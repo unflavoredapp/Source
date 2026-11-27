@@ -1108,3 +1108,15 @@ Re-sign the app with a developer certificate that carries it (free certificates 
 "sign_certificate_id_hint" = "Same value as Bundle ID. Enter the App ID from the certificate/profile, or fill it from the selected profile.";
 "sign_fill_from_profile" = "Fill from Profile";
 "sign_certificate_id_wildcard" = "This profile is a wildcard. Enter a concrete App ID manually.";
+
+"telegram_worker_title" = "Telegram Worker";
+"telegram_worker_intro" = "Use this iPhone as a fetch + decrypt worker controlled from Telegram. Keep the app open while jobs run.";
+"telegram_worker_enabled" = "Enable worker";
+"telegram_worker_token" = "Bot token";
+"telegram_worker_token_hint" = "From @BotFather. Stored in the Keychain on this device.";
+"telegram_worker_chats" = "Allowed chat IDs";
+"telegram_worker_chats_hint" = "Comma-separated. Leave empty to lock to the first chat that messages the bot.";
+"telegram_worker_save" = "Save & apply";
+"telegram_worker_running" = "Worker enabled";
+"telegram_worker_stopped" = "Worker off";
+"telegram_worker_commands" = "Commands: /fd <bundleId|url> · /fetch · /decrypt · /status · /help";
