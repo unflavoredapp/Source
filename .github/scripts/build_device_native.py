@@ -116,9 +116,16 @@ def main():
         run("cargo", f"+{toolchain}", "build", "--locked", "--release", "--target", target,
             "-p", "idevice-ffi", cwd=source, env=env)
     headers = WORK / "include"
-    headers.mkdir(exist_ok=True)
+    if headers.exists():
+        shutil.rmtree(headers)
+    headers.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source / "ffi/idevice.h", headers / "idevice.h")
-    (headers / "module.modulemap").write_text('module IDevice {\n  header "idevice.h"\n  export *\n}\n')
+    # Do not write Headers/module.modulemap. xcodebuild archive flattens every
+    # linked XCFramework's module.modulemap into the same
+    # BuildProductsPath/.../include/module.modulemap; AppleAuth already ships
+    # one, so a second map aborts the archive. SPM synthesizes the IDevice
+    # clang module from idevice.h for the binary target (and cbindgen already
+    # emits ksign_pairing_* into that header).
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
