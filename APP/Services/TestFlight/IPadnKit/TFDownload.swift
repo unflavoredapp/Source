@@ -136,9 +136,10 @@ public enum TFDownload {
         guard let urlString, let url = URL(string: urlString) else {
             throw TFError.malformed("install: 元数据里没有 url")
         }
-        log("install: url host=" + (url.host ?? "-") + " dpInfo="
-            + (dpInfo.map { String($0.count) + " B" } ?? "null")
-            + " size=" + (declaredSize.map(String.init) ?? "-"))
+        let host = url.host ?? "-"
+        let dpInfoLabel = dpInfo.map { "\($0.count) B" } ?? "null"
+        let sizeLabel = declaredSize.map(String.init) ?? "-"
+        log("install: url host=\(host) dpInfo=\(dpInfoLabel) size=\(sizeLabel)")
 
         if handle.isPaused {
             try await handle.waitWhilePaused()
