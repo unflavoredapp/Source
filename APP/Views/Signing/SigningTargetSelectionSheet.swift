@@ -116,7 +116,6 @@ struct SigningTargetSelectionSheet: View {
                 selected = ["."]
             }
         }
-        .presentationDetents([.large])
     }
 
     private func targetRow(_ target: SigningTarget) -> some SwiftUI.View {

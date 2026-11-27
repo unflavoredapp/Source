@@ -29,8 +29,8 @@ struct FloatingTabBarConfig: Equatable {
     var cornerRadius: CGFloat
 
     static let `default` = FloatingTabBarConfig(
-        horizontalPadding: 36,
-        bottomOffset: 14,
+        horizontalPadding: 16,
+        bottomOffset: 8,
         height: 60,
         cornerRadius: 24
     )
@@ -65,7 +65,8 @@ final class TabBarStyleManager: ObservableObject {
            let style = TabBarStyle(rawValue: saved) {
             self.currentStyle = style
         } else {
-            self.currentStyle = .systemDefault
+            // Match AppAssassin: floating bar over a full-bleed content canvas.
+            self.currentStyle = .floatingCard
         }
 
         self.floatingConfig = .default

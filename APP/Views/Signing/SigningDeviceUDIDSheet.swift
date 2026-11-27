@@ -62,7 +62,6 @@ struct SigningDeviceUDIDSheet: View {
             }
         }
         .navigationViewStyle(.stack)
-        .presentationDetents([.large])
     }
 
     private var statusCard: some SwiftUI.View {

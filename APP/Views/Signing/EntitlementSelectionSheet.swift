@@ -387,8 +387,6 @@ struct EntitlementSelectionSheet: View {
         } message: {
             Text(alertMessage)
         }
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
     }
 
     private var header: some View {

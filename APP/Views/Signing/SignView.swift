@@ -400,7 +400,7 @@ struct SignView: SwiftUI.View {
         .sheet(item: $shareFile) { file in
             ActivityView(items: [file.url])
         }
-        .sheet(isPresented: $showCertificateDetail) {
+        .fullScreenCover(isPresented: $showCertificateDetail) {
             if let certificate {
                 CertificateDetailSheet(
                     certificate: certificate,
@@ -415,7 +415,7 @@ struct SignView: SwiftUI.View {
                 .environmentObject(themeManager)
             }
         }
-        .sheet(isPresented: $showEntitlements) {
+        .fullScreenCover(isPresented: $showEntitlements) {
             if let profile {
                 EntitlementSelectionSheet(
                     profile: profile,
@@ -427,7 +427,7 @@ struct SignView: SwiftUI.View {
                 .environmentObject(themeManager)
             }
         }
-        .sheet(isPresented: $showTargetSheet) {
+        .fullScreenCover(isPresented: $showTargetSheet) {
             SigningTargetSelectionSheet(
                 targets: availableTargets,
                 selected: targetBinding,
@@ -436,7 +436,7 @@ struct SignView: SwiftUI.View {
             )
                 .environmentObject(themeManager)
         }
-        .sheet(isPresented: $showExtensionCredentials) {
+        .fullScreenCover(isPresented: $showExtensionCredentials) {
             ExtensionCredentialsSheet(
                 targets: availableTargets.filter { $0.kind != .main },
                 certificates: store.certificates,
@@ -451,14 +451,14 @@ struct SignView: SwiftUI.View {
             )
             .environmentObject(themeManager)
         }
-        .sheet(isPresented: $showHistory) {
+        .fullScreenCover(isPresented: $showHistory) {
             SigningHistoryView(onRefresh: { record in
                 showHistory = false
                 refreshFromHistory(record)
             })
             .environmentObject(themeManager)
         }
-        .sheet(isPresented: $showDeviceSheet) {
+        .fullScreenCover(isPresented: $showDeviceSheet) {
             SigningDeviceUDIDSheet(
                 deviceUDID: $deviceUDID,
                 serviceURL: $udidServiceURL,

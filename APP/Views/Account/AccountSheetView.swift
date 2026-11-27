@@ -35,6 +35,8 @@ struct AccountSheetView: View {
                 actionSection
             }
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(themeManager.backgroundColor.ignoresSafeArea())
             .navigationTitle("apple_id".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -46,19 +48,21 @@ struct AccountSheetView: View {
                     .foregroundColor(themeManager.accentColor)
                 }
             }
-            .sheet(isPresented: $showAddAccount) {
+            .fullScreenCover(isPresented: $showAddAccount) {
                 AddAccountView()
                     .environmentObject(appStore)
                     .environmentObject(themeManager)
             }
-            .sheet(item: $selectedAccountForDetail) { account in
+            .fullScreenCover(item: $selectedAccountForDetail) { account in
                 NavigationView {
                     AccountDetailView(account: account)
+                        .background(themeManager.backgroundColor.ignoresSafeArea())
                 }
                 .environmentObject(appStore)
                 .environmentObject(themeManager)
             }
         }
+        .background(themeManager.backgroundColor.ignoresSafeArea())
     }
 
     private var emptyAccountSection: some View {
