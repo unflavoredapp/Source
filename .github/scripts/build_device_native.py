@@ -120,12 +120,9 @@ def main():
         shutil.rmtree(headers)
     headers.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source / "ffi/idevice.h", headers / "idevice.h")
-    # Do not write Headers/module.modulemap. xcodebuild archive flattens every
-    # linked XCFramework's module.modulemap into the same
-    # BuildProductsPath/.../include/module.modulemap; AppleAuth already ships
-    # one, so a second map aborts the archive. SPM synthesizes the IDevice
-    # clang module from idevice.h for the binary target (and cbindgen already
-    # emits ksign_pairing_* into that header).
+    # No Headers/module.modulemap in the XCFramework — archive would flatten it
+    # onto the same include/module.modulemap path as AppleAuth. The IDevice clang
+    # module lives in Sources/IDeviceModule (see integrate_devicekit.py).
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
@@ -133,6 +130,12 @@ def main():
     for target, _ in targets:
         command += ["-library", str(source / f"target/{target}/release/libidevice_ffi.a"), "-headers", str(headers)]
     run(*command, "-output", str(OUTPUT))
+    module_include = ROOT / "IDeviceKit/Sources/IDeviceModule/include"
+    module_include.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(headers / "idevice.h", module_include / "idevice.h")
+    (module_include / "module.modulemap").write_text(
+        'module IDevice {\n\theader "idevice.h"\n\texport *\n}\n'
+    )
     stamp_path.write_text(stamp)
 
 
