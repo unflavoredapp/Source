@@ -561,6 +561,7 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
         appVersion: String? = nil,
         downloadId: String? = nil,
         prefetchedSongList: [[String: Any]]? = nil,
+        maxConnections: Int = DownloadConnectionSettings.defaultValue,
         progressHandler: @escaping @Sendable (DownloadProgress) -> Void,
         completion: @escaping @Sendable (Result<DownloadResult, DownloadError>) -> Void
     ) {
@@ -636,6 +637,7 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
                     downloadId: downloadId,
                     storeItem: storeItem,
                     destinationURL: destinationURL,
+                    maxConnections: maxConnections,
                     progressHandler: progressHandler,
                     completion: completion
                 )
@@ -755,6 +757,7 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
         downloadId: String,
         storeItem: DownloadStoreItem,
         destinationURL: URL,
+        maxConnections: Int,
         progressHandler: @escaping @Sendable (DownloadProgress) -> Void,
         completion: @escaping @Sendable (Result<DownloadResult, DownloadError>) -> Void
     ) async {
@@ -775,6 +778,7 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
                 downloadId: downloadId,
                 storeItem: storeItem,
                 destinationURL: destinationURL,
+                maxConnections: maxConnections,
                 progressHandler: progressHandler,
                 completion: completion
             )
@@ -823,6 +827,7 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
         downloadId: String,
         storeItem: DownloadStoreItem,
         destinationURL: URL,
+        maxConnections: Int,
         progressHandler: @escaping @Sendable (DownloadProgress) -> Void,
         completion: @escaping @Sendable (Result<DownloadResult, DownloadError>) -> Void
     ) async {
@@ -864,8 +869,14 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
             downloadId: downloadId,
             url: downloadURL,
             tempFileURL: tempFileURL,
-            onProgress: { [weak self] bytesDownloaded, totalBytes in
-                self?.handleSegmentedProgress(downloadId: downloadId, bytesDownloaded: bytesDownloaded, totalBytes: totalBytes)
+            maxConnections: maxConnections,
+            onProgress: { [weak self] bytesDownloaded, totalBytes, activeConnections in
+                self?.handleSegmentedProgress(
+                    downloadId: downloadId,
+                    bytesDownloaded: bytesDownloaded,
+                    totalBytes: totalBytes,
+                    activeConnections: activeConnections
+                )
             },
             onFinish: { [weak self] result in
                 self?.handleSegmentedCompletion(downloadId: downloadId, result: result)
@@ -873,8 +884,13 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
         )
     }
 
-    private func handleSegmentedProgress(downloadId: String, bytesDownloaded: Int64, totalBytes: Int64) {
-        let captured = buildProgressUpdate(downloadId: downloadId, bytesDownloaded: bytesDownloaded, totalBytes: totalBytes)
+    private func handleSegmentedProgress(downloadId: String, bytesDownloaded: Int64, totalBytes: Int64, activeConnections: Int) {
+        let captured = buildProgressUpdate(
+            downloadId: downloadId,
+            bytesDownloaded: bytesDownloaded,
+            totalBytes: totalBytes,
+            activeConnections: activeConnections
+        )
         guard let captured, captured.shouldUpdate else { return }
         DispatchQueue.main.async {
             captured.handler(captured.progress)
@@ -1025,8 +1041,6 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
         cleanupDownload(downloadId: downloadId)
     }
 
-    /// Set of download ids that have a **running** task. Paused (suspended) downloads are not
-    /// active; otherwise syncDownloadStatus reconciliation would flip paused back to "downloading".
     var activeDownloadIds: Set<String> {
         get async {
             let tasks = await urlSession.allTasks
@@ -1042,7 +1056,6 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
                 result.subtract(suspendedTaskIds)
                 return Set(segmentedDownloadIds)
             }
-            // Also exclude paused segmented downloads (suspend state lives in the segmented downloader)
             let pausedSegmented = segmentedIds.filter { SegmentedIPADownloader.shared.isPaused(downloadId: $0) }
             result.subtract(pausedSegmented)
             return result
@@ -1679,7 +1692,7 @@ extension AppStoreDownloadManager {
         completionHandler(.allow)
     }
 
-    private func buildProgressUpdate(downloadId: String, bytesDownloaded: Int64, totalBytes: Int64) -> (progress: DownloadProgress, handler: @Sendable (DownloadProgress) -> Void, shouldUpdate: Bool)? {
+    private func buildProgressUpdate(downloadId: String, bytesDownloaded: Int64, totalBytes: Int64, activeConnections: Int = 1) -> (progress: DownloadProgress, handler: @Sendable (DownloadProgress) -> Void, shouldUpdate: Bool)? {
         guard let progressHandler = progressHandlers[downloadId],
               downloadStartTimes[downloadId] != nil else {
             return nil
@@ -1714,7 +1727,8 @@ extension AppStoreDownloadManager {
             progress: progressValue,
             speed: speed,
             remainingTime: remainingTime,
-            status: .downloading
+            status: .downloading,
+            activeConnections: activeConnections
         )
 
         let lastUIUpdateTime = lastUIUpdate[downloadId] ?? Date.distantPast
@@ -1901,6 +1915,7 @@ extension AppStoreDownloadManager {
                 downloadId: downloadId,
                 storeItem: storeItem,
                 destinationURL: destination,
+                maxConnections: DownloadConnectionSettings.defaultValue,
                 progressHandler: progressHandler,
                 completion: completion
             )
@@ -1918,7 +1933,7 @@ extension AppStoreDownloadManager {
             return true
         }
         guard hasContext else {
-            NSLog("[Download] \(downloadId) completion callback missing destination or metadata; abandoning download")
+            NSLog("[Download] \(downloadId) 完成回调缺少目标或元数据，放弃本次下载")
             safeComplete(downloadId: downloadId, result: .failure(.fileSystemError("dl_err_local_file_missing".localized)))
             return
         }
@@ -2113,6 +2128,7 @@ struct DownloadProgress {
     let speed: Double
     let remainingTime: TimeInterval
     let status: DownloadStatus
+    var activeConnections: Int = 0
     var formattedProgress: String {
         return String(format: "%.1f%%", progress * 100)
     }
