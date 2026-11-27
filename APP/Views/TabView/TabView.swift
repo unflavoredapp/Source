@@ -136,8 +136,8 @@ struct TabbarView: View {
         }
     }
 
-    /// iOS 18+：搜索用 `role: .search` 单独成一个按钮，不占前五个位置，
-    /// 这样六个标签也不会被系统塞进「更多」那个老式表格页。
+    /// iOS 18+: Search uses `role: .search` as its own button and does not occupy one of the first five slots,
+    /// so six tabs are not forced into the legacy “More” table page.
     @available(iOS 18.0, *)
     private var modernStandardTabView: some View {
         TabView(selection: $selectedTab) {
@@ -179,7 +179,7 @@ struct TabbarView: View {
     private var floatingCardTabView: some View {
         GeometryReader { geo in
             ZStack(alignment: .bottom) {
-                // 兜底：整屏再铺一层，TabView 没盖到的缝隙也不会露出黑底
+                // Fallback: fill the whole screen so gaps TabView does not cover never show a black backdrop
                 LiquidGlassBackdrop()
                     .environmentObject(themeManager)
                     .ignoresSafeArea()
@@ -187,8 +187,8 @@ struct TabbarView: View {
                 TabView(selection: $selectedTab) {
                     ForEach(tabOrder.order, id: \.self) { tab in
                         tabContent(for: tab)
-                            // 用 safeAreaInset 而不是 padding：只把内容顶起来，
-                            // 页面背景仍然铺到屏幕最底，不会留黑带
+                            // Prefer safeAreaInset over padding: lift content only,
+                            // while the page background still extends to the bottom edge (no black strip)
                             .safeAreaInset(edge: .bottom, spacing: 0) {
                                 Color.clear
                                     .frame(height: tabBarStyleManager.floatingConfig.height + tabBarStyleManager.floatingConfig.bottomOffset)
@@ -206,17 +206,17 @@ struct TabbarView: View {
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 
-    /// 每个标签页自带一层液态玻璃背景：TabView 容器本身不透明，
-    /// 放在最外层的背景会被它盖住。
+    /// Each tab owns its own liquid-glass backdrop: the TabView container is opaque,
+    /// so a background placed on the outermost layer would be covered.
     @ViewBuilder
     private func tabContent(for tab: TabEnum) -> some SwiftUI.View {
         TabEnum.view(for: tab, themeManager: themeManager, tabBarStyleManager: tabBarStyleManager)
-            // 悬浮模式下系统自带的 tab bar 会留一条空白矩形，这里彻底藏掉
+            // In floating mode the system tab bar leaves a blank rectangle — hide it completely
             .toolbar(
                 tabBarStyleManager.currentStyle == .floatingCard ? .hidden : .visible,
                 for: .tabBar
             )
-            // iOS 26 的玻璃 tab bar 不吃 UITabBarAppearance，必须显式隐藏背景
+            // iOS 26 glass tab bar ignores UITabBarAppearance; hide the background explicitly
             .toolbarBackground(.hidden, for: .tabBar)
     }
 

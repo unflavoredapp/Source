@@ -180,7 +180,7 @@ struct SignView: SwiftUI.View {
             issues.append(SigningIssue(text: "sign_ipa_encrypted".localized, isError: true))
         }
         if trimmedBundleID == Bundle.main.bundleIdentifier,
-           injections.contains(where: { $0.name == "内购破解.dylib" }) {
+           injections.contains(where: { $0.name == "InAppPurchase.dylib" }) {
             issues.append(SigningIssue(text: "sign_self_injection_warning".localized, isError: false))
         }
         if !trimmedBundleID.isEmpty, trimmedBundleID == Bundle.main.bundleIdentifier {
@@ -1624,7 +1624,7 @@ struct SignView: SwiftUI.View {
             }
             return copy
         }.filter { item in
-            !(isSigningSelf && item.name == "内购破解.dylib")
+            !(isSigningSelf && item.name == "InAppPurchase.dylib")
         }
 
         let taskRequest = SigningIPTask(
@@ -2030,7 +2030,7 @@ struct SignView: SwiftUI.View {
         injections.append(
             SigningInjection(
                 url: url,
-                name: "内购破解.dylib",
+                name: "InAppPurchase.dylib",
                 isFramework: false,
                 targets: ["."],
                 weak: true

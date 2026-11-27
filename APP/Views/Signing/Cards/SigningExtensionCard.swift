@@ -64,7 +64,7 @@ struct SigningExtensionCard: SwiftUI.View {
                         .font(.system(size: 11.5, weight: .semibold))
                         .lineLimit(1)
                         .truncationMode(.middle)
-                    if injection.name == "内购破解.dylib" {
+                    if injection.name == "InAppPurchase.dylib" {
                         Text("sign_injection_builtin".localized)
                             .font(.system(size: 6.5, weight: .bold))
                             .foregroundStyle(.cyan)
