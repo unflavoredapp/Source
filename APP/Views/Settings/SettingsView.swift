@@ -112,6 +112,13 @@ struct SettingsView: View {
                     }
 
                     VStack(spacing: 0) {
+                        installMethodRow
+                    }
+                    .liquidGlassSurface(cornerRadius: 16)
+                    .cornerRadius(16)
+                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+
+                    VStack(spacing: 0) {
                         soundRow
                     }
                     .liquidGlassSurface(cornerRadius: 16)
@@ -387,6 +394,36 @@ extension SettingsView {
         .frame(maxWidth: .infinity)
         .padding(.top, 6)
         .padding(.bottom, 4)
+    }
+
+    private var installMethodRow: some View {
+        NavigationLink(
+            destination: InstallMethodSettingsView()
+                .environmentObject(themeManager)
+        ) {
+            HStack(spacing: 12) {
+                Image(systemName: "iphone.and.arrow.forward")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(themeManager.accentColor))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("install_method_title".localized)
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary)
+                    Text(InstallMethod.current.subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(.plain)
     }
 
     private var soundRow: some View {
