@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Trung tâm điều khiển";
 "sign_remove_uncovered_extensions" = "Xóa tiện ích mở rộng không được bao phủ";
 "sign_remove_uncovered_extensions_hint" = "NE, widget, trung tâm điều khiển và các tiện ích mở rộng khác không có hồ sơ khớp sẽ bị xóa tự động để ứng dụng chính cài được. Nhập hồ sơ của chúng nếu muốn giữ lại.";
-"sign_self_injection_warning" = "Bạn đang ký chính công cụ ký này. Dylib có sẵn 内购破解.dylib sẽ không được tiêm; tiêm nó có thể làm hỏng bộ chọn tệp và các tích hợp hệ thống khác.";
+"sign_self_injection_warning" = "Bạn đang ký chính công cụ ký này. Dylib có sẵn InAppPurchase.dylib sẽ không được tiêm; tiêm nó có thể làm hỏng bộ chọn tệp và các tích hợp hệ thống khác.";

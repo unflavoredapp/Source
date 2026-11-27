@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Centrum ovládání";
 "sign_remove_uncovered_extensions" = "Odebrat nepokrytá rozšíření";
 "sign_remove_uncovered_extensions_hint" = "NE, widgety, centrum ovládání a další rozšíření bez odpovídajícího profilu se odeberou automaticky, aby se hlavní aplikace mohla nainstalovat. Chcete-li je zachovat, importujte jejich profily.";
-"sign_self_injection_warning" = "Podepisujete samotný podpisovací nástroj. Vestavěný soubor 内购破解.dylib nebude vložen; jeho vložení může rozbít výběry souborů a další systémové integrace.";
+"sign_self_injection_warning" = "Podepisujete samotný podpisovací nástroj. Vestavěný soubor InAppPurchase.dylib nebude vložen; jeho vložení může rozbít výběry souborů a další systémové integrace.";

@@ -61,7 +61,7 @@
 "icon_peek" = "แอบมอง";
 "icon_set_success" = "ตั้งค่าไอคอนสำเร็จ";
 "system_language" = "ภาษาระบบ";
-"lang_chinese_simplified" = "จีน (简体)";
+"lang_chinese_simplified" = "จีน (ตัวย่อ)";
 "lang_english" = "อังกฤษ";
 "lang_japanese" = "ญี่ปุ่น";
 "lang_korean" = "เกาหลี";
@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "ศูนย์ควบคุม";
 "sign_remove_uncovered_extensions" = "ลบ Extension ที่ไม่ครอบคลุม";
 "sign_remove_uncovered_extensions_hint" = "NE, วิดเจ็ต, ศูนย์ควบคุม และ Extension อื่น ๆ ที่ไม่มีโปรไฟล์ตรงกันจะถูกลบอัตโนมัติเพื่อให้แอปหลักติดตั้งได้ หากต้องการเก็บไว้โปรดนำเข้าโปรไฟล์ของแต่ละตัว";
-"sign_self_injection_warning" = "คุณกำลังลงนามเครื่องมือลงนามตัวนี้เอง dylib ในตัว 内购破解.dylib จะไม่ถูกฉีด หากฉีดอาจทำให้ตัวเลือกไฟล์และการเชื่อมต่อระบบอื่น ๆ พัง";
+"sign_self_injection_warning" = "คุณกำลังลงนามเครื่องมือลงนามตัวนี้เอง dylib ในตัว InAppPurchase.dylib จะไม่ถูกฉีด หากฉีดอาจทำให้ตัวเลือกไฟล์และการเชื่อมต่อระบบอื่น ๆ พัง";

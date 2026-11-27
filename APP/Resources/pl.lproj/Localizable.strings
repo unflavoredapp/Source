@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Centrum sterowania";
 "sign_remove_uncovered_extensions" = "Usuń nieobjęte rozszerzenia";
 "sign_remove_uncovered_extensions_hint" = "Rozszerzenia NE, widżety, centrum sterowania i inne bez pasującego profilu są usuwane automatycznie, aby główna aplikacja mogła się zainstalować. Zaimportuj ich profile, aby je zachować.";
-"sign_self_injection_warning" = "Podpisujesz samo to narzędzie do podpisywania. Wbudowany plik 内购破解.dylib nie zostanie wstrzyknięty; jego wstrzyknięcie może zepsuć selektory plików i inne integracje systemowe.";
+"sign_self_injection_warning" = "Podpisujesz samo to narzędzie do podpisywania. Wbudowany plik InAppPurchase.dylib nie zostanie wstrzyknięty; jego wstrzyknięcie może zepsuć selektory plików i inne integracje systemowe.";

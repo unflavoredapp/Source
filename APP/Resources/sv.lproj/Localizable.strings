@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Kontrollcenter";
 "sign_remove_uncovered_extensions" = "Ta bort otäckta tillägg";
 "sign_remove_uncovered_extensions_hint" = "NE, widgets, kontrollcenter och andra tillägg utan matchande profil tas bort automatiskt så att huvudappen kan installeras. Importera deras profiler för att behålla dem.";
-"sign_self_injection_warning" = "Du signerar själva signeringsverktyget. Den inbyggda 内购破解.dylib injiceras inte; injicering kan bryta filväljare och andra systemintegrationer.";
+"sign_self_injection_warning" = "Du signerar själva signeringsverktyget. Den inbyggda InAppPurchase.dylib injiceras inte; injicering kan bryta filväljare och andra systemintegrationer.";

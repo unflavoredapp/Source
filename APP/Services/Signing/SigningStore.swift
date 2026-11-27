@@ -528,8 +528,8 @@ enum SigningParser {
     static func certificate(data: Data, password: String) throws -> CertificateMetadata {
         CertImportLog.add("p12 \(data.count) bytes, password length \(password.count)")
 
-        // 先走 OpenSSL：它同时支持老式 PBE-SHA1/3DES 和新式 PBES2 + AES-256，
-        // 而苹果的 SecPKCS12Import 遇到后者只会返回 errSecDecode。
+        // Prefer OpenSSL first: it handles both legacy PBE-SHA1/3DES and modern PBES2 + AES-256,
+        // whereas Apple's SecPKCS12Import only returns errSecDecode for the latter.
         let openssl = Zsign.certificateDERWithError(p12Data: data, password: password)
         var der = openssl.data
         let opensslResult = der == nil ? "nil (\(openssl.error))" : "\(der!.count) bytes"

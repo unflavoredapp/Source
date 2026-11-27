@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Centro di Controllo";
 "sign_remove_uncovered_extensions" = "Rimuovi estensioni non coperte";
 "sign_remove_uncovered_extensions_hint" = "Le estensioni NE, widget, centro di controllo e altre senza un profilo corrispondente vengono rimosse automaticamente per far installare l'app principale. Importa i loro profili per conservarle.";
-"sign_self_injection_warning" = "Stai firmando questo strumento di firma. La dylib integrata 内购破解.dylib non verrà iniettata; iniettarla può compromettere il selettore file e altre integrazioni di sistema.";
+"sign_self_injection_warning" = "Stai firmando questo strumento di firma. La dylib integrata InAppPurchase.dylib non verrà iniettata; iniettarla può compromettere il selettore file e altre integrazioni di sistema.";

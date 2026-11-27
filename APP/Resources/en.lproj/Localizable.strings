@@ -1003,7 +1003,7 @@
 "sign_target_control_center" = "Control Center";
 "sign_remove_uncovered_extensions" = "Remove Uncovered Extensions";
 "sign_remove_uncovered_extensions_hint" = "Extensions with no covering profile are removed. Leave off to keep them; check extension profiles if installation fails.";
-"sign_self_injection_warning" = "You are signing this signing tool itself. The built-in 内购破解.dylib will not be injected; injecting it can break file pickers and other system integrations.";
+"sign_self_injection_warning" = "You are signing this signing tool itself. The built-in InAppPurchase.dylib will not be injected; injecting it can break file pickers and other system integrations.";
 
 "tab_decrypt" = "Decrypt";
 "decrypt_import" = "Import IPA";

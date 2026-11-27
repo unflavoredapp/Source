@@ -667,7 +667,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
                     let installSuccess = false;
 
                     window.onload = function() {
-                        console.log('页面加载完成，开始自动安装...');
+                        console.log('Page loaded, starting automatic install...');
                         initializeInstallation();
                     };
 
@@ -685,7 +685,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
 
                     function autoInstall() {
                         if (isInstalling || installSuccess) {
-                            console.log('安装正在进行中或已成功，跳过重复调用');
+                            console.log('Install already in progress or succeeded, skipping duplicate call');
                             return;
                         }
 
@@ -695,14 +695,14 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
                         isInstalling = true;
                         status.innerHTML = '<span class="loading"></span>\("install_starting".localized)';
 
-                        console.log('开始安装尝试');
+                        console.log('Starting install attempt');
 
                         try {
                             window.location.href = itmsURL;
                             status.innerHTML = '<span class="success">\("install_auto_started".localized)</span>';
                             installSuccess = true;
 
-                            console.log('安装程序启动成功');
+                            console.log('Installer launched successfully');
 
                             setTimeout(function() {
                                 if (installSuccess) {
@@ -712,7 +712,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
                             }, 3000);
 
                         } catch (error) {
-                            console.error('安装失败:', error);
+                            console.error('Install failed:', error);
                             status.innerHTML = '<span class="error">❌ \("install_start_failed".localized)</span>';
                             manualInstall.style.display = 'block';
                             isInstalling = false;
@@ -721,7 +721,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
 
                     function manualInstall() {
                         if (isInstalling || installSuccess) {
-                            console.log('安装正在进行中或已成功，忽略手动安装');
+                            console.log('Install already in progress or succeeded, ignoring manual install');
                             return;
                         }
 

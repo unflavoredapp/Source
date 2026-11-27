@@ -53,7 +53,7 @@
 "app_icon" = "Uygulama Simgesi";
 "language_select" = "Dil Seç";
 "language_switch" = "Dil Değiştir";
-"language_switch_message" = "Dili değiştirdikten sonra uygulama arayüzü hemen güncellenecektir. Bazı sistem bileşenlerinin tam olarak生效mesi için yeniden başlatma gerekebilir.";
+"language_switch_message" = "Dili değiştirdikten sonra uygulama arayüzü hemen güncellenecektir. Bazı sistem bileşenlerinin tam olarak etkinleşmesi için yeniden başlatma gerekebilir.";
 "confirm_switch" = "Değişikliği Onayla";
 "icon_default" = "Varsayılan";
 "icon_author" = "Simge";
@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Denetim Merkezi";
 "sign_remove_uncovered_extensions" = "Kapsanmayan Uzantıları Kaldır";
 "sign_remove_uncovered_extensions_hint" = "Eşleşen profili olmayan NE, widget'lar, denetim merkezi ve diğer uzantılar, ana uygulamanın yüklenebilmesi için otomatik olarak kaldırılır. Korumak için profillerini içe aktarın.";
-"sign_self_injection_warning" = "Bu imzalama aracının kendisini imzalıyorsunuz. Yerleşik 内购破解.dylib enjekte edilmeyecek; enjekte edilmesi dosya seçicileri ve diğer sistem entegrasyonlarını bozabilir.";
+"sign_self_injection_warning" = "Bu imzalama aracının kendisini imzalıyorsunuz. Yerleşik InAppPurchase.dylib enjekte edilmeyecek; enjekte edilmesi dosya seçicileri ve diğer sistem entegrasyonlarını bozabilir.";

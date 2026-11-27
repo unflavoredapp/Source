@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Controlecentrum";
 "sign_remove_uncovered_extensions" = "Niet-gedekte extensies verwijderen";
 "sign_remove_uncovered_extensions_hint" = "NE, widgets, controlecentrum en andere extensies zonder overeenkomend profiel worden automatisch verwijderd, zodat de hoofd-app kan worden geïnstalleerd. Importeer hun profielen om ze te behouden.";
-"sign_self_injection_warning" = "Je ondertekent deze ondertekeningstool zelf. De ingebouwde 内购破解.dylib wordt niet geïnjecteerd; injectie kan bestandskiezers en andere systeemintegraties breken.";
+"sign_self_injection_warning" = "Je ondertekent deze ondertekeningstool zelf. De ingebouwde InAppPurchase.dylib wordt niet geïnjecteerd; injectie kan bestandskiezers en andere systeemintegraties breken.";
