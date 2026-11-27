@@ -79,14 +79,14 @@ struct DecryptView: SwiftUI.View {
                 }
             }
         }
-        .sheet(isPresented: $showDecryptedFiles) {
+        .fullScreenCover(isPresented: $showDecryptedFiles) {
             DecryptedFilesView()
                 .environmentObject(themeManager)
         }
         .sheet(item: $shareItem) { item in
             ActivityView(items: [item.url])
         }
-        .sheet(item: $logJob) { job in
+        .fullScreenCover(item: $logJob) { job in
             DecryptLogSheet(log: job.log, title: job.displayName)
                 .environmentObject(themeManager)
         }

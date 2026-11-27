@@ -170,8 +170,7 @@ struct CertificateDetailSheet: View {
             }
         }
         .navigationViewStyle(.stack)
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
+        .background(themeManager.backgroundColor.ignoresSafeArea())
     }
 
     private var header: some SwiftUI.View {

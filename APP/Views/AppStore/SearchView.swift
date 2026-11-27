@@ -332,7 +332,7 @@ struct SearchView: SwiftUI.View {
                     .environmentObject(appStore)
                     .environmentObject(themeManager)
             }
-            .sheet(isPresented: $showPurchasedSheet) {
+            .fullScreenCover(isPresented: $showPurchasedSheet) {
                 NavigationView {
                     PurchasedView(onClose: { showPurchasedSheet = false })
                         .environmentObject(appStore)
@@ -347,17 +347,17 @@ struct SearchView: SwiftUI.View {
                 }
                 .navigationViewStyle(.stack)
             }
-            .sheet(isPresented: $showAccountSheet) {
+            .fullScreenCover(isPresented: $showAccountSheet) {
                 AccountSheetView()
                     .environmentObject(appStore)
                     .environmentObject(themeManager)
             }
-            .sheet(isPresented: $showDirectSheet) {
+            .fullScreenCover(isPresented: $showDirectSheet) {
                 directEntrySheet
                     .environmentObject(appStore)
                     .environmentObject(themeManager)
             }
-            .sheet(isPresented: $showLoginSheet) {
+            .fullScreenCover(isPresented: $showLoginSheet) {
                 AddAccountView()
                     .environmentObject(appStore)
                     .environmentObject(themeManager)

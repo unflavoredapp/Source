@@ -168,7 +168,7 @@ struct SettingsView: View {
                 }
                 themeManager.objectWillChange.send()
             }
-            .sheet(isPresented: $showAccountSheet) {
+            .fullScreenCover(isPresented: $showAccountSheet) {
                 AccountSheetView()
                     .environmentObject(appStore)
                     .environmentObject(themeManager)

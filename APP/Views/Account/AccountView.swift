@@ -137,14 +137,15 @@ struct AccountView: View {
                     }
                 }
             }
-            .sheet(isPresented: $addSheet) {
+            .fullScreenCover(isPresented: $addSheet) {
                 AddAccountView()
                     .environmentObject(appStore)
                     .environmentObject(themeManager)
             }
-            .sheet(item: $selectedAccountForDetail) { account in
+            .fullScreenCover(item: $selectedAccountForDetail) { account in
                 NavigationView {
                     AccountDetailView(account: account)
+                        .background(themeManager.backgroundColor.ignoresSafeArea())
                 }
                 .environmentObject(appStore)
                 .environmentObject(themeManager)

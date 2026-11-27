@@ -176,10 +176,11 @@ struct TabbarView: View {
 
     @available(iOS 18.0, *)
 
+    /// AppAssassin-style: content is edge-to-edge; the floating bar is a bottom safe-area inset
+    /// (not a card wrapping the whole UI).
     private var floatingCardTabView: some View {
         GeometryReader { geo in
-            ZStack(alignment: .bottom) {
-                // Fallback: fill the whole screen so gaps TabView does not cover never show a black backdrop
+            ZStack {
                 LiquidGlassBackdrop()
                     .environmentObject(themeManager)
                     .ignoresSafeArea()
@@ -187,22 +188,21 @@ struct TabbarView: View {
                 TabView(selection: $selectedTab) {
                     ForEach(tabOrder.order, id: \.self) { tab in
                         tabContent(for: tab)
-                            // Prefer safeAreaInset over padding: lift content only,
-                            // while the page background still extends to the bottom edge (no black strip)
-                            .safeAreaInset(edge: .bottom, spacing: 0) {
-                                Color.clear
-                                    .frame(height: tabBarStyleManager.floatingConfig.height + tabBarStyleManager.floatingConfig.bottomOffset)
-                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .tag(tab)
                     }
                 }
-        
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 floatingTabBarContent
                     .padding(.horizontal, floatingHorizontalPadding(for: geo.size.width))
-                    .padding(.bottom, max(geo.safeAreaInsets.bottom + tabBarStyleManager.floatingConfig.bottomOffset - 16, 4))
+                    .padding(.bottom, max(tabBarStyleManager.floatingConfig.bottomOffset, 4))
+                    .padding(.top, 4)
             }
-            .ignoresSafeArea(edges: .bottom)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 
