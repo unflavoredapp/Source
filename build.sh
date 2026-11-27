@@ -88,17 +88,6 @@ if [ "${SKIP_NATIVE:-0}" != "1" ]; then
   run python3 .github/scripts/build_device_native.py
 fi
 
-# Archive flattens every XCFramework's Headers/module.modulemap into the same
-# BuildProductsPath/.../include/module.modulemap. AppleAuth ships one; IDevice
-# builds one — keep only IDevice's by stripping AppleAuth's (SPM synthesizes a
-# module map for the apple_auth binary target without a checked-in map).
-for map in Vendor/AppleAuth/Artifacts/apple_auth.xcframework/*/Headers/module.modulemap; do
-  if [ -f "$map" ]; then
-    echo "==> Removing colliding AppleAuth module.modulemap: $map"
-    rm -f "$map"
-  fi
-done
-
 echo ""; echo "==> Schemes"
 run_soft xcodebuild -list -project "$PROJECT"
 
