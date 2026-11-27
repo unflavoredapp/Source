@@ -7,8 +7,8 @@ struct TaskStatsWidget: Widget {
             TaskStatsView(items: entry.items)
                 .modifier(WidgetSurface())
         }
-        .configurationDisplayName("任务统计")
-        .description("正在运行、已完成、失败的下载与签名任务数量")
+        .configurationDisplayName("Task Stats")
+        .description("Counts of running, completed, and failed download and signing tasks")
         .supportedFamilies([.systemSmall, .accessoryCircular, .accessoryInline])
     }
 }
@@ -19,8 +19,8 @@ struct RecentTasksWidget: Widget {
             RecentTasksView(items: entry.items)
                 .modifier(WidgetSurface())
         }
-        .configurationDisplayName("最近任务")
-        .description("最近处理的下载、签名、解密任务")
+        .configurationDisplayName("Recent Tasks")
+        .description("Recently handled download, signing, and decrypt tasks")
         .supportedFamilies([.systemMedium, .accessoryRectangular])
     }
 }
@@ -31,8 +31,8 @@ struct TaskBoardWidget: Widget {
             TaskBoardView(items: entry.items)
                 .modifier(WidgetSurface())
         }
-        .configurationDisplayName("任务面板")
-        .description("正在运行的任务进度一览")
+        .configurationDisplayName("Task Board")
+        .description("Overview of running task progress")
         .supportedFamilies([.systemLarge, .systemMedium])
     }
 }
@@ -58,10 +58,10 @@ private struct TaskSnapshotProvider: TimelineProvider {
 
     static let samples: [TaskSnapshotItem] = [
         TaskSnapshotItem(id: "s1", title: "WeChat.ipa", kind: "download",
-                         phase: "下载中", progress: 0.42, status: "running",
+                         phase: "Downloading", progress: 0.42, status: "running",
                          updatedAt: Date()),
         TaskSnapshotItem(id: "s2", title: "TikTok.ipa", kind: "sign",
-                         phase: "签名中", progress: 0.74, status: "running",
+                         phase: "Signing", progress: 0.74, status: "running",
                          updatedAt: Date())
     ]
 }
@@ -85,7 +85,7 @@ private struct TaskStatsView: View {
             }
             .gaugeStyle(.accessoryCircular)
         case .accessoryInline:
-            Label("\(running) 个任务运行中", systemImage: "bolt.horizontal.fill")
+            Label("\(running) tasks running", systemImage: "bolt.horizontal.fill")
         default:
             regularBody
         }
@@ -96,7 +96,7 @@ private struct TaskStatsView: View {
             HStack(spacing: 5) {
                 Image(systemName: "bolt.horizontal.circle.fill")
                     .font(.system(size: 13, weight: .semibold))
-                Text("任务")
+                Text("Tasks")
                     .font(.system(size: 12, weight: .semibold))
             }
             .foregroundStyle(.secondary)
@@ -105,7 +105,7 @@ private struct TaskStatsView: View {
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .monospacedDigit()
 
-            Text("运行中")
+            Text("Running")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
 
@@ -157,11 +157,11 @@ private struct RecentTasksView: View {
                         .font(.caption2)
                         .monospacedDigit()
                 }
-                Text("\(items.filter(\.isRunning).count) 个运行中")
+                Text("\(items.filter(\.isRunning).count) running")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             } else {
-                Text("暂无任务")
+                Text("No tasks")
                     .font(.caption)
             }
         }
@@ -172,7 +172,7 @@ private struct RecentTasksView: View {
             HStack(spacing: 5) {
                 Image(systemName: "clock.arrow.circlepath")
                     .font(.system(size: 12, weight: .semibold))
-                Text("最近任务")
+                Text("Recent Tasks")
                     .font(.system(size: 12, weight: .semibold))
                 Spacer()
             }
@@ -180,7 +180,7 @@ private struct RecentTasksView: View {
 
             if items.isEmpty {
                 Spacer()
-                Text("暂无任务")
+                Text("No tasks")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
@@ -226,7 +226,7 @@ private struct TaskBoardView: View {
             HStack(spacing: 5) {
                 Image(systemName: "square.stack.3d.up.fill")
                     .font(.system(size: 12, weight: .semibold))
-                Text("任务面板")
+                Text("Task Board")
                     .font(.system(size: 12, weight: .semibold))
                 Spacer()
                 Text("\(running.count)")
@@ -240,7 +240,7 @@ private struct TaskBoardView: View {
                 VStack(spacing: 6) {
                     Image(systemName: "checkmark.circle")
                         .font(.system(size: 24))
-                    Text("没有运行中的任务")
+                    Text("No running tasks")
                         .font(.system(size: 12))
                 }
                 .foregroundStyle(.secondary)
@@ -315,8 +315,8 @@ struct StorageWidget: Widget {
             StorageView(entry: entry)
                 .modifier(WidgetSurface())
         }
-        .configurationDisplayName("存储空间")
-        .description("设备剩余空间与占用比例")
+        .configurationDisplayName("Storage")
+        .description("Free space and usage on this device")
         .supportedFamilies([.systemSmall, .accessoryCircular])
     }
 }
@@ -372,7 +372,7 @@ private struct StorageView: View {
                 HStack(spacing: 5) {
                     Image(systemName: "internaldrive.fill")
                         .font(.system(size: 12, weight: .semibold))
-                    Text("存储")
+                    Text("Storage")
                         .font(.system(size: 12, weight: .semibold))
                 }
                 .foregroundStyle(.secondary)
@@ -382,7 +382,7 @@ private struct StorageView: View {
                     .minimumScaleFactor(0.7)
                     .lineLimit(1)
 
-                Text("可用")
+                Text("Available")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
 
@@ -392,7 +392,7 @@ private struct StorageView: View {
                     .progressViewStyle(.linear)
                     .tint(used > 0.9 ? .red : .blue)
 
-                Text("已用 \(Int(used * 100))%")
+                Text("Used \(Int(used * 100))%")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }

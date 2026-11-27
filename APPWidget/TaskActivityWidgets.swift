@@ -35,7 +35,7 @@ struct DecryptActivityWidget: Widget {
                             .font(.title3.weight(.semibold))
                             .monospacedDigit()
                             .foregroundStyle(decryptTint(status: state.status))
-                        Text("项")
+                        Text("Items")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -148,8 +148,8 @@ struct QuickLaunchWidget: Widget {
             QuickLaunchView()
                 .modifier(WidgetSurface())
         }
-        .configurationDisplayName("快捷启动")
-        .description("一键进入下载、签名、解密、搜索")
+        .configurationDisplayName("Quick Launch")
+        .description("Jump into Downloads, Sign, Decrypt, or Search")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
@@ -176,10 +176,10 @@ private struct QuickLaunchView: View {
     @Environment(\.widgetFamily) private var family
 
     private let actions: [(String, String, String)] = [
-        ("arrow.down.to.line", "下载", "downloads"),
-        ("signature", "签名", "sign"),
-        ("lock.open", "解密", "decrypt"),
-        ("magnifyingglass", "搜索", "search")
+        ("arrow.down.to.line", "Downloads", "downloads"),
+        ("signature", "Sign", "sign"),
+        ("lock.open", "Decrypt", "decrypt"),
+        ("magnifyingglass", "Search", "search")
     ]
 
     var body: some View {
