@@ -5,6 +5,7 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER).task.*</string>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER).userTask.*</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>zh-Hans</string>
@@ -103,7 +104,11 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Used to unlock hidden signing records and the signing library.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Local network access is required to start a temporary server for installing downloaded apps.</string>
+	<string>Local network access is required for native device pairing and for the temporary OTA install server.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_remotepairing-pairable-host._tcp</string>
+	</array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>

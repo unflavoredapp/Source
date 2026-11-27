@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      adhoc_entitlements:
+        description: "Ad-hoc sign with entitlements so re-signers keep packet-tunnel-provider (native install)"
+        type: boolean
+        required: false
+        default: true
 
 concurrency:
   group: build-${{ github.ref }}
@@ -13,8 +19,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-latest
-    timeout-minutes: 30
+    runs-on: macos-15
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v7
 
@@ -23,18 +29,69 @@ jobs:
           LATEST=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
           sudo xcode-select -s "$LATEST"
           xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
 
-      - name: Cache SwiftPM dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Native build cache (idevice Rust library)
         uses: actions/cache@v4
         with:
-          path: .spm
-          key: spm-${{ runner.os }}-${{ hashFiles('APP.xcodeproj/project.pbxproj', 'APP.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
-          restore-keys: spm-${{ runner.os }}-
+          path: |
+            .build/device-native
+            IDeviceKit/.build/IDevice.xcframework
+          key: idevice-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Native/Device/source.json', 'Native/Device/ksign_pairing.rs', '.github/scripts/build_device_native.py') }}
+
+      - name: Cargo registry cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Native/Device/source.json', 'Native/Device/ksign_pairing.rs') }}
+          restore-keys: |
+            cargo-v1-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Xcode DerivedData / SwiftPM cache
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          key: xcode-dd-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('APP.xcodeproj/project.pbxproj', 'APP.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'build.sh') }}
+          restore-keys: |
+            xcode-dd-v1-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Compile unsigned IPA
-        run: make
         env:
-          CI: true
+          APP_NAME: APP
+          SCHEME: APP
+          CONFIG: Release
+          ADHOC_ENTITLEMENTS: ${{ inputs.adhoc_entitlements == false && '0' || '1' }}
+          CLEAN_DERIVED: "0"
+          CI: "true"
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
+
+      - name: Verify IPA (tunnel + unsigned)
+        run: |
+          set -euo pipefail
+          IPA=APP.ipa
+          test -f "$IPA"
+          rm -rf /tmp/app-ipa-check
+          mkdir -p /tmp/app-ipa-check
+          unzip -q "$IPA" -d /tmp/app-ipa-check
+          APP_BUNDLE=$(find /tmp/app-ipa-check/Payload -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP_BUNDLE"
+          test -f "$APP_BUNDLE/Info.plist"
+          test -d "$APP_BUNDLE/PlugIns/APPDeviceTunnel.appex"
+          if [ -f "$APP_BUNDLE/embedded.mobileprovision" ]; then
+            echo "ERROR: embedded.mobileprovision exists in unsigned IPA"
+            exit 1
+          fi
+          echo "Verified: $IPA embeds APPDeviceTunnel.appex"
+          unzip -l "$IPA" | sed -n '1,80p'
 
       - name: Upload IPA
         uses: actions/upload-artifact@v7
@@ -45,7 +102,6 @@ jobs:
 
       # Phone-first delivery: drop APP.ipa into Telegram when secrets are set.
       # Do not reference secrets in `if:` — that aborts the whole workflow with 0 jobs.
-      # Repo secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
       - name: Send IPA to Telegram
         if: success() && github.event_name != 'pull_request'
         continue-on-error: true
@@ -70,11 +126,13 @@ jobs:
           echo "Sent APP.ipa to Telegram (${SIZE})"
 
       - name: Upload build log
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: build-log
-          path: /tmp/app_build.log
+          path: |
+            build/xcodebuild.log
+            /tmp/app_build.log
           if-no-files-found: ignore
           retention-days: 7
 

@@ -1,8 +1,8 @@
 # Native install (VPN + idevice)
 
-Source already installs signed IPAs over **OTA** (`itms-services` via `SigningOTAInstaller` / `LocalInstallServer`).
+Source installs signed IPAs over **OTA** by default (`itms-services` via `SigningOTAInstaller` / `LocalInstallServer`).
 
-**Native install** delivers the IPA straight to this device through a local packet-tunnel VPN and idevice pairing — the same approach as AppAssassin ([`unflavoredapp/Random`](https://github.com/unflavoredapp/Random)).
+**Native install** delivers the IPA straight to this device through a local packet-tunnel VPN and idevice pairing — the same approach as AppAssassin / TetherLess ([`unflavoredapp/Random`](https://github.com/unflavoredapp/Random)).
 
 ## Status
 
@@ -10,32 +10,31 @@ Source already installs signed IPAs over **OTA** (`itms-services` via `SigningOT
 | --- | --- |
 | Settings › Install Method (OTA / Native) | Done |
 | `SigningInstaller` routes to Native when selected (falls back to OTA if not ready) | Done |
-| Pairing Keychain store | Done |
-| Local VPN controller | Done |
-| `APPDeviceTunnel` packet-tunnel sources | Done |
-| `APPDeviceTunnel` Xcode target + embed in APP | Done |
-| IDeviceKit fetch / patch / build scripts | Done under `.github/scripts/` |
-| `Native/Device` idevice overlays | Vendored from Random |
-| Link IDeviceKit / IDeviceSwift into `APP.xcodeproj` | **Next** |
-| On-device pairing UX (iOS 27+) / Manual pairing file import | **Next** |
-| Full `DeviceInstallationManager` install/uninstall | **Next** |
+| Pairing Keychain store + Manual `pairingFile.plist` import | Done |
+| Built-in / Manual connection mode | Done |
+| `LocalDeviceVPN` + `APPDeviceTunnel` appex (embedded) | Done |
+| IDeviceKit fetch / integrate / `build_device_native` | Done (`make native-device`) |
+| `IDevice` + `IDeviceSwift` linked in `APP.xcodeproj` | Done |
+| `DeviceInstallationManager` + real `NativeInstaller` | Done |
+| On-device pairing (iOS 27+ via `DevicePairingService`) | Done |
 
-The tunnel appex now embeds with APP. Native install still needs IDeviceKit linked before `NativeInstaller.isStackReady` becomes true; until then installs fall back to OTA.
+## Build
 
-## What to wire next (from Random)
+Same flow as [`unflavoredapp/Random`](https://github.com/unflavoredapp/Random) `build.sh`:
 
-1. Run `python3 .github/scripts/fetch_devicekit.py` then patch/integrate/build (`build_device_native.py`) to produce `IDeviceKit` + `IDevice.xcframework`.
-2. Add an `APPDeviceTunnel` Network Extension target (sources in `APPDeviceTunnel/`, entitlements `APPDeviceTunnel.entitlements`).
-3. Embed the appex in the APP target; link local packages `IDeviceSwift` + `IDevice`.
-4. Port `DeviceInstallationManager` / `NativeInstaller` install path from Random’s `Sources/Device/*` (adapt AirShare types to Source’s `SigningIPAInfo`).
-5. Sign app + appex with a profile that allows **Network Extensions → packet-tunnel-provider**.
+```bash
+./build.sh          # fetch/integrate IDeviceKit → rust XCFramework → xcodebuild archive
+                    # → ad-hoc entitlement stamp on APP + APPDeviceTunnel → APP.ipa
+make                # wraps ./build.sh
+SKIP_NATIVE=1 ./build.sh          # skip kit rebuild (needs a prior IDeviceKit)
+ADHOC_ENTITLEMENTS=0 ./build.sh   # omit ad-hoc codesign (re-signers won't see NE entitlement)
+```
+
+CI (`.github/workflows/ios.yml`) mirrors Random: macos-15, idevice + cargo + DerivedData caches, `./build.sh`, verifies `APPDeviceTunnel.appex` and no `embedded.mobileprovision`.
 
 ## Requirements (device)
 
 - App + appex signed with the same team and matching bundle-id prefix.
+- Provisioning profile allows **Network Extensions → packet-tunnel-provider**.
 - Built-in pairing: iOS 27+, Developer Mode, Local Network permission, one-time PIN.
-- Older iOS: Manual Setup with an imported `pairingFile.plist`.
-
-## Build notes
-
-Unsigned `make` / CI IPA builds stay OTA-only until the extension target is added. Ad-hoc signing can preserve the NE entitlement request for later re-sign (same pattern as Random’s `build-unsigned-ipa.yml`).
+- Older iOS: Manual Setup — import `pairingFile.plist` in Settings › Install Method.

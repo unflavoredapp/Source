@@ -1,0 +1,18 @@
+# Xcode / SwiftPM
+build/
+.spm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Native idevice kit (fetched + built on demand)
+IDeviceKit/
+.build/
+
+# IPA output
+APP.ipa
+*.ipa
+
+# Local tooling
+.DS_Store
+/tmp/
