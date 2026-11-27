@@ -10,5 +10,10 @@
 		<string>group.b26d9af3ffccda33.4</string>
 		<string>group.b26d9af3ffccda33.5</string>
 	</array>
+	<!-- Required once APPDeviceTunnel is embedded and signed with a matching profile. -->
+	<key>com.apple.developer.networking.networkextension</key>
+	<array>
+		<string>packet-tunnel-provider</string>
+	</array>
 </dict>
 </plist>

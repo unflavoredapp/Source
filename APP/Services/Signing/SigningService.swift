@@ -966,6 +966,20 @@ enum SigningInstaller {
         onPhase: (@MainActor (SigningInstallPhase) -> Void)? = nil
     ) async throws {
         let info = try SigningIPAInfo.read(url: ipaURL)
+        if NativeInstaller.isSelected {
+            do {
+                try await NativeInstaller.install(
+                    ipaURL: ipaURL,
+                    bundleID: info.bundleIdentifier,
+                    name: info.displayName,
+                    version: info.version,
+                    onPhase: onPhase
+                )
+                return
+            } catch {
+                print("[SignInstall] Native install unavailable, falling back to OTA: \(error.localizedDescription)")
+            }
+        }
         do {
             try await SigningOTAInstaller.install(ipaURL: ipaURL, info: info, onPhase: onPhase)
         } catch {
