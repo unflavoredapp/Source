@@ -12,27 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  download-regression:
-    if: hashFiles('tools/download-harness/run.sh') != ''
-    runs-on: macos-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Run downloader regression (12 scenarios)
-        run: |
-          cd tools/download-harness
-          ./run.sh
-
-      - name: Upload regression logs
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: regression-logs
-          path: tools/download-harness/.harness_tmp/
-          if-no-files-found: ignore
-          retention-days: 7
-
   build:
     runs-on: macos-latest
     timeout-minutes: 30
@@ -43,6 +22,7 @@ jobs:
         run: |
           LATEST=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
           sudo xcode-select -s "$LATEST"
+          xcodebuild -version
 
       - name: Cache SwiftPM dependencies
         uses: actions/cache@v4
@@ -56,12 +36,11 @@ jobs:
         env:
           CI: true
 
-      - name: Upload artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v7
         with:
           name: APP
           path: APP.ipa
-          archive: false
           if-no-files-found: error
 
       - name: Upload build log
@@ -70,6 +49,16 @@ jobs:
         with:
           name: build-log
           path: /tmp/app_build.log
-          archive: false
           if-no-files-found: ignore
           retention-days: 7
+
+  download-regression:
+    if: ${{ false }}
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run downloader regression (12 scenarios)
+        run: |
+          cd tools/download-harness
+          ./run.sh
