@@ -85,6 +85,10 @@ class GlobalInstallationManager: ObservableObject, @unchecked Sendable {
     }
 
     func failInstallation(for requestId: UUID, reason: String) {
+        if currentInstallingRequestId == requestId || currentInstallingRequestId == nil {
+            isAnyInstalling = false
+            currentInstallingRequestId = nil
+        }
         InstallActivityManager.shared.fail(
             key: IslandTaskKey.install(requestId),
             reason: reason
@@ -667,7 +671,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
                     let installSuccess = false;
 
                     window.onload = function() {
-                        console.log('Page loaded, starting automatic install...');
+                        console.log('页面加载完成，开始自动安装...');
                         initializeInstallation();
                     };
 
@@ -685,7 +689,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
 
                     function autoInstall() {
                         if (isInstalling || installSuccess) {
-                            console.log('Install already in progress or succeeded, skipping duplicate call');
+                            console.log('安装正在进行中或已成功，跳过重复调用');
                             return;
                         }
 
@@ -695,14 +699,14 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
                         isInstalling = true;
                         status.innerHTML = '<span class="loading"></span>\("install_starting".localized)';
 
-                        console.log('Starting install attempt');
+                        console.log('开始安装尝试');
 
                         try {
                             window.location.href = itmsURL;
                             status.innerHTML = '<span class="success">\("install_auto_started".localized)</span>';
                             installSuccess = true;
 
-                            console.log('Installer launched successfully');
+                            console.log('安装程序启动成功');
 
                             setTimeout(function() {
                                 if (installSuccess) {
@@ -712,7 +716,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
                             }, 3000);
 
                         } catch (error) {
-                            console.error('Install failed:', error);
+                            console.error('安装失败:', error);
                             status.innerHTML = '<span class="error">❌ \("install_start_failed".localized)</span>';
                             manualInstall.style.display = 'block';
                             isInstalling = false;
@@ -721,7 +725,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
 
                     function manualInstall() {
                         if (isInstalling || installSuccess) {
-                            console.log('Install already in progress or succeeded, ignoring manual install');
+                            console.log('安装正在进行中或已成功，忽略手动安装');
                             return;
                         }
 
@@ -875,6 +879,7 @@ class SimpleHTTPServer: NSObject, @unchecked Sendable {
 enum DownloadSheet: Identifiable {
     case details(DownloadRequest)
     case decryptedFiles
+    case decryptTool
 
     var id: String {
         switch self {
@@ -882,6 +887,8 @@ enum DownloadSheet: Identifiable {
             return "details-\(request.id.uuidString)"
         case .decryptedFiles:
             return "decrypted-files"
+        case .decryptTool:
+            return "decrypt-tool"
         }
     }
 }
@@ -892,6 +899,7 @@ struct DownloadView: SwiftUI.View {
     @State private var showSafariWebView = false
     @State private var safariURL: URL? = nil
     @State private var showThemeSelector = false
+    @State private var showFloatingDecryptMenu = false
     @StateObject private var scrollTracker = ScrollVelocityTracker()
     @State private var decryptedCount = 0
     @State private var activeSheet: DownloadSheet?
@@ -924,6 +932,7 @@ struct DownloadView: SwiftUI.View {
                 Button(action: {
                     let impactMed = UIImpactFeedbackGenerator(style: .light)
                     impactMed.impactOccurred()
+                    SoundEffects.play(.tick)
                     withAnimation(.easeInOut(duration: 0.3)) {
                         showThemeSelector.toggle()
                     }
@@ -952,7 +961,18 @@ struct DownloadView: SwiftUI.View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DecryptedFilesChanged"))) { _ in
             refreshDecryptedCount()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenDecryptTool"))) { _ in
+            activeSheet = .decryptTool
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CloseDecryptSheet"))) { _ in
+            activeSheet = nil
+        }
         .environmentObject(GlobalInstallationManager.shared)
+        .overlay {
+            if showFloatingDecryptMenu {
+                decryptFullScreenMenu
+            }
+        }
         .overlay(alignment: .bottomTrailing) {
             decryptedFilesButton
         }
@@ -994,6 +1014,19 @@ struct DownloadView: SwiftUI.View {
         case .decryptedFiles:
             DecryptedFilesView()
                 .environmentObject(themeManager)
+        case .decryptTool:
+            NavigationStack {
+                DecryptView()
+                    .environmentObject(themeManager)
+                    .environmentObject(tabBarStyleManager)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("close".localized) {
+                                activeSheet = nil
+                            }
+                        }
+                    }
+            }
         }
     }
 
@@ -1082,15 +1115,209 @@ struct DownloadView: SwiftUI.View {
         #endif
     }
 
+    private var decryptFullScreenMenu: some SwiftUI.View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
+                        showFloatingDecryptMenu = false
+                    }
+                }
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                HStack(spacing: Spacing.xl) {
+                    decryptOptionCard(
+                        title: "decrypted_files_title".localized,
+                        badge: decryptedCount,
+                        preview: { decryptedFilesPreview },
+                        action: {
+                            showFloatingDecryptMenu = false
+                            activeSheet = .decryptedFiles
+                        }
+                    )
+
+                    decryptOptionCard(
+                        title: "tab_decrypt".localized,
+                        badge: 0,
+                        preview: { decryptToolPreview },
+                        action: {
+                            showFloatingDecryptMenu = false
+                            activeSheet = .decryptTool
+                        }
+                    )
+                }
+                .padding(.horizontal, Spacing.lg)
+                .padding(.bottom, 80)
+            }
+        }
+        .transition(.opacity)
+    }
+
+    private func decryptOptionCard<Preview: SwiftUI.View>(title: String, badge: Int,
+                                                          @ViewBuilder preview: () -> Preview,
+                                                          action: @escaping () -> Void) -> some SwiftUI.View {
+        Button {
+            SoundEffects.play(.tap)
+            action()
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 10) {
+                    preview()
+                        .frame(width: 88, height: 60)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            themeManager.accentColor.opacity(0.16),
+                                            themeManager.accentColor.opacity(0.05)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(themeManager.accentColor.opacity(0.22), lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                    Text(title)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(themeManager.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 14)
+                .frame(width: 112)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [themeManager.surfacePrimary, themeManager.surfaceSecondary],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    themeManager.accentColor,
+                                    themeManager.accentColor.opacity(0.15)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2
+                        )
+                )
+                .shadow(color: themeManager.accentColor.opacity(0.35), radius: 14, x: 0, y: 8)
+
+                if badge > 0 {
+                    Text(badge > 99 ? "99+" : "\(badge)")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 5)
+                        .frame(minWidth: 20, minHeight: 20)
+                        .background(
+                            Capsule()
+                                .fill(Color.red)
+                                .overlay(Capsule().strokeBorder(Color.white, lineWidth: 1.5))
+                        )
+                        .offset(x: 6, y: -6)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var decryptedFilesPreview: some SwiftUI.View {
+        ZStack(alignment: .bottomTrailing) {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(0..<3, id: \.self) { index in
+                    HStack(spacing: 4) {
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .fill(themeManager.accentColor.opacity(0.55))
+                            .frame(width: 11, height: 11)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Capsule()
+                                .fill(Color.primary.opacity(0.30))
+                                .frame(width: 34 - CGFloat(index) * 7, height: 3)
+                            Capsule()
+                                .fill(Color.primary.opacity(0.14))
+                                .frame(width: 24 - CGFloat(index) * 5, height: 2)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                }
+            }
+            .padding(.leading, 8)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Color.green)
+                .background(Circle().fill(Color(.systemBackground)).frame(width: 14, height: 14))
+                .padding(.trailing, 6)
+                .padding(.bottom, 5)
+        }
+    }
+
+    private var decryptToolPreview: some SwiftUI.View {
+        ZStack(alignment: .trailing) {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(0..<4, id: \.self) { index in
+                    Capsule()
+                        .fill(themeManager.accentColor.opacity(index == 3 ? 0.16 : 0.30))
+                        .frame(width: index == 3 ? 26 : 40 - CGFloat(index) * 5, height: 3)
+                }
+            }
+            .padding(.leading, 9)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Image(systemName: "lock.open.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+                .background(
+                    Circle().fill(
+                        LinearGradient(
+                            colors: [
+                                themeManager.accentColor,
+                                themeManager.accentColor.opacity(0.65)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                )
+                .shadow(color: themeManager.accentColor.opacity(0.45), radius: 6, x: 0, y: 2)
+                .padding(.trailing, 7)
+        }
+    }
+
     private var decryptedFilesButton: some SwiftUI.View {
         Button {
-            activeSheet = .decryptedFiles
+            SoundEffects.play(.tap)
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
+                showFloatingDecryptMenu.toggle()
+            }
         } label: {
             ZStack(alignment: .topTrailing) {
                 Image("XcodeIcon")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 52, height: 52)
+                    .frame(width: 54, height: 54)
                     .shadow(color: Color.black.opacity(0.28), radius: 10, y: 4)
 
                 if decryptedCount > 0 {
@@ -1098,24 +1325,19 @@ struct DownloadView: SwiftUI.View {
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 4)
-                        .frame(minWidth: 18, minHeight: 18)
+                        .frame(minWidth: 19, minHeight: 19)
                         .background(
-                            Circle()
+                            Capsule()
                                 .fill(Color.red)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(Color.white, lineWidth: 1.5)
-                                )
-                                .shadow(color: Color.black.opacity(0.2), radius: 3, y: 1)
+                                .overlay(Capsule().strokeBorder(Color.white, lineWidth: 1.5))
                         )
-                        .offset(x: 4, y: -4)
-                        .transition(.scale(scale: 0.4).combined(with: .opacity))
+                        .offset(x: 5, y: -5)
                 }
             }
         }
         .buttonStyle(.plain)
         .padding(.trailing, 18)
-        .padding(.bottom, tabBarStyleManager.currentStyle == .floatingCard ? 96 : 24)
+        .padding(.bottom, tabBarStyleManager.currentStyle == .floatingCard ? 112 : 24)
     }
 
     private func refreshDecryptedCount() {
@@ -1213,57 +1435,112 @@ struct DownloadView: SwiftUI.View {
     }
 
     private var emptyStateView: some SwiftUI.View {
-        VStack(spacing: 32) {
+        VStack(spacing: 22) {
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [themeManager.accentColor.opacity(0.16), .clear],
+                            center: .center,
+                            startRadius: 8,
+                            endRadius: 68
+                        )
+                    )
+                    .frame(width: 136, height: 136)
 
-            Image("AppLogo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 120, height: 120)
-                .cornerRadius(24)
-                .scaleEffect(animateCards ? 1.1 : 1)
-                .opacity(animateCards ? 1 : 0.7)
-                .animation(
-                    Animation.easeInOut(duration: 2).repeatForever(autoreverses: true),
-                    value: animateCards
-                )
+                Circle()
+                    .strokeBorder(
+                        AngularGradient(
+                            colors: [
+                                themeManager.accentColor.opacity(0),
+                                themeManager.accentColor.opacity(0.55),
+                                themeManager.accentColor.opacity(0)
+                            ],
+                            center: .center
+                        ),
+                        lineWidth: 1.2
+                    )
+                    .frame(width: 132, height: 132)
+                    .rotationEffect(.degrees(animateCards ? 360 : 0))
+                    .animation(
+                        .linear(duration: 9).repeatForever(autoreverses: false),
+                        value: animateCards
+                    )
 
-            Button(action: {
+                Circle()
+                    .strokeBorder(themeManager.accentColor.opacity(0.10), lineWidth: 0.8)
+                    .frame(width: 104, height: 104)
+
+                Image(systemName: "arrow.down.app.fill")
+                    .font(.system(size: 44, weight: .regular))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.65)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .scaleEffect(animateCards ? 1.04 : 0.96)
+                    .animation(
+                        .easeInOut(duration: 2.4).repeatForever(autoreverses: true),
+                        value: animateCards
+                    )
+            }
+
+            VStack(spacing: 6) {
+                Text("no_downloads".localized)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.primary)
+
+                Text("no_downloads_hint".localized)
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 40)
+            }
+
+            Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                guard let url = URL(string: "https://github.com/pxx917144686"),
-                    UIApplication.shared.canOpenURL(url) else {
-                    return
+                TabRouter.shared.select(.search)
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("no_downloads_action".localized)
+                        .font(.system(size: 15, weight: .semibold))
                 }
-                UIApplication.shared.open(url)
-            }) {
-                HStack(spacing: 16) {
-                    Text("view_source_code".localized)
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .foregroundColor(.white)
+                .padding(.horizontal, 22)
+                .padding(.vertical, 11)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    Capsule(style: .continuous)
                         .fill(
                             LinearGradient(
-                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.75)],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.78)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
                         )
                 )
-                .shadow(color: themeManager.accentColor.opacity(colorScheme == .dark ? 0.5 : 0.3), radius: colorScheme == .dark ? 12 : 8, x: 0, y: 4)
+                .shadow(color: themeManager.accentColor.opacity(colorScheme == .dark ? 0.45 : 0.28), radius: 14, x: 0, y: 6)
             }
             .buttonStyle(ScaleButtonStyle())
 
-            .frame(maxWidth: 200)
-            .padding(.horizontal, 8)
-
-            VStack(spacing: 8) {
-                Text("no_downloads".localized)
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundColor(.primary)
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                guard let url = URL(string: "https://github.com/pxx917144686"),
+                      UIApplication.shared.canOpenURL(url) else {
+                    return
+                }
+                SoundEffects.play(.tap)
+                UIApplication.shared.open(url)
+            } label: {
+                Text("view_source_code".localized)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.secondary)
             }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 32)
@@ -1312,7 +1589,6 @@ struct DownloadScrollOffsetPreferenceKey: PreferenceKey {
     }
 }
 
-
 struct DownloadCardView: SwiftUI.View {
     @ObservedObject var request: DownloadRequest
     @SwiftUI.Environment(\.colorScheme) private var colorScheme
@@ -1333,6 +1609,7 @@ struct DownloadCardView: SwiftUI.View {
     @State private var fileSizeText: String?
     @State private var decryptOutcome: DecryptConsoleOutcome = .idle
     @State private var isConsoleCollapsed = false
+    @State private var showConnectionsSheet = false
     @StateObject private var decryptLog = DecryptLog()
 
     private var progress: Double {
@@ -1356,7 +1633,7 @@ struct DownloadCardView: SwiftUI.View {
             topSection
 
             if shouldShowProgress {
-                WindowsTransferProgressView(
+                KLineDownloadProgressView(
                     progress: progress,
                     status: status,
                     error: request.runtime.error,
@@ -1365,8 +1642,10 @@ struct DownloadCardView: SwiftUI.View {
                     completedBytes: request.runtime.completedBytes,
                     totalBytes: request.runtime.totalBytes,
                     remainingTime: request.runtime.remainingTime,
-                    isPreview: isPreview
+                    samples: request.runtime.speedSamples
                 )
+
+                connectionRow
             }
 
             if status == DownloadStatus.completed {
@@ -1437,14 +1716,16 @@ struct DownloadCardView: SwiftUI.View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(.ultraThinMaterial)
-                .shadow(
-                    color: colorScheme == .dark ? Color.black.opacity(0.4) : Color.black.opacity(0.08),
-                    radius: colorScheme == .dark ? 10 : 6,
-                    x: 0,
-                    y: 2
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.primary.opacity(colorScheme == .dark ? 0.05 : 0.03))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(
+                    Color.primary.opacity(colorScheme == .dark ? 0.07 : 0.05),
+                    lineWidth: 0.5
                 )
+                .allowsHitTesting(false)
         )
         .onAppear {
             loadExistingDecrypted()
@@ -1459,6 +1740,14 @@ struct DownloadCardView: SwiftUI.View {
         }
         .onDisappear {
             expandedRequestIDs.remove(request.id)
+        }
+        .sheet(isPresented: $showConnectionsSheet) {
+            connectionSheet
+        }
+        .onChange(of: showConnectionsSheet) { _, presented in
+            if !presented {
+                UnifiedDownloadManager.shared.saveDownloadTasks()
+            }
         }
         .id(request.id)
     }
@@ -1525,6 +1814,116 @@ struct DownloadCardView: SwiftUI.View {
         request.runtime.progressValue >= 0
     }
 
+    private var connectionEditable: Bool {
+        switch request.runtime.status {
+        case .waiting, .failed, .cancelled:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private var connectionLimit: Int {
+        DownloadConnectionSettings.clamp(request.maxConnections)
+    }
+
+    private var connectionDisplay: String {
+        let active = request.runtime.activeConnections
+        if status == .downloading, active > 0 {
+            return "\(active)/\(connectionLimit)"
+        }
+        return "\(connectionLimit)"
+    }
+
+    @ViewBuilder
+    private var connectionRow: some SwiftUI.View {
+        if request.runtime.status != .completed {
+            HStack(spacing: 6) {
+                Image(systemName: "bolt.horizontal.circle.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(themeManager.accentColor.opacity(0.85))
+                Text("download_connections".localized)
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 4)
+                if connectionEditable {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        SoundEffects.play(.tap)
+                        showConnectionsSheet = true
+                    } label: {
+                        Text(connectionDisplay)
+                            .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(themeManager.accentColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule().fill(themeManager.accentColor.opacity(0.15))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text(connectionDisplay)
+                        .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(status == .downloading ? themeManager.accentColor : .secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule().fill(
+                                status == .downloading
+                                    ? themeManager.accentColor.opacity(0.15)
+                                    : Color.primary.opacity(0.06)
+                            )
+                        )
+                }
+            }
+        }
+    }
+
+    private var connectionSheet: some SwiftUI.View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 10) {
+                    Image(systemName: "bolt.horizontal.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(themeManager.accentColor))
+
+                    Text("download_connections".localized)
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    Text("\(connectionLimit)")
+                        .font(.system(size: 22, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(themeManager.accentColor)
+                }
+
+                ConnectionLimitControl(
+                    value: $request.maxConnections,
+                    accent: themeManager.accentColor,
+                    totalBytes: request.runtime.totalBytes
+                )
+
+                Spacer(minLength: 0)
+            }
+            .padding(20)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("done".localized) {
+                        UnifiedDownloadManager.shared.saveDownloadTasks()
+                        showConnectionsSheet = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.height(320)])
+        .presentationDragIndicator(.visible)
+    }
+
     private var topSection: some SwiftUI.View {
         HStack(alignment: .top, spacing: 10) {
             appIconView
@@ -1538,9 +1937,26 @@ struct DownloadCardView: SwiftUI.View {
         }
     }
 
+    private var resolvedIconURL: String? {
+        let appID = request.identifier > 0 ? String(request.identifier) : nil
+        let storedURL = request.package.iconURL.flatMap { URL(string: $0) }
+        return TFIcon.resolvedURL(storedURL: storedURL, appID: appID)?.absoluteString
+    }
+
     private var appIconView: some SwiftUI.View {
         Group {
-            if let iconURL = request.package.iconURL, let url = URL(string: iconURL) {
+            if let iconURL = resolvedIconURL, let url = URL(string: iconURL), url.isFileURL,
+               let image = UIImage(contentsOfFile: url.path) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 52, height: 52)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+                    )
+            } else if let iconURL = resolvedIconURL, let url = URL(string: iconURL) {
                 ResourceImage(
                     url: url,
                     pointSize: CGSize(width: 52, height: 52),
@@ -1680,6 +2096,25 @@ struct DownloadCardView: SwiftUI.View {
         }
 
         let task = Task {
+            if request.isTestFlight {
+                let appID = request.identifier > 0 ? String(request.identifier) : ""
+                if await TestFlightDownloadManager.shared.ensureSinf(ipaPath: path, appID: appID) != true {
+                    await MainActor.run {
+                        if backgroundTask != UIBackgroundTaskIdentifier.invalid {
+                            UIApplication.shared.endBackgroundTask(backgroundTask)
+                        }
+                        decryptMessage = "dc_err_tf_no_sinf".localized
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
+                            isDecrypting = false
+                            decryptOutcome = .failed
+                        }
+                        log.append("sinf  missing", level: .failure)
+                        log.finish()
+                        DecryptCoordinator.shared.finish(requestID: request.id)
+                    }
+                    return
+                }
+            }
             let record = await DecryptService.decryptFull(ipaPath: path, cancelToken: token) { event in
                 log.consume(event)
             }
@@ -1808,7 +2243,9 @@ struct DownloadCardView: SwiftUI.View {
             .accessibilityLabel("retry".localized)
 
         case .completed:
-            if request.localFilePath != nil {
+            if request.isTestFlight {
+                EmptyView()
+            } else if request.localFilePath != nil {
                 Button {
                     guard !isInstalling else { return }
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -1963,6 +2400,23 @@ struct DownloadCardView: SwiftUI.View {
 
         Task {
             do {
+                let ipaURL = URL(fileURLWithPath: localFilePath)
+                let hasSinf = TFSINF.members(ipa: ipaURL).contains {
+                    $0.contains("/SC_Info/") && $0.hasSuffix(".sinf")
+                }
+                if !hasSinf {
+                    var skipped: [String] = []
+                    if TFSINF.encryptedMachOCount(ipa: ipaURL, skipped: &skipped) > 0 {
+                        let appID = request.identifier > 0 ? String(request.identifier) : ""
+                        guard await TestFlightDownloadManager.shared.ensureSinf(
+                            ipaPath: localFilePath,
+                            appID: appID
+                        ) == true else {
+                            throw PackageInstallationError.installationFailed("dc_err_tf_no_sinf".localized)
+                        }
+                    }
+                }
+
                 let ipaMetadata = readIPAInfo(at: localFilePath)
                 var bundleIdentifier = ipaMetadata?.bundleIdentifier ?? request.bundleIdentifier
                 var version = ipaMetadata?.version ?? request.version

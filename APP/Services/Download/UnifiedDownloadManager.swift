@@ -48,10 +48,10 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
     private var reservedDestinationPaths: Set<String> = []
     private var persistSequence = 0
     private var requestDestinationPaths: [UUID: String] = [:]
+    private var keepAliveActive = false
+    private var keepAliveRetryAt = Date.distantPast
+    private var isInBackground = false
     private var islandTicker: Timer?
-    private var islandKeepAlive = false
-    private var islandKeepAliveRetryAt = Date.distantPast
-    private var islandBackground = false
 
     private var documentsDirectory: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -108,7 +108,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
             restoreBackgroundDownloadHandlers()
             syncDownloadStatus()
             reconcileIslandActivities()
-            syncIslandLifecycle()
+            syncBackgroundKeepAlive()
         }
 
         NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
@@ -125,23 +125,23 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                 self.syncDownloadStatus()
                 self.saveDownloadTasks()
                 self.reconcileIslandActivities()
-                self.syncIslandLifecycle()
+                self.syncBackgroundKeepAlive()
             }
         }
 
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
-                self.islandBackground = true
-                self.syncIslandLifecycle()
+                self.isInBackground = true
+                self.syncBackgroundKeepAlive()
             }
         }
 
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
-                self.islandBackground = false
-                self.syncIslandLifecycle()
+                self.isInBackground = false
+                self.syncBackgroundKeepAlive()
             }
         }
 
@@ -167,6 +167,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                         remainingTime: downloadProgress.remainingTime
                     )
                     request.runtime.speed = downloadProgress.formattedSpeed
+                    request.runtime.activeConnections = downloadProgress.activeConnections
 
                     switch downloadProgress.status {
                     case .waiting:
@@ -175,6 +176,8 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                         request.runtime.status = DownloadStatus.downloading
                     case .paused:
                         request.runtime.status = DownloadStatus.paused
+                request.runtime.activeConnections = 0
+            request.runtime.activeConnections = 0
                     case .completed:
                         request.runtime.status = DownloadStatus.completed
                     case .failed:
@@ -237,7 +240,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
 
                     self.activeDownloads.remove(request.id)
                     self.processNextInQueue()
-                    self.syncIslandLifecycle()
+                    self.syncBackgroundKeepAlive()
                 }
             }
         )
@@ -260,14 +263,14 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                         remainingTime: downloadProgress.remainingTime
                     )
                     request.runtime.speed = downloadProgress.formattedSpeed
+                    request.runtime.activeConnections = downloadProgress.activeConnections
                     request.runtime.status = .downloading
 
                     if !self.activeDownloads.contains(request.id) {
                         self.activeDownloads.insert(request.id)
                     }
 
-                    self.reportIslandProgress(request)
-                    self.syncIslandLifecycle()
+                    self.syncBackgroundKeepAlive()
 
                     request.objectWillChange.send()
                     request.runtime.objectWillChange.send()
@@ -315,7 +318,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
 
                     self.activeDownloads.remove(request.id)
                     self.processNextInQueue()
-                    self.syncIslandLifecycle()
+                    self.syncBackgroundKeepAlive()
                     self.saveDownloadTasks()
                 }
             }
@@ -330,12 +333,14 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
         iconURL: String? = nil,
         versionId: String? = nil,
         price: Double? = nil,
-        currency: String? = nil
+        currency: String? = nil,
+        isTestFlight: Bool = false
     ) -> UUID {
 
         if let existing = downloadRequests.first(where: {
             $0.bundleIdentifier == bundleIdentifier
                 && $0.version == version
+                && $0.package.isTestFlight == isTestFlight
                 && (bundleIdentifier.isEmpty ? $0.name == name : true)
         }) {
             return existing.id
@@ -348,7 +353,8 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
             identifier: identifier,
             iconURL: iconURL,
             price: price,
-            currency: currency
+            currency: currency,
+            isTestFlight: isTestFlight
         )
 
         let request = DownloadRequest(
@@ -382,7 +388,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
         activeDownloads.remove(request.id)
         completedRequests.remove(request.id)
         waitingDownloads.remove(request.id)
-        syncIslandLifecycle()
+        syncBackgroundKeepAlive()
     }
 
     func startDownload(for request: DownloadRequest) {
@@ -400,7 +406,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
             request.runtime.status = DownloadStatus.waiting
             waitingDownloads.insert(request.id)
             downloadQueue.append(request)
-            syncIslandLifecycle()
+            syncBackgroundKeepAlive()
             return
         }
 
@@ -419,7 +425,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
 
         IslandActivityManager.shared.allowRecreate(key: islandKey(for: request))
         reportIslandProgress(request)
-        syncIslandLifecycle()
+        syncBackgroundKeepAlive()
 
         Task {
             let downloadId = request.id.uuidString
@@ -443,8 +449,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                     request.runtime.error = "session_err_no_account".localized
                     request.runtime.status = DownloadStatus.failed
                     self.activeDownloads.remove(request.id)
-                    self.reportIslandFail(request, cancelled: false)
-                    self.syncIslandLifecycle()
+                    self.syncBackgroundKeepAlive()
                 }
                 self.processNextInQueue()
                 return
@@ -478,8 +483,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                     request.runtime.error = "session_err_expired".localized
                     request.runtime.status = DownloadStatus.failed
                     self.activeDownloads.remove(request.id)
-                    self.reportIslandFail(request, cancelled: false)
-                    self.syncIslandLifecycle()
+                    self.syncBackgroundKeepAlive()
                 }
                 self.processNextInQueue()
                 return
@@ -488,7 +492,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
             if request.runtime.status == DownloadStatus.cancelled || request.runtime.status == DownloadStatus.paused {
                 _ = await MainActor.run {
                     self.activeDownloads.remove(request.id)
-                    self.syncIslandLifecycle()
+                    self.syncBackgroundKeepAlive()
                 }
                 self.processNextInQueue()
                 return
@@ -554,8 +558,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                     request.runtime.error = error.localizedDescription
                     request.runtime.status = DownloadStatus.failed
                     self.activeDownloads.remove(request.id)
-                    self.reportIslandFail(request, cancelled: false)
-                    self.syncIslandLifecycle()
+                    self.syncBackgroundKeepAlive()
                 }
                 self.processNextInQueue()
             }
@@ -594,6 +597,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
             appVersion: request.versionId,
             downloadId: request.id.uuidString,
             prefetchedSongList: prefetchedSongList,
+            maxConnections: request.maxConnections,
             progressHandler: { downloadProgress in
                 Task { @MainActor in
 
@@ -604,6 +608,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                         remainingTime: downloadProgress.remainingTime
                     )
                     request.runtime.speed = downloadProgress.formattedSpeed
+                    request.runtime.activeConnections = downloadProgress.activeConnections
 
                     switch downloadProgress.status {
                     case .waiting:
@@ -612,6 +617,8 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                         request.runtime.status = DownloadStatus.downloading
                     case .paused:
                         request.runtime.status = DownloadStatus.paused
+                request.runtime.activeConnections = 0
+            request.runtime.activeConnections = 0
                     case .completed:
                         request.runtime.status = DownloadStatus.completed
                     case .failed:
@@ -629,10 +636,6 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                         self.reportIslandFail(request, cancelled: true)
                     default:
                         self.reportIslandProgress(request)
-                    }
-
-                    let progressPercent = Int(downloadProgress.progress * 100)
-                    if progressPercent % 1 == 0 && progressPercent > 0 {
                     }
 
                     request.objectWillChange.send()
@@ -683,7 +686,7 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
 
                     self.activeDownloads.remove(request.id)
                     self.processNextInQueue()
-                    self.syncIslandLifecycle()
+                    self.syncBackgroundKeepAlive()
                 }
             }
         )
@@ -707,20 +710,28 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
         waitingDownloads.remove(request.id)
 
         if activeDownloads.contains(request.id) {
-            downloadManager.cancelDownload(downloadId: request.id.uuidString)
+            if request.package.isTestFlight {
+                TestFlightDownloadManager.shared.cancelUnifiedDownload(taskID: request.id)
+            } else {
+                downloadManager.cancelDownload(downloadId: request.id.uuidString)
+            }
             activeDownloads.remove(request.id)
             processNextInQueue()
         } else {
-
-            downloadManager.cancelDownload(downloadId: request.id.uuidString)
+            if request.package.isTestFlight {
+                TestFlightDownloadManager.shared.cancelUnifiedDownload(taskID: request.id)
+            } else {
+                downloadManager.cancelDownload(downloadId: request.id.uuidString)
+            }
         }
 
         request.runtime.status = DownloadStatus.cancelled
+        request.runtime.activeConnections = 0
         request.runtime.error = nil
         request.runtime.isAuthFailure = false
         reportIslandFail(request, cancelled: true)
         saveDownloadTasks()
-        syncIslandLifecycle()
+        syncBackgroundKeepAlive()
     }
 
     func pauseDownload(request: DownloadRequest) {
@@ -731,20 +742,34 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
             }
             waitingDownloads.remove(request.id)
             request.runtime.status = DownloadStatus.paused
+            request.runtime.activeConnections = 0
             reportIslandProgress(request)
             saveDownloadTasks()
-            syncIslandLifecycle()
+            syncBackgroundKeepAlive()
+            return
+        }
+
+        if request.package.isTestFlight {
+            guard request.runtime.status == DownloadStatus.downloading else { return }
+            TestFlightDownloadManager.shared.pauseUnifiedDownload(taskID: request.id)
+            request.runtime.status = DownloadStatus.paused
+            request.runtime.activeConnections = 0
+            activeDownloads.remove(request.id)
+            reportIslandProgress(request)
+            saveDownloadTasks()
+            syncBackgroundKeepAlive()
             return
         }
 
         if activeDownloads.contains(request.id) {
             downloadManager.pauseDownload(downloadId: request.id.uuidString)
             request.runtime.status = DownloadStatus.paused
+            request.runtime.activeConnections = 0
             activeDownloads.remove(request.id)
             reportIslandProgress(request)
             processNextInQueue()
             saveDownloadTasks()
-            syncIslandLifecycle()
+            syncBackgroundKeepAlive()
         }
     }
 
@@ -756,7 +781,64 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
 
         request.runtime.error = nil
         request.runtime.isAuthFailure = false
+        if request.package.isTestFlight {
+            request.runtime.status = .downloading
+            activeDownloads.insert(request.id)
+            reportIslandProgress(request)
+            syncBackgroundKeepAlive()
+            TestFlightDownloadManager.shared.resumeUnifiedDownload(
+                taskID: request.id,
+                bundle: request.package.bundleIdentifier
+            )
+            return
+        }
         startDownload(for: request)
+    }
+
+    func beginTestFlightTask(taskID: UUID) {
+        guard let request = downloadRequests.first(where: { $0.id == taskID }) else { return }
+        activeDownloads.insert(taskID)
+        IslandActivityManager.shared.allowRecreate(key: islandKey(for: request))
+        reportIslandProgress(request)
+        syncBackgroundKeepAlive()
+    }
+
+    func finishTestFlightTask(taskID: UUID) {
+        guard let request = downloadRequests.first(where: { $0.id == taskID }) else { return }
+        activeDownloads.remove(taskID)
+        reportIslandFinish(request)
+        processNextInQueue()
+        syncBackgroundKeepAlive()
+    }
+
+    func failTestFlightTask(taskID: UUID) {
+        guard let request = downloadRequests.first(where: { $0.id == taskID }) else { return }
+        activeDownloads.remove(taskID)
+        reportIslandFail(request, cancelled: false)
+        processNextInQueue()
+        syncBackgroundKeepAlive()
+    }
+
+    private func syncBackgroundKeepAlive() {
+        let isBusy = !activeDownloads.isEmpty || !waitingDownloads.isEmpty
+
+        if keepAliveActive, !isBusy || !isInBackground || !InstallKeepAlive.shared.isActive {
+            keepAliveActive = false
+            keepAliveRetryAt = Date().addingTimeInterval(30)
+            InstallKeepAlive.shared.stop("download")
+        }
+
+        if isBusy, isInBackground, !keepAliveActive, Date() >= keepAliveRetryAt {
+            keepAliveActive = true
+            InstallKeepAlive.shared.start("download")
+        }
+
+        if isBusy {
+            startIslandTicker()
+            syncIslandProgress()
+        } else {
+            stopIslandTicker()
+        }
     }
 
     private func reportIslandProgress(_ request: DownloadRequest) {
@@ -806,27 +888,6 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
         )
     }
 
-    private func syncIslandLifecycle() {
-        let isBusy = !activeDownloads.isEmpty || !waitingDownloads.isEmpty
-
-        if islandKeepAlive, !isBusy || !islandBackground || !InstallKeepAlive.shared.isActive {
-            islandKeepAlive = false
-            islandKeepAliveRetryAt = Date().addingTimeInterval(30)
-            InstallKeepAlive.shared.stop("download")
-        }
-
-        if isBusy {
-            startIslandTicker()
-            if islandBackground, !islandKeepAlive, Date() >= islandKeepAliveRetryAt {
-                islandKeepAlive = true
-                InstallKeepAlive.shared.start("download")
-            }
-            syncIslandProgress()
-        } else {
-            stopIslandTicker()
-        }
-    }
-
     private func reconcileIslandActivities() {
         let keys = Set(downloadRequests.map { islandKey(for: $0) })
         IslandActivityManager.shared.endOrphanedDownloadActivities(validKeys: keys)
@@ -862,7 +923,6 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
     }
 
     private func syncIslandProgress() {
-        guard !activeDownloads.isEmpty else { return }
         for request in downloadRequests where activeDownloads.contains(request.id) {
             reportIslandProgress(request)
         }
@@ -893,10 +953,11 @@ struct DownloadArchive {
     let description: String?
     let price: Double?
     let currency: String?
+    let isTestFlight: Bool
 
     var isFree: Bool { (price ?? 0.0) == 0.0 }
 
-    init(bundleIdentifier: String, name: String, version: String, identifier: Int = 0, iconURL: String? = nil, description: String? = nil, price: Double? = nil, currency: String? = nil) {
+    init(bundleIdentifier: String, name: String, version: String, identifier: Int = 0, iconURL: String? = nil, description: String? = nil, price: Double? = nil, currency: String? = nil, isTestFlight: Bool = false) {
         self.bundleIdentifier = bundleIdentifier
         self.name = name
         self.version = version
@@ -905,11 +966,20 @@ struct DownloadArchive {
         self.description = description
         self.price = price
         self.currency = currency
+        self.isTestFlight = isTestFlight
     }
 }
 
 class DownloadRuntime: ObservableObject {
-    @Published var status: DownloadStatus = DownloadStatus.waiting
+    struct SpeedSample: Sendable, Codable {
+        let time: TimeInterval
+        let bytes: Int64
+        let speed: Double
+    }
+
+    @Published var status: DownloadStatus = DownloadStatus.waiting {
+        didSet { if oldValue != status { persistCurve(force: true) } }
+    }
     @Published var progress: Progress = Progress(totalUnitCount: 0)
     @Published var speed: String = ""
     @Published var error: String?
@@ -917,12 +987,29 @@ class DownloadRuntime: ObservableObject {
     @Published var progressValue: Double = 0.0
     @Published var completedBytes: Int64 = 0
     @Published var totalBytes: Int64 = 0
+    @Published var activeConnections: Int = 0
     @Published var bytesPerSecond: Double = 0
     @Published var remainingTime: TimeInterval = 0
+
+    var curveIdentifier: String?
+    private(set) var speedSamples: [SpeedSample] = []
+    private var lastSampleTime: TimeInterval = 0
+    private var lastSampleBytes: Int64 = 0
+    private var samplesSincePersist = 0
 
     init() {
 
         progress.completedUnitCount = 0
+    }
+
+    func applyStoredSamples(_ list: [SpeedSample]) {
+        guard speedSamples.isEmpty, !list.isEmpty else { return }
+        speedSamples = list
+        if let last = list.last {
+            lastSampleTime = last.time
+            lastSampleBytes = last.bytes
+        }
+        objectWillChange.send()
     }
 
     @MainActor
@@ -935,8 +1022,42 @@ class DownloadRuntime: ObservableObject {
         totalBytes = total
         bytesPerSecond = speed
         self.remainingTime = remainingTime
+        recordSample(completed: completed, speed: speed)
 
         objectWillChange.send()
+    }
+
+    private func recordSample(completed: Int64, speed: Double) {
+        let now = Date().timeIntervalSince1970
+        if lastSampleTime == 0 {
+            lastSampleTime = now
+            lastSampleBytes = completed
+            speedSamples.append(SpeedSample(time: now, bytes: completed, speed: max(0, speed)))
+            persistCurve()
+            return
+        }
+        let dt = now - lastSampleTime
+        guard dt >= 0.2 || completed != lastSampleBytes else { return }
+        let delta = Double(max(0, completed - lastSampleBytes))
+        let measured = dt > 0 ? delta / dt : 0
+        speedSamples.append(SpeedSample(time: now, bytes: completed, speed: speed > 0 ? speed : measured))
+        lastSampleTime = now
+        lastSampleBytes = completed
+        if speedSamples.count > 4000 {
+            speedSamples.removeFirst(speedSamples.count - 4000)
+        }
+        persistCurve()
+    }
+
+    private func persistCurve(force: Bool = false) {
+        guard let curveIdentifier, !speedSamples.isEmpty else { return }
+        samplesSincePersist += 1
+        guard force || samplesSincePersist >= 20 else { return }
+        samplesSincePersist = 0
+        let snapshot = speedSamples
+        Task.detached(priority: .utility) {
+            await SpeedCurveStore.shared.save(id: curveIdentifier, samples: snapshot)
+        }
     }
 }
 
@@ -958,6 +1079,7 @@ class DownloadRequest: Identifiable, ObservableObject, Equatable, @unchecked Sen
     let package: DownloadArchive
     var versionId: String?
     @Published var localFilePath: String?
+    @Published var maxConnections: Int
 
     private var cancellables: Set<AnyCancellable> = []
     @Published var runtime: DownloadRuntime { didSet { bindRuntime() } }
@@ -966,11 +1088,18 @@ class DownloadRequest: Identifiable, ObservableObject, Equatable, @unchecked Sen
         return package.iconURL
     }
 
+    var isTestFlight: Bool {
+        package.isTestFlight
+            || localFilePath?.contains("/TestFlight/") == true
+            || localFilePath?.hasPrefix("TestFlight/") == true
+    }
+
     var identifier: Int {
         return package.identifier
     }
 
-    init(id: UUID = UUID(), bundleIdentifier: String, version: String, name: String, package: DownloadArchive, versionId: String? = nil) {
+    init(id: UUID = UUID(), bundleIdentifier: String, version: String, name: String, package: DownloadArchive,
+         versionId: String? = nil, maxConnections: Int? = nil) {
         self.id = id
         self.bundleIdentifier = bundleIdentifier
         self.version = version
@@ -978,7 +1107,15 @@ class DownloadRequest: Identifiable, ObservableObject, Equatable, @unchecked Sen
         self.createdAt = Date()
         self.package = package
         self.versionId = versionId
+        self.maxConnections = DownloadConnectionSettings.clamp(maxConnections ?? DownloadConnectionSettings.defaultValue)
         self.runtime = DownloadRuntime()
+        self.runtime.curveIdentifier = id.uuidString
+        let curveID = id.uuidString
+        let runtime = self.runtime
+        Task { @MainActor in
+            let stored = await SpeedCurveStore.shared.load(id: curveID)
+            runtime.applyStoredSamples(stored)
+        }
 
         bindRuntime()
     }
@@ -1048,7 +1185,8 @@ extension UnifiedDownloadManager {
                         speed: request.runtime.speed,
                         localFilePath: request.localFilePath.map { relativePath(for: $0) }
                     ),
-                    createdAt: request.createdAt
+                    createdAt: request.createdAt,
+                    maxConnections: request.maxConnections
                 )
             },
             completedRequests: Array(completedRequests),
@@ -1236,7 +1374,8 @@ extension UnifiedDownloadManager {
                 version: saveRequest.version,
                 name: saveRequest.name,
                 package: saveRequest.package,
-                versionId: saveRequest.versionId
+                versionId: saveRequest.versionId,
+                maxConnections: saveRequest.maxConnections
             )
 
             request.runtime.status = saveRequest.runtime.status
@@ -1310,9 +1449,6 @@ extension UnifiedDownloadManager {
             for request in downloadRequests {
                 let hasActiveTask = activeIds.contains(request.id.uuidString)
 
-                // Only treat as paused when orphaned (restored as .downloading after app restart
-                // and not started in this session). Downloads already started this session that are
-                // still in the preflight path (purchase / version resolve / fetch URL) are left alone.
                 if request.runtime.status == .downloading && !hasActiveTask && !activeDownloads.contains(request.id) {
                     request.runtime.status = .paused
                     activeDownloads.remove(request.id)
@@ -1334,7 +1470,7 @@ extension UnifiedDownloadManager {
                 reportIslandProgress(request)
             }
 
-            syncIslandLifecycle()
+            syncBackgroundKeepAlive()
         }
     }
 
@@ -1344,11 +1480,15 @@ extension UnifiedDownloadManager {
             if request.runtime.status == DownloadStatus.downloading {
                 downloadManager.pauseDownload(downloadId: request.id.uuidString)
                 request.runtime.status = DownloadStatus.paused
+                request.runtime.activeConnections = 0
+            request.runtime.activeConnections = 0
                 activeDownloads.remove(request.id)
                 reportIslandProgress(request)
             }
             if request.runtime.status == DownloadStatus.waiting {
                 request.runtime.status = DownloadStatus.paused
+                request.runtime.activeConnections = 0
+            request.runtime.activeConnections = 0
                 waitingDownloads.remove(request.id)
                 reportIslandProgress(request)
             }
@@ -1357,7 +1497,7 @@ extension UnifiedDownloadManager {
         downloadQueue.removeAll()
 
         saveDownloadTasks()
-        syncIslandLifecycle()
+        syncBackgroundKeepAlive()
     }
 
     func resumeAllDownloads() {
@@ -1391,11 +1531,13 @@ struct DownloadRequestSaveData: Codable {
     let packageIconURL: String?
     let packagePrice: Double?
     let packageCurrency: String?
+    var packageIsTestFlight: Bool?
     let versionId: String?
     let runtime: DownloadRuntimeSaveData
     var createdAt: Date
+    var maxConnections: Int?
 
-    init(id: UUID, bundleIdentifier: String, version: String, name: String, package: DownloadArchive, versionId: String?, runtime: DownloadRuntimeSaveData, createdAt: Date) {
+    init(id: UUID, bundleIdentifier: String, version: String, name: String, package: DownloadArchive, versionId: String?, runtime: DownloadRuntimeSaveData, createdAt: Date, maxConnections: Int? = nil) {
         self.id = id
         self.bundleIdentifier = bundleIdentifier
         self.version = version
@@ -1404,9 +1546,11 @@ struct DownloadRequestSaveData: Codable {
         self.packageIconURL = package.iconURL
         self.packagePrice = package.price
         self.packageCurrency = package.currency
+        self.packageIsTestFlight = package.isTestFlight
         self.versionId = versionId
         self.runtime = runtime
         self.createdAt = createdAt
+        self.maxConnections = maxConnections
     }
 
     var package: DownloadArchive {
@@ -1417,7 +1561,8 @@ struct DownloadRequestSaveData: Codable {
             identifier: packageIdentifier,
             iconURL: packageIconURL,
             price: packagePrice,
-            currency: packageCurrency
+            currency: packageCurrency,
+            isTestFlight: packageIsTestFlight ?? false
         )
     }
 }
