@@ -52,6 +52,7 @@ struct App: SwiftUI.App {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
             .preferredColorScheme(colorScheme)
             .onOpenURL { url in
                 IslandDeepLink.handle(url)

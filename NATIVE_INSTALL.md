@@ -12,14 +12,15 @@ Source already installs signed IPAs over **OTA** (`itms-services` via `SigningOT
 | `SigningInstaller` routes to Native when selected (falls back to OTA if not ready) | Done |
 | Pairing Keychain store | Done |
 | Local VPN controller | Done |
-| `APPDeviceTunnel` packet-tunnel sources | Done (not yet an Xcode target) |
+| `APPDeviceTunnel` packet-tunnel sources | Done |
+| `APPDeviceTunnel` Xcode target + embed in APP | Done |
 | IDeviceKit fetch / patch / build scripts | Done under `.github/scripts/` |
 | `Native/Device` idevice overlays | Vendored from Random |
-| Embed `APPDeviceTunnel.appex` + link IDeviceKit in `APP.xcodeproj` | **Next** |
+| Link IDeviceKit / IDeviceSwift into `APP.xcodeproj` | **Next** |
 | On-device pairing UX (iOS 27+) / Manual pairing file import | **Next** |
 | Full `DeviceInstallationManager` install/uninstall | **Next** |
 
-Until the appex + IDeviceKit are wired into the Xcode project, choosing **Native** shows a readiness message and installs still use OTA.
+The tunnel appex now embeds with APP. Native install still needs IDeviceKit linked before `NativeInstaller.isStackReady` becomes true; until then installs fall back to OTA.
 
 ## What to wire next (from Random)
 

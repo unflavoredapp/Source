@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		TNL10000000000000000002 /* APPDeviceTunnel.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = TNL10000000000000000001 /* APPDeviceTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		TNL1000000000000000000E /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = TNL1000000000000000000F /* NetworkExtension.framework */; };
 		06CC9CAA43BDDCF70A8E6E82 /* IslandActivityTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D2CC66CF54D893E941BEA7 /* IslandActivityTypes.swift */; };
 		21C6E9C6D08C32F3C8B536C6 /* IslandActivityTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D2CC66CF54D893E941BEA7 /* IslandActivityTypes.swift */; };
 		681E98F3353E3F41694CB729 /* APPWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 939B39DEA649D26C724F3B39 /* APPWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -22,6 +24,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		TNL1000000000000000000A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 851FD9572E578774002136BA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = TNL10000000000000000003;
+			remoteInfo = APPDeviceTunnel;
+		};
 		E871FAE0AD1F4A042D59A70A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 851FD9572E578774002136BA /* Project object */;
@@ -70,6 +79,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				681E98F3353E3F41694CB729 /* APPWidgetExtension.appex in Embed App Extensions */,
+				TNL10000000000000000002 /* APPDeviceTunnel.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -81,6 +91,8 @@
 		939B39DEA649D26C724F3B39 /* APPWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = APPWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1D100000000000000000001 /* APP/InAppPurchase.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = APP/InAppPurchase.dylib; sourceTree = SOURCE_ROOT; };
 		C7D2CC66CF54D893E941BEA7 /* IslandActivityTypes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = IslandActivityTypes.swift; sourceTree = "<group>"; };
+		TNL10000000000000000001 /* APPDeviceTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = APPDeviceTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		TNL1000000000000000000F /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -99,6 +111,13 @@
 			);
 			target = 851FD95E2E578774002136BA /* APP */;
 		};
+		TNL10000000000000000008 /* Exceptions for "APPDeviceTunnel" folder in "APPDeviceTunnel" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = TNL10000000000000000003 /* APPDeviceTunnel */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -116,6 +135,14 @@
 				5F402FFA589197F01B4BAAFA /* Exceptions for "APPWidget" folder in "APPWidgetExtension" target */,
 			);
 			path = APPWidget;
+			sourceTree = "<group>";
+		};
+		TNL10000000000000000007 /* APPDeviceTunnel */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				TNL10000000000000000008 /* Exceptions for "APPDeviceTunnel" folder in "APPDeviceTunnel" target */,
+			);
+			path = APPDeviceTunnel;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -143,12 +170,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		TNL10000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				TNL1000000000000000000E /* NetworkExtension.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		347453212985AC119A208052 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				TNL1000000000000000000F /* NetworkExtension.framework */,
 			);
 			name = iOS;
 			sourceTree = "<group>";
@@ -161,6 +197,7 @@
 				856CCA8930AF298000764042 /* Recovered References */,
 				9229E7AF72451AFB7E69510D /* Frameworks */,
 				BBB8B572868E69293F4E9A52 /* APPWidget */,
+				TNL10000000000000000007 /* APPDeviceTunnel */,
 				D6B8F7B5097B8951BA8F6250 /* Shared */,
 			);
 			sourceTree = "<group>";
@@ -170,6 +207,7 @@
 			children = (
 				851FD95F2E578774002136BA /* APP.app */,
 				939B39DEA649D26C724F3B39 /* APPWidgetExtension.appex */,
+				TNL10000000000000000001 /* APPDeviceTunnel.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -201,6 +239,26 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		TNL10000000000000000003 /* APPDeviceTunnel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = TNL1000000000000000000B /* Build configuration list for PBXNativeTarget "APPDeviceTunnel" */;
+			buildPhases = (
+				TNL10000000000000000004 /* Sources */,
+				TNL10000000000000000005 /* Frameworks */,
+				TNL10000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				TNL10000000000000000007 /* APPDeviceTunnel */,
+			);
+			name = APPDeviceTunnel;
+			productName = APPDeviceTunnel;
+			productReference = TNL10000000000000000001 /* APPDeviceTunnel.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		58098B174893E41DAB198A04 /* APPWidgetExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 930EE0CDC2D5BDF645B189F3 /* Build configuration list for PBXNativeTarget "APPWidgetExtension" */;
@@ -237,6 +295,7 @@
 			);
 			dependencies = (
 				4BC56596445E98240B9E3C90 /* PBXTargetDependency */,
+				TNL10000000000000000009 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				851FD9612E578774002136BA /* APP */,
@@ -329,6 +388,7 @@
 			targets = (
 				851FD95E2E578774002136BA /* APP */,
 				58098B174893E41DAB198A04 /* APPWidgetExtension */,
+				TNL10000000000000000003 /* APPDeviceTunnel */,
 			);
 		};
 /* End PBXProject section */
@@ -342,6 +402,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9F78F1B3159481BB6EB51577 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		TNL10000000000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -367,6 +434,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		TNL10000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -375,6 +449,12 @@
 			name = APPWidgetExtension;
 			target = 58098B174893E41DAB198A04 /* APPWidgetExtension */;
 			targetProxy = E871FAE0AD1F4A042D59A70A /* PBXContainerItemProxy */;
+		};
+		TNL10000000000000000009 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = APPDeviceTunnel;
+			target = TNL10000000000000000003 /* APPDeviceTunnel */;
+			targetProxy = TNL1000000000000000000A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -536,6 +616,7 @@
 					"$(SRCROOT)/APP/Vendor/FairPlayedCore",
 				);
 				INFOPLIST_FILE = APP/Info.plist;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -597,6 +678,7 @@
 					"$(SRCROOT)/APP/Vendor/FairPlayedCore",
 				);
 				INFOPLIST_FILE = APP/Info.plist;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -689,6 +771,69 @@
 			};
 			name = Debug;
 		};
+		TNL1000000000000000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = APPDeviceTunnel/APPDeviceTunnel.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = APPDeviceTunnel/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.7.9;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pxx917144686.App.APPDeviceTunnel;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		TNL1000000000000000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = APPDeviceTunnel/APPDeviceTunnel.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = APPDeviceTunnel/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.7.9;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pxx917144686.App.APPDeviceTunnel;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -715,6 +860,15 @@
 			buildConfigurations = (
 				B003DD2AE33D2030167A5570 /* Release */,
 				F1033B306858C78B865C53EB /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		TNL1000000000000000000B /* Build configuration list for PBXNativeTarget "APPDeviceTunnel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				TNL1000000000000000000D /* Release */,
+				TNL1000000000000000000C /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
