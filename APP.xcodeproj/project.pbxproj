@@ -21,6 +21,8 @@
 		D6A1B2C3D4E5F60718293001 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = D6A1B2C3D4E5F60718293002 /* GRDB */; };
 		3C360D069E1903A6A0AA2DDB /* AppleAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 8BE6990CEB031658612F1949 /* AppleAuth */; };
 		AE5FDED1F0200FEC6690DD60 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 24F694E244D3E899EB98A2A6 /* ZIPFoundation */; };
+		IDE10000000000000000001 /* IDeviceSwift in Frameworks */ = {isa = PBXBuildFile; productRef = IDE10000000000000000003 /* IDeviceSwift */; };
+		IDE10000000000000000004 /* IDevice in Frameworks */ = {isa = PBXBuildFile; productRef = IDE10000000000000000005 /* IDevice */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -160,6 +162,8 @@
 				A1C000000000000000000001 /* AsyncHTTPClient in Frameworks */,
 				3C360D069E1903A6A0AA2DDB /* AppleAuth in Frameworks */,
 				AE5FDED1F0200FEC6690DD60 /* ZIPFoundation in Frameworks */,
+				IDE10000000000000000001 /* IDeviceSwift in Frameworks */,
+				IDE10000000000000000004 /* IDevice in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -309,6 +313,8 @@
 				E2BFBE6BCBC4081A86D24867 /* SRP */,
 				8BE6990CEB031658612F1949 /* AppleAuth */,
 				24F694E244D3E899EB98A2A6 /* ZIPFoundation */,
+				IDE10000000000000000003 /* IDeviceSwift */,
+				IDE10000000000000000005 /* IDevice */,
 			);
 			productName = APP;
 			productReference = 851FD95F2E578774002136BA /* APP.app */;
@@ -380,6 +386,7 @@
 				9B589897381099888265D01D /* XCLocalSwiftPackageReference "Vendor/AppleAuth" */,
 				BC3A2481B613E932AD09F8D2 /* XCLocalSwiftPackageReference "Vendor/ZIPFoundation" */,
 				D6A1B2C3D4E5F60718293003 /* XCLocalSwiftPackageReference "Vendor/GRDB.swift" */,
+				IDE10000000000000000002 /* XCLocalSwiftPackageReference "IDeviceKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 851FD9602E578774002136BA /* Products */;
@@ -892,6 +899,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Vendor/GRDB.swift;
 		};
+		IDE10000000000000000002 /* XCLocalSwiftPackageReference "IDeviceKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = IDeviceKit;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -969,6 +980,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 955DE4CABD7624367200C85A /* XCRemoteSwiftPackageReference "swift-srp" */;
 			productName = SRP;
+		};
+		IDE10000000000000000003 /* IDeviceSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = IDE10000000000000000002 /* XCLocalSwiftPackageReference "IDeviceKit" */;
+			productName = IDeviceSwift;
+		};
+		IDE10000000000000000005 /* IDevice */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = IDE10000000000000000002 /* XCLocalSwiftPackageReference "IDeviceKit" */;
+			productName = IDevice;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

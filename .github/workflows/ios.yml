@@ -14,7 +14,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v7
 
@@ -23,6 +23,24 @@ jobs:
           LATEST=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
           sudo xcode-select -s "$LATEST"
           xcodebuild -version
+
+      - name: Native build cache (idevice Rust library)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build/device-native
+            IDeviceKit/.build/IDevice.xcframework
+          key: idevice-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Native/Device/source.json', 'Native/Device/ksign_pairing.rs', '.github/scripts/build_device_native.py') }}
+
+      - name: Cargo registry cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Native/Device/source.json', 'Native/Device/ksign_pairing.rs') }}
+          restore-keys: |
+            cargo-v1-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Cache SwiftPM dependencies
         uses: actions/cache@v4
@@ -35,6 +53,16 @@ jobs:
         run: make
         env:
           CI: true
+
+      - name: Verify native tunnel is embedded
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/app-ipa-check
+          mkdir -p /tmp/app-ipa-check
+          unzip -q APP.ipa -d /tmp/app-ipa-check
+          APP_BUNDLE=$(find /tmp/app-ipa-check/Payload -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP_BUNDLE"
+          test -d "$APP_BUNDLE/PlugIns/APPDeviceTunnel.appex"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v7
@@ -63,8 +91,8 @@ jobs:
             "$SIZE" "${GITHUB_REPOSITORY}" "${GITHUB_REF_NAME}" "${GITHUB_SHA:0:7}")
           curl -fsS \
             -F chat_id="${TELEGRAM_CHAT_ID}" \
-            -F caption="${CAPTION}" \
             -F document=@APP.ipa \
+            -F caption="${CAPTION}" \
             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
             >/tmp/telegram-send.json
           echo "Sent APP.ipa to Telegram (${SIZE})"
