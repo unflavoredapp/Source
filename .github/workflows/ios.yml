@@ -43,6 +43,30 @@ jobs:
           path: APP.ipa
           if-no-files-found: error
 
+      # Phone-first delivery: drop APP.ipa into Telegram when secrets are set.
+      # Repo secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+      - name: Send IPA to Telegram
+        if: >-
+          success()
+          && github.event_name != 'pull_request'
+          && secrets.TELEGRAM_BOT_TOKEN != ''
+          && secrets.TELEGRAM_CHAT_ID != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          SIZE=$(du -h APP.ipa | awk '{print $1}')
+          CAPTION=$(printf 'APP.ipa (%s)\n%s @ %s\n%s' \
+            "$SIZE" "${GITHUB_REPOSITORY}" "${GITHUB_REF_NAME}" "${GITHUB_SHA:0:7}")
+          curl -fsS \
+            -F chat_id="${TELEGRAM_CHAT_ID}" \
+            -F caption="${CAPTION}" \
+            -F document=@APP.ipa \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+            >/tmp/telegram-send.json
+          echo "Sent APP.ipa to Telegram (${SIZE})"
+
       - name: Upload build log
         if: failure()
         uses: actions/upload-artifact@v7
