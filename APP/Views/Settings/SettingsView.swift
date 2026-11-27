@@ -113,6 +113,7 @@ struct SettingsView: View {
 
                     VStack(spacing: 0) {
                         installMethodRow
+                        telegramWorkerRow
                     }
                     .liquidGlassSurface(cornerRadius: 16)
                     .cornerRadius(16)
@@ -417,6 +418,40 @@ extension SettingsView {
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var telegramWorkerRow: some View {
+        NavigationLink(
+            destination: TelegramWorkerSettingsView()
+                .environmentObject(themeManager)
+        ) {
+            HStack(spacing: 12) {
+                Image(systemName: "paperplane.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(themeManager.accentColor))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("telegram_worker_title".localized)
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary)
+                    Text(
+                        TelegramWorkerConfig.isEnabled
+                            ? "telegram_worker_running".localized
+                            : "telegram_worker_stopped".localized
+                    )
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
                 }
 
                 Spacer()
