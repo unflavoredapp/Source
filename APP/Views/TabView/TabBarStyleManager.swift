@@ -63,17 +63,21 @@ final class TabBarStyleManager: ObservableObject {
     private init() {
         // Always prefer the Assassin full-bleed floating shell. Users can still
         // switch to the system tab bar from Settings if they want it back.
+        // Resolve style into a local first — `self.currentStyle` cannot be read
+        // until every stored property is initialized.
+        let style: TabBarStyle
         if let saved = UserDefaults.standard.string(forKey: "TabBarStyle"),
-           let style = TabBarStyle(rawValue: saved),
-           style == .systemDefault,
+           let parsed = TabBarStyle(rawValue: saved),
+           parsed == .systemDefault,
            UserDefaults.standard.bool(forKey: "TabBarStyle.userChoseSystem") {
-            self.currentStyle = .systemDefault
+            style = .systemDefault
         } else {
-            self.currentStyle = .floatingCard
+            style = .floatingCard
         }
 
-        UserDefaults.standard.set(self.currentStyle.rawValue, forKey: "TabBarStyle")
+        self.currentStyle = style
         self.floatingConfig = .default
+        UserDefaults.standard.set(style.rawValue, forKey: "TabBarStyle")
         self.loadFloatingConfig()
     }
 
