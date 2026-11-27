@@ -74,9 +74,11 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
 
     override init() {
         super.init()
-        // 回前台时重置停滞基线：后台挂起期间任务冻结、无数据是正常现象，
-        // 不能把后台时长计入看门狗的停滞判定（否则回前台瞬间误报超时）。
-        // 用通知名字符串注册，避免引入 UIKit 依赖（回归工具需在 macOS 编译本文件）。
+        // Reset the stall baseline when returning to foreground: while suspended in the background,
+        // tasks freeze and no data is expected, so background time must not count toward the
+        // watchdog stall timeout (otherwise we false-trigger as soon as we resume).
+        // Register by notification name string to avoid a UIKit dependency (regression tools
+        // compile this file on macOS).
         foregroundObserver = NotificationCenter.default.addObserver(
             forName: NSNotification.Name("UIApplicationWillEnterForegroundNotification"),
             object: nil,
@@ -216,7 +218,7 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
             return
         }
 
-        // 探测期间用户已按暂停 → 延迟发起各段，等 resume 再真正启动
+        // User paused during probe → defer launching segments until resume
         var deferredByPause = false
         locked {
             if let state = states[downloadId], !state.finished, !state.userCancelled, state.paused {
@@ -265,7 +267,8 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
         let tasks: [URLSessionTask]? = locked {
             guard var state = states[downloadId], !state.finished, !state.paused else { return nil }
             state.paused = true
-            // 暂停期间无数据流动，停掉看门狗定时器（避免每 5s 的空转唤醒）；resume 时重启
+            // No data flows while paused; stop the watchdog timer (avoid a useless wake every 5s).
+            // Restart it on resume.
             state.stallTimer?.cancel()
             state.stallTimer = nil
             let tasks = state.segments.compactMap { $0.activeTask }
@@ -288,7 +291,8 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
             guard var state = states[downloadId], !state.finished, state.paused else { return nil }
             state.paused = false
             let tasks = state.segments.compactMap { $0.activeTask }
-            // 没有任何运行中任务但有未完成段（探测期暂停延迟发起 / 竞态滞留）→ 重新发起
+            // No running tasks but unfinished segments remain (deferred by pause during probe /
+            // race leftover) → relaunch them
             if tasks.isEmpty, !state.segments.isEmpty,
                state.segments.contains(where: { !$0.finished }) {
                 for index in state.segments.indices where !state.segments[index].finished {
@@ -306,7 +310,7 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
         for index in launchIndices {
             launchSegment(downloadId: downloadId, index: index)
         }
-        // 暂停期间看门狗已被停掉，恢复时统一重启（内部会重置停滞基线）
+        // Watchdog was stopped while paused; restart it on resume (also resets the stall baseline)
         startStallWatchdog(downloadId: downloadId)
         if !launchIndices.isEmpty, let onProgress {
             onProgress(resumedBytes, totalSize)
@@ -320,7 +324,8 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
             state.userCancelled = true
             let tasks = state.segments.compactMap { $0.activeTask }
             if tasks.isEmpty, !state.segments.isEmpty {
-                // 探测/延迟启动阶段：没有可取消的任务，直接结束（否则完成回调永不触发、状态泄漏）
+                // Probe / deferred-launch phase: nothing to cancel, finish immediately
+                // (otherwise the completion callback never fires and state leaks)
                 state.finished = true
                 for index in state.segments.indices {
                     try? state.segments[index].fileHandle?.close()
@@ -364,7 +369,8 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
         let task = session.dataTask(with: request)
         task.taskDescription = "\(downloadId)#\(index)"
 
-        // 落库时校验状态：期间被暂停/取消/结束则不启动新任务（避免 paused 与运行中任务错位）
+        // Re-check state when recording: if paused/cancelled/finished meanwhile, do not start
+        // a new task (avoids a mismatch between paused and a still-running task)
         var shouldLaunch = false
         locked {
             if var state = states[downloadId], index < state.segments.count,
@@ -497,7 +503,8 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
 
             let nsError = error as NSError?
             if error != nil, nsError?.code == NSURLErrorCancelled {
-                // 任务已终结，清空引用（cancel/对账以 activeTask 判定存活，滞留旧引用会误判）
+                // Task is finished; clear the reference (cancel/reconciliation use activeTask to
+                // decide liveness — a stale reference would misclassify it as still alive)
                 state.segments[index].activeTask = nil
                 if let pending = state.segments[index].pendingFailure {
                     state.segments[index].pendingFailure = nil
@@ -627,10 +634,11 @@ final class SegmentedIPADownloader: NSObject, @unchecked Sendable {
         }
     }
 
-    // MARK: - 传输停滞看门狗
+    // MARK: - Transfer stall watchdog
 
-    /// 各段启动后开启：传输中所有段持续 stallTimeout 无数据则判定失败（保留断点，可重试续传）。
-    /// 兜底 waitsForConnectivity 带来的"失效 URL 静默等待最长 2 小时"问题。
+    /// Started after segments launch: if every in-flight segment sees no data for stallTimeout,
+    /// treat as failure (keep resume checkpoints so a retry can continue).
+    /// Covers the waitsForConnectivity case where a dead URL can sit silently for up to 2 hours.
     private func startStallWatchdog(downloadId: String) {
         locked {
             guard var state = states[downloadId], !state.finished else { return }

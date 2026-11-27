@@ -1,6 +1,7 @@
 import Foundation
 
-/// 证书/描述文件导入的诊断日志，写到 Documents，方便出问题时直接拉出来看。
+/// Diagnostic log for certificate / provisioning-profile import. Written under Documents
+/// so it can be pulled off the device when something goes wrong.
 enum CertImportLog {
     static let fileName = "cert-import.log"
 

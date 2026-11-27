@@ -1025,8 +1025,8 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
         cleanupDownload(downloadId: downloadId)
     }
 
-    /// 有**运行中**任务的下载 id 集合。已暂停（任务挂起）的下载不算活动，
-    /// 否则 syncDownloadStatus 的对账会把暂停状态错误翻回“下载中”
+    /// Set of download ids that have a **running** task. Paused (suspended) downloads are not
+    /// active; otherwise syncDownloadStatus reconciliation would flip paused back to "downloading".
     var activeDownloadIds: Set<String> {
         get async {
             let tasks = await urlSession.allTasks
@@ -1042,7 +1042,7 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
                 result.subtract(suspendedTaskIds)
                 return Set(segmentedDownloadIds)
             }
-            // 已暂停的分段下载同样排除（挂起状态记录在分段下载器内）
+            // Also exclude paused segmented downloads (suspend state lives in the segmented downloader)
             let pausedSegmented = segmentedIds.filter { SegmentedIPADownloader.shared.isPaused(downloadId: $0) }
             result.subtract(pausedSegmented)
             return result
@@ -1918,7 +1918,7 @@ extension AppStoreDownloadManager {
             return true
         }
         guard hasContext else {
-            NSLog("[Download] \(downloadId) 完成回调缺少目标或元数据，放弃本次下载")
+            NSLog("[Download] \(downloadId) completion callback missing destination or metadata; abandoning download")
             safeComplete(downloadId: downloadId, result: .failure(.fileSystemError("dl_err_local_file_missing".localized)))
             return
         }
