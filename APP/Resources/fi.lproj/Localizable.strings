@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Ohjauskeskus";
 "sign_remove_uncovered_extensions" = "Poista kattamattomat laajennukset";
 "sign_remove_uncovered_extensions_hint" = "NE:t, widgetit, ohjauskeskus ja muut laajennukset ilman vastaavaa profiilia poistetaan automaattisesti, jotta pääsovellus voidaan asentaa. Tuo niiden profiilit säilyttääksesi ne.";
-"sign_self_injection_warning" = "Olet allekirjoittamassa tätä allekirjoitustyökalua itseään. Sisäänrakennettua 内购破解.dylib:ta ei injektoida; sen injektointi voi rikkoa tiedostonvalitsimia ja muita järjestelmäintegraatioita.";
+"sign_self_injection_warning" = "Olet allekirjoittamassa tätä allekirjoitustyökalua itseään. Sisäänrakennettua InAppPurchase.dylib:ta ei injektoida; sen injektointi voi rikkoa tiedostonvalitsimia ja muita järjestelmäintegraatioita.";

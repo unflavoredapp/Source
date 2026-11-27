@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Kontrollsenter";
 "sign_remove_uncovered_extensions" = "Fjern udekkede utvidelser";
 "sign_remove_uncovered_extensions_hint" = "NE, widgets, kontrollsenter og andre utvidelser uten samsvarende profil fjernes automatisk slik at hovedappen kan installeres. Importer profilene deres for å beholde dem.";
-"sign_self_injection_warning" = "Du signerer dette signeringsverktøyet selv. Den innebygde 内购破解.dylib injiseres ikke; injisering kan ødelegge filvelgere og andre systemintegrasjoner.";
+"sign_self_injection_warning" = "Du signerer dette signeringsverktøyet selv. Den innebygde InAppPurchase.dylib injiseres ikke; injisering kan ødelegge filvelgere og andre systemintegrasjoner.";

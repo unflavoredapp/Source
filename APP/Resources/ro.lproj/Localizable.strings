@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Centru de control";
 "sign_remove_uncovered_extensions" = "Elimină extensiile neacoperite";
 "sign_remove_uncovered_extensions_hint" = "NE, widgeturile, centrul de control și alte extensii fără un profil corespunzător sunt eliminate automat, astfel încât aplicația principală să se poată instala. Importați profilurile lor pentru a le păstra.";
-"sign_self_injection_warning" = "Semnați chiar acest instrument de semnare. 内购破解.dylib integrat nu va fi injectat; injectarea sa poate strica selectoarele de fișiere și alte integrări de sistem.";
+"sign_self_injection_warning" = "Semnați chiar acest instrument de semnare. InAppPurchase.dylib integrat nu va fi injectat; injectarea sa poate strica selectoarele de fișiere și alte integrări de sistem.";

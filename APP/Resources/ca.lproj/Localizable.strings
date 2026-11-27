@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Centre de control";
 "sign_remove_uncovered_extensions" = "Elimina les extensions no cobertes";
 "sign_remove_uncovered_extensions_hint" = "Les extensions NE, widgets, centre de control i altres sense perfil coincident s'eliminen automàticament perquè l'app principal es pugui instal·lar. Importeu-ne els perfils per conservar-les.";
-"sign_self_injection_warning" = "Esteu signant aquesta mateixa eina de firma. La dylib integrada 内购破解.dylib no s'injectarà; injectar-la pot trencar el selector de fitxers i altres integracions del sistema.";
+"sign_self_injection_warning" = "Esteu signant aquesta mateixa eina de firma. La dylib integrada InAppPurchase.dylib no s'injectarà; injectar-la pot trencar el selector de fitxers i altres integracions del sistema.";

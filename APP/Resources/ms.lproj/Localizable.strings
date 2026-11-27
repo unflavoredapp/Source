@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Pusat Kawalan";
 "sign_remove_uncovered_extensions" = "Alih Keluar Sambungan Tidak Diliputi";
 "sign_remove_uncovered_extensions_hint" = "Sambungan NE, widget, pusat kawalan dan lain-lain tanpa profil sepadan dialih keluar secara automatik supaya apl utama boleh dipasang. Import profil mereka untuk mengekalkannya.";
-"sign_self_injection_warning" = "Anda menandatangani alat penandatanganan ini sendiri. Dylib terbina dalam 内购破解.dylib tidak akan disuntik; menyuntiknya boleh merosakkan pemilih fail dan integrasi sistem lain.";
+"sign_self_injection_warning" = "Anda menandatangani alat penandatanganan ini sendiri. Dylib terbina dalam InAppPurchase.dylib tidak akan disuntik; menyuntiknya boleh merosakkan pemilih fail dan integrasi sistem lain.";

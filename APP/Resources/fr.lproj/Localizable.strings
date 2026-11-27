@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Centre de contrôle";
 "sign_remove_uncovered_extensions" = "Supprimer les extensions non couvertes";
 "sign_remove_uncovered_extensions_hint" = "Les extensions NE, widgets, centre de contrôle et autres sans profil correspondant sont supprimées automatiquement pour que l'app principale puisse s'installer. Importez leurs profils pour les conserver.";
-"sign_self_injection_warning" = "Vous signez cet outil de signature lui-même. La dylib intégrée 内购破解.dylib ne sera pas injectée ; l'injecter peut casser les sélecteurs de fichiers et autres intégrations système.";
+"sign_self_injection_warning" = "Vous signez cet outil de signature lui-même. La dylib intégrée InAppPurchase.dylib ne sera pas injectée ; l'injecter peut casser les sélecteurs de fichiers et autres intégrations système.";

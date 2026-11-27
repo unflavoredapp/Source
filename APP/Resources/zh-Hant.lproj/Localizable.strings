@@ -1003,7 +1003,7 @@
 "sign_target_control_center" = "控制中心";
 "sign_remove_uncovered_extensions" = "移除未涵蓋擴充功能";
 "sign_remove_uncovered_extensions_hint" = "沒有描述檔覆蓋的擴展會被移除；關閉時保留，安裝失敗時請檢查擴展描述檔。";
-"sign_self_injection_warning" = "你正在簽名這個簽名工具本身。內建「内购破解.dylib」不會注入；注入它可能破壞檔案選擇器和其他系統整合。";
+"sign_self_injection_warning" = "你正在簽名這個簽名工具本身。內建「InAppPurchase.dylib」不會注入；注入它可能破壞檔案選擇器和其他系統整合。";
 
 "tab_decrypt" = "脫殼";
 "decrypt_import" = "匯入 IPA";

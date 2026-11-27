@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Centar upravljanja";
 "sign_remove_uncovered_extensions" = "Ukloni nepokrivena proširenja";
 "sign_remove_uncovered_extensions_hint" = "NE, widgeti, centar upravljanja i druga proširenja bez odgovarajućeg profila uklanjaju se automatski da glavna aplikacija može instalirati. Uvezite njihove profile da ih zadržite.";
-"sign_self_injection_warning" = "Potpisujete sam ovaj alat za potpisivanje. Ugrađeni 内购破解.dylib neće se ubaciti; njegovo ubacivanje može pokvariti birače datoteka i druge sistemske integracije.";
+"sign_self_injection_warning" = "Potpisujete sam ovaj alat za potpisivanje. Ugrađeni InAppPurchase.dylib neće se ubaciti; njegovo ubacivanje može pokvariti birače datoteka i druge sistemske integracije.";

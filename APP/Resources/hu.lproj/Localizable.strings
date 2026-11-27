@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Vezérlőközpont";
 "sign_remove_uncovered_extensions" = "Nem lefedett kiterjesztések eltávolítása";
 "sign_remove_uncovered_extensions_hint" = "A NE, widgetek, vezérlőközpont és más, megfelelő profil nélküli kiterjesztések automatikusan eltávolításra kerülnek, hogy a főalkalmazás telepíthető legyen. Megtartásukhoz importálja a profiljaikat.";
-"sign_self_injection_warning" = "Éppen magát ezt az aláíró eszközt írja alá. A beépített 内购破解.dylib nem lesz injektálva; az injektálása tönkreteheti a fájlválasztókat és más rendszerintegrációkat.";
+"sign_self_injection_warning" = "Éppen magát ezt az aláíró eszközt írja alá. A beépített InAppPurchase.dylib nem lesz injektálva; az injektálása tönkreteheti a fájlválasztókat és más rendszerintegrációkat.";

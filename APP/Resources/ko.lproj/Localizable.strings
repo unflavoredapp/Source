@@ -1003,4 +1003,4 @@
 "sign_target_control_center" = "제어 센터";
 "sign_remove_uncovered_extensions" = "미커버 확장 제거";
 "sign_remove_uncovered_extensions_hint" = "일치하는 프로파일이 없는 네트워크 확장, 위젯, 제어 센터 등 확장은 메인 앱이 설치될 수 있도록 자동으로 제거됩니다. 유지하려면 해당 프로파일을 가져오세요.";
-"sign_self_injection_warning" = "이 서명 도구 자체를 서명하고 있습니다. 내장된 内购破解.dylib는 주입되지 않습니다. 주입하면 파일 선택기 등 시스템 연동이 손상될 수 있습니다.";
+"sign_self_injection_warning" = "이 서명 도구 자체를 서명하고 있습니다. 내장된 InAppPurchase.dylib는 주입되지 않습니다. 주입하면 파일 선택기 등 시스템 연동이 손상될 수 있습니다.";

@@ -762,7 +762,7 @@ void ZArchO::RemoveDylibs(const set<string>& setDylibs)
 	free(new_load_command_data);
 }
 
-// ===== fork 扩展: 列出 Mach-O 的 LC_LOAD_DYLIB 依赖（App 注入功能使用） =====
+// ===== Fork extension: list Mach-O LC_LOAD_DYLIB dependencies (used by App injection) =====
 std::vector<std::string> ZArchO::ListDylibs() {
 	std::vector<std::string> dylibList;
 	uint8_t *pLoadCommand = m_pBase + m_uHeaderSize;

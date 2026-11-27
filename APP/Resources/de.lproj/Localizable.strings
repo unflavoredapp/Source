@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Kontrollzentrum";
 "sign_remove_uncovered_extensions" = "Nicht abgedeckte Erweiterungen entfernen";
 "sign_remove_uncovered_extensions_hint" = "NE-, Widget-, Kontrollzentrum- und andere Erweiterungen ohne passendes Profil werden automatisch entfernt, damit sich die Haupt-App installieren lässt. Importieren Sie deren Profile, um sie zu behalten.";
-"sign_self_injection_warning" = "Sie signieren dieses Signatur-Tool selbst. Die eingebaute 内购破解.dylib wird nicht injiziert; ihre Injektion kann Dateiauswähler und andere Systemintegrationen beschädigen.";
+"sign_self_injection_warning" = "Sie signieren dieses Signatur-Tool selbst. Die eingebaute InAppPurchase.dylib wird nicht injiziert; ihre Injektion kann Dateiauswähler und andere Systemintegrationen beschädigen.";

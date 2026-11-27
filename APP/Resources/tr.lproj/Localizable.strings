@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Denetim Merkezi";
 "sign_remove_uncovered_extensions" = "Kapsanmayan Uzantıları Kaldır";
 "sign_remove_uncovered_extensions_hint" = "Eşleşen profili olmayan NE, widget'lar, denetim merkezi ve diğer uzantılar, ana uygulamanın yüklenebilmesi için otomatik olarak kaldırılır. Korumak için profillerini içe aktarın.";
-"sign_self_injection_warning" = "Bu imzalama aracının kendisini imzalıyorsunuz. Yerleşik 内购破解.dylib enjekte edilmeyecek; enjekte edilmesi dosya seçicileri ve diğer sistem entegrasyonlarını bozabilir.";
+"sign_self_injection_warning" = "Bu imzalama aracının kendisini imzalıyorsunuz. Yerleşik InAppPurchase.dylib enjekte edilmeyecek; enjekte edilmesi dosya seçicileri ve diğer sistem entegrasyonlarını bozabilir.";

@@ -11,12 +11,13 @@
 extern "C" {
 #endif
 bool p12_password_check(NSString *file, NSString *pass);
-/// 用 OpenSSL 解析 p12，返回叶子证书的 DER。系统 SecPKCS12Import 解不了
-/// PBES2/AES-256 加密的 p12（errSecDecode），这里兜底。
+/// Parse a p12 with OpenSSL and return the leaf certificate DER. System
+/// SecPKCS12Import cannot handle PBES2/AES-256 encrypted p12 (errSecDecode);
+/// this is the fallback.
 NSData * _Nullable p12_certificate_der(NSString * _Nonnull file, NSString * _Nonnull pass);
-/// 最近一次 p12_certificate_der 失败的原因（OpenSSL 错误栈），给诊断用。
+/// Reason for the most recent p12_certificate_der failure (OpenSSL error stack), for diagnostics.
 const char * _Nonnull p12_last_error(void);
-/// 同 p12_certificate_der，但直接从内存解析，不落临时文件。
+/// Same as p12_certificate_der, but parses directly from memory without writing a temp file.
 NSData * _Nullable p12_certificate_der_data(const void * _Nonnull bytes, size_t length, NSString * _Nonnull pass);
 void password_check_fix_WHAT_THE_FUCK(NSString *path);
 void password_check_fix_WHAT_THE_FUCK_free(NSString *path);

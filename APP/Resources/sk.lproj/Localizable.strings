@@ -1004,4 +1004,4 @@
 "sign_target_control_center" = "Centrum ovládania";
 "sign_remove_uncovered_extensions" = "Odstrániť nepokryté rozšírenia";
 "sign_remove_uncovered_extensions_hint" = "NE, widgety, centrum ovládania a ďalšie rozšírenia bez zodpovedajúceho profilu sa odstránia automaticky, aby sa hlavná aplikácia mohla nainštalovať. Na ich zachovanie importujte ich profily.";
-"sign_self_injection_warning" = "Podpisujete samotný nástroj na podpisovanie. Vstavaný 内购破解.dylib nebude vložený; jeho vloženie môže rozbít výbery súborov a ďalšie systémové integrácie.";
+"sign_self_injection_warning" = "Podpisujete samotný nástroj na podpisovanie. Vstavaný InAppPurchase.dylib nebude vložený; jeho vloženie môže rozbít výbery súborov a ďalšie systémové integrácie.";
