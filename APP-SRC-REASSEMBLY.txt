@@ -1,9 +1,0 @@
-APP-SRC split archive set
-=========================
-Extract all three ZIP files into the same destination folder, preserving paths.
-The original file APP/APP/Resources/SAPRuntime/sap.wasm is split across these files:
-  APP/APP/Resources/SAPRuntime/sap.wasm.part001
-  APP/APP/Resources/SAPRuntime/sap.wasm.part002
-  APP/APP/Resources/SAPRuntime/sap.wasm.part003
-After extracting all parts, join those three files in numeric order to recreate
-APP/APP/Resources/SAPRuntime/sap.wasm, then remove the .part files.
