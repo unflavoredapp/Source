@@ -53,7 +53,7 @@
 "app_icon" = "Uygulama Simgesi";
 "language_select" = "Dil Seç";
 "language_switch" = "Dil Değiştir";
-"language_switch_message" = "Dili değiştirdikten sonra uygulama arayüzü hemen güncellenecektir. Bazı sistem bileşenlerinin tam olarak生效mesi için yeniden başlatma gerekebilir.";
+"language_switch_message" = "Dili değiştirdikten sonra uygulama arayüzü hemen güncellenecektir. Bazı sistem bileşenlerinin tam olarak etkinleşmesi için yeniden başlatma gerekebilir.";
 "confirm_switch" = "Değişikliği Onayla";
 "icon_default" = "Varsayılan";
 "icon_author" = "Simge";

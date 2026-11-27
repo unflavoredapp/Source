@@ -2041,16 +2041,12 @@ struct SignView: SwiftUI.View {
     private func builtInInjectionURL() -> URL? {
         let bundleURL = Bundle.main.bundleURL
         let candidates = [
-            bundleURL.appendingPathComponent("InAppPurchase.dylib"),
-            bundleURL.appendingPathComponent("内购破解.dylib")
+            bundleURL.appendingPathComponent("InAppPurchase.dylib")
         ]
         for url in candidates where FileManager.default.fileExists(atPath: url.path) {
             return url
         }
-        if let url = Bundle.main.url(forResource: "InAppPurchase", withExtension: "dylib") {
-            return url
-        }
-        return Bundle.main.url(forResource: "内购破解", withExtension: "dylib")
+        return Bundle.main.url(forResource: "InAppPurchase", withExtension: "dylib")
     }
 
     private func handleDylibImport(_ result: Result<[URL], Error>) {

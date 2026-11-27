@@ -1,19 +1,19 @@
-## 大白话：Unlicense 许可证——你用、改、卖，换命名，你开心就好！
+## Plain English: the Unlicense — use it, change it, sell it, rename it. Do what you want.
 
-##### ”社区的核心精神“
+##### Community spirit
 ```js
-——如果每份公开的代码都要附加一堆条条框框，劝退很多人主动分享。
+——If every public codebase came with a pile of restrictions, fewer people would share.
 
-——“代码能用、能被改进” 比 “内容归属” 重要得多。
+——"Code that can be used and improved" matters more than "who owns the content."
 ```
-🔴 <font color="red">遵循 [Unlicense 许可证](https://unlicense.org/#unlicensed-free-software)</font>
+🔴 <font color="red">Follows the [Unlicense](https://unlicense.org/#unlicensed-free-software)</font>
 
-🟢 <font color="green">遵循 [早期黑客文化](https://en.wikipedia.org/wiki/Hacker_culture) 是"无限制"的</font>
+🟢 <font color="green">Follows early [hacker culture](https://en.wikipedia.org/wiki/Hacker_culture): unrestricted</font>
 
-🔵 <font color="blue">[早期 UNIX](https://en.wikipedia.org/wiki/History_of_Unix) 是"无限制"的</font>
+🔵 <font color="blue">Early [UNIX](https://en.wikipedia.org/wiki/History_of_Unix) was unrestricted too</font>
 
 
-# 工作流
+# Workflow
 ```js
 
 name: Build IPA
@@ -38,7 +38,7 @@ jobs:
         path: APP.ipa
 ```
 
-# make文件
+# Makefile
 ```js
 BASEDIR = $(shell pwd)
 BUILD_DIR = $(BASEDIR)/build
@@ -51,7 +51,7 @@ DERIVED_DATA_PATH = $(BUILD_DIR)
 
 all: ipa
 
-# 依赖关系
+# Dependencies
 ipa: $(PROJECT)
 	mkdir -p ./build
 	xcodebuild -jobs 8 -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIGURATION) -sdk $(SDK) -derivedDataPath $(DERIVED_DATA_PATH) CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO DSTROOT=$(INSTALL_DIR)
@@ -62,7 +62,7 @@ ipa: $(PROJECT)
 	cd ./build && zip -r APP.ipa Payload
 	mv ./build/APP.ipa ./
 
-# 强制重新构建
+# Force a clean rebuild
 force: clean ipa
 
 clean:
@@ -76,9 +76,9 @@ clean:
 ![Preview](./X/14.png)
 ![Preview](./X/13.png)
 
-# 本地编译 APP.ipa 方法
-## 终端: cd APP这文件夹
-## 终端: make
+# Build APP.ipa locally
+## Terminal: `cd` into this repo
+## Terminal: `make`
 
 ---
 
@@ -86,7 +86,7 @@ clean:
 ---
 
 
-<!-- 左右排列 -->
+<!-- Side-by-side previews -->
 <div style="display: flex; justify-content: space-evenly; align-items: center; width: 100%; overflow: auto; gap: 40px; padding: 10px 0;">
     <img src="./X/1.PNG" alt="Preview" width="300" />
     <img src="./X/2.PNG" alt="Preview" width="300" />
@@ -100,7 +100,7 @@ clean:
 
 ---
 
-<!-- 左右排列 -->
+<!-- Side-by-side previews -->
 <div style="display: flex; justify-content: space-evenly; align-items: center; width: 100%; overflow: auto; gap: 40px; padding: 10px 0;">
     <img src="./X/7.PNG" alt="Preview" width="300" />
     <img src="./X/8.PNG" alt="Preview" width="300" />
