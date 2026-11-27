@@ -40,6 +40,7 @@ struct App: SwiftUI.App {
                         .environmentObject(AppStore.this)
                         .environmentObject(languageManager)
                         .id(languageToggle)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AppLanguageChanged"))) { _ in
                             languageToggle.toggle()
                         }
@@ -47,8 +48,10 @@ struct App: SwiftUI.App {
                 } else {
                     LaunchScreenView()
                         .environmentObject(themeManager)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .preferredColorScheme(colorScheme)
             .onOpenURL { url in
                 IslandDeepLink.handle(url)

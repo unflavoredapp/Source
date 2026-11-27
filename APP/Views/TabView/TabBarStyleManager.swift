@@ -61,14 +61,18 @@ final class TabBarStyleManager: ObservableObject {
     }
 
     private init() {
+        // Always prefer the Assassin full-bleed floating shell. Users can still
+        // switch to the system tab bar from Settings if they want it back.
         if let saved = UserDefaults.standard.string(forKey: "TabBarStyle"),
-           let style = TabBarStyle(rawValue: saved) {
-            self.currentStyle = style
+           let style = TabBarStyle(rawValue: saved),
+           style == .systemDefault,
+           UserDefaults.standard.bool(forKey: "TabBarStyle.userChoseSystem") {
+            self.currentStyle = .systemDefault
         } else {
-            // Match AppAssassin: floating bar over a full-bleed content canvas.
             self.currentStyle = .floatingCard
         }
 
+        UserDefaults.standard.set(self.currentStyle.rawValue, forKey: "TabBarStyle")
         self.floatingConfig = .default
         self.loadFloatingConfig()
     }

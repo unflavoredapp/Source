@@ -154,6 +154,7 @@ struct SettingsView: View {
                 }
                 .background(Color.clear)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarHidden(true)
             .onAppear {
@@ -681,6 +682,7 @@ extension SettingsView {
         Button(action: {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 tabBarStyleManager.currentStyle = style
+                UserDefaults.standard.set(style == .systemDefault, forKey: "TabBarStyle.userChoseSystem")
             }
             let impactFeedback = UIImpactFeedbackGenerator(style: .light)
             impactFeedback.impactOccurred()
