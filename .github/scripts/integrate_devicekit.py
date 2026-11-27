@@ -24,10 +24,30 @@ def replace_once(source, old, new):
 
 def transform(inputs):
     outputs = dict(inputs)
+    # Binary XCFramework keeps only idevice.h (no module.modulemap) so archive
+    # does not collide with AppleAuth's flattened include/module.modulemap.
+    # Expose `import IDevice` via a thin clang target that owns the module map.
     source = inputs["Package.swift"]
-    start = source.index('\t\t\turl: "https://github.com/jkcoxson/idevice/')
-    end = source.index('\n\t\t)', start)
-    outputs["Package.swift"] = source[:start] + '\t\t\tpath: ".build/IDevice.xcframework"' + source[end:]
+    # Match the package-level targets array only (not `.library(..., targets: ["IDevice"])`).
+    start = source.index("\ttargets: [\n")
+    end = source.rindex("\n\t]\n)") + len("\n\t]\n)")
+    outputs["Package.swift"] = source[:start] + """\ttargets: [
+\t\t.binaryTarget(
+\t\t\tname: "IDeviceFFI",
+\t\t\tpath: ".build/IDevice.xcframework"
+\t\t),
+\t\t.target(
+\t\t\tname: "IDevice",
+\t\t\tdependencies: ["IDeviceFFI"],
+\t\t\tpath: "Sources/IDeviceModule",
+\t\t\tpublicHeadersPath: "include"
+\t\t),
+\t\t.target(
+\t\t\tname: "IDeviceSwift",
+\t\t\tdependencies: ["IDevice"]
+\t\t),
+\t]
+)""" + source[end:]
 
     key = "Sources/IDeviceSwift/Heartbeat/Heartbeat.swift"
     source = replace_once(inputs[key], '\t\tFileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("pairingFile.plist").relativePath',
@@ -123,6 +143,18 @@ def apply(kit):
             source = MARKER + source
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source)
+    # Clang module stub; idevice.h is filled in by build_device_native.py.
+    include = kit / "Sources/IDeviceModule/include"
+    include.mkdir(parents=True, exist_ok=True)
+    (include / "module.modulemap").write_text(
+        'module IDevice {\n\theader "idevice.h"\n\texport *\n}\n'
+    )
+    placeholder = include / "idevice.h"
+    if not placeholder.exists():
+        placeholder.write_text(
+            "/* Placeholder — replaced after build_device_native.py builds the XCFramework. */\n"
+            "#pragma once\n"
+        )
     print("Applied Ksign device installation overlays")
 
 
