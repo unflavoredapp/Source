@@ -20,12 +20,17 @@ Source installs signed IPAs over **OTA** by default (`itms-services` via `Signin
 
 ## Build
 
+Same flow as [`unflavoredapp/Random`](https://github.com/unflavoredapp/Random) `build.sh`:
+
 ```bash
-make            # fetches IDeviceKit, builds XCFramework (needs rustup), then unsigned IPA
-make SKIP_NATIVE=1 ipa   # skip native prep (package resolve will fail without IDeviceKit)
+./build.sh          # fetch/integrate IDeviceKit → rust XCFramework → xcodebuild archive
+                    # → ad-hoc entitlement stamp on APP + APPDeviceTunnel → APP.ipa
+make                # wraps ./build.sh
+SKIP_NATIVE=1 ./build.sh          # skip kit rebuild (needs a prior IDeviceKit)
+ADHOC_ENTITLEMENTS=0 ./build.sh   # omit ad-hoc codesign (re-signers won't see NE entitlement)
 ```
 
-CI (`.github/workflows/ios.yml`) caches `.build/device-native` and `IDeviceKit/.build/IDevice.xcframework`, then runs `make` and verifies `APPDeviceTunnel.appex` is inside the IPA.
+CI (`.github/workflows/ios.yml`) mirrors Random: macos-15, idevice + cargo + DerivedData caches, `./build.sh`, verifies `APPDeviceTunnel.appex` and no `embedded.mobileprovision`.
 
 ## Requirements (device)
 
