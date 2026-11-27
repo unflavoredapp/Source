@@ -7,7 +7,7 @@
 #
 set -uo pipefail   # NOT -e: failures are caught and explained below
 
-APP_NAME="${APP_NAME:-APP}"
+APP_NAME="${APP_NAME:-UNlicense}"
 SCHEME="${SCHEME:-APP}"
 CONFIG="${CONFIG:-Release}"
 

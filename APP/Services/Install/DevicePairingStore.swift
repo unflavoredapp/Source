@@ -36,7 +36,7 @@ enum DevicePairingStore {
     private static var query: [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: (Bundle.main.bundleIdentifier ?? "APP") + ".device-pairing",
+            kSecAttrService as String: (Bundle.main.bundleIdentifier ?? "cc.unlicense.app") + ".device-pairing",
             kSecAttrAccount as String: "local-device-v1"
         ]
     }

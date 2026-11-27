@@ -11,7 +11,7 @@ final class DecryptActivityManager {
     private var lastCounts: [String: Int] = [:]
     private var observers: [String: Task<Void, Never>] = [:]
 
-    private let log = Logger(subsystem: "com.pxx917144686.App", category: "island")
+    private let log = Logger(subsystem: "cc.unlicense.app", category: "island")
 
     private init() {
         for activity in Activity<DecryptActivityAttributes>.activities {
@@ -192,7 +192,7 @@ final class InstallActivityManager {
     private var lastSteps: [String: String] = [:]
     private var observers: [String: Task<Void, Never>] = [:]
 
-    private let log = Logger(subsystem: "com.pxx917144686.App", category: "island")
+    private let log = Logger(subsystem: "cc.unlicense.app", category: "island")
 
     private init() {
         for activity in Activity<InstallActivityAttributes>.activities {

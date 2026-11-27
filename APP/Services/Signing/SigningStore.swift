@@ -84,7 +84,7 @@ enum SigningStoreError: LocalizedError {
 }
 
 private enum SigningKeychain {
-    private static let service = "com.pxx917144686.App.signing"
+    private static let service = "cc.unlicense.app.signing"
 
     static func set(_ password: String, account: String) -> Bool {
         let query: [String: Any] = [

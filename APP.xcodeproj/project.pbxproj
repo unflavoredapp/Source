@@ -89,7 +89,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		851FD95F2E578774002136BA /* APP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = APP.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		851FD95F2E578774002136BA /* UNlicense.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UNlicense.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		939B39DEA649D26C724F3B39 /* APPWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = APPWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1D100000000000000000001 /* APP/InAppPurchase.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = APP/InAppPurchase.dylib; sourceTree = SOURCE_ROOT; };
 		C7D2CC66CF54D893E941BEA7 /* IslandActivityTypes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = IslandActivityTypes.swift; sourceTree = "<group>"; };
@@ -209,7 +209,7 @@
 		851FD9602E578774002136BA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				851FD95F2E578774002136BA /* APP.app */,
+				851FD95F2E578774002136BA /* UNlicense.app */,
 				939B39DEA649D26C724F3B39 /* APPWidgetExtension.appex */,
 				TNL10000000000000000001 /* APPDeviceTunnel.appex */,
 			);
@@ -317,7 +317,7 @@
 				IDE10000000000000000005 /* IDevice */,
 			);
 			productName = APP;
-			productReference = 851FD95F2E578774002136BA /* APP.app */;
+			productReference = 851FD95F2E578774002136BA /* UNlicense.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -636,8 +636,9 @@
 				);
 				MARKETING_VERSION = 2.7.9;
 				OTHER_LDFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.pxx917144686.App;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = cc.unlicense.app;
+				INFOPLIST_KEY_CFBundleDisplayName = UNlicense;
+				PRODUCT_NAME = UNlicense;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
 				STRIP_BITCODE_FROM_COPIED_FILES = NO;
@@ -698,8 +699,9 @@
 				);
 				MARKETING_VERSION = 2.7.9;
 				OTHER_LDFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.pxx917144686.App;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = cc.unlicense.app;
+				INFOPLIST_KEY_CFBundleDisplayName = UNlicense;
+				PRODUCT_NAME = UNlicense;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
 				STRIP_BITCODE_FROM_COPIED_FILES = NO;
@@ -734,7 +736,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 2.7.6;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pxx917144686.App.APPWidgetExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = cc.unlicense.app.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -766,7 +768,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 2.7.6;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pxx917144686.App.APPWidgetExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = cc.unlicense.app.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -797,7 +799,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 2.7.9;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pxx917144686.App.APPDeviceTunnel;
+				PRODUCT_BUNDLE_IDENTIFIER = cc.unlicense.app.tunnel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -829,7 +831,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 2.7.9;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pxx917144686.App.APPDeviceTunnel;
+				PRODUCT_BUNDLE_IDENTIFIER = cc.unlicense.app.tunnel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;

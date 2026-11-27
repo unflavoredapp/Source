@@ -24,7 +24,7 @@ Same flow as [`unflavoredapp/Random`](https://github.com/unflavoredapp/Random) `
 
 ```bash
 ./build.sh          # fetch/integrate IDeviceKit → rust XCFramework → xcodebuild archive
-                    # → ad-hoc entitlement stamp on APP + APPDeviceTunnel → APP.ipa
+                    # → ad-hoc entitlement stamp on UNlicense + APPDeviceTunnel → UNlicense.ipa
 make                # wraps ./build.sh
 SKIP_NATIVE=1 ./build.sh          # skip kit rebuild (needs a prior IDeviceKit)
 ADHOC_ENTITLEMENTS=0 ./build.sh   # omit ad-hoc codesign (re-signers won't see NE entitlement)

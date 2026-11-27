@@ -641,7 +641,7 @@
 "install_native_mode" = "Connection";
 "install_native_mode_builtin" = "Built-in";
 "install_native_mode_manual" = "Manual";
-"install_native_vpn_stuck" = "The previous local VPN did not disconnect. Turn off APP Local Installation in VPN settings and retry.";
+"install_native_vpn_stuck" = "The previous local VPN did not disconnect. Turn off UNlicense Local Installation in VPN settings and retry.";
 "install_native_vpn_disconnecting" = "The previous VPN connection is still disconnecting. Try again in a moment.";
 "install_native_vpn_connect_failed" = "The local VPN did not connect. Check VPN permission and this build's signing profiles, then try again.";
 "install_native_vpn_invalid" = "The local VPN configuration is invalid. Reset VPN settings for this app and try again.";

@@ -15,7 +15,7 @@ final class IslandActivityManager {
     private var dismissed: Set<String> = []
     private var loggedDisabled = false
 
-    private let log = Logger(subsystem: "com.pxx917144686.App", category: "island")
+    private let log = Logger(subsystem: "cc.unlicense.app", category: "island")
 
     private init() {
         endDuplicateActivities()

@@ -10,7 +10,7 @@ IDeviceKit/
 .build/
 
 # IPA output
-APP.ipa
+UNlicense.ipa
 *.ipa
 
 # Local tooling
