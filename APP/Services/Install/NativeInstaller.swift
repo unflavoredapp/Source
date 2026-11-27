@@ -5,7 +5,7 @@ import ZIPFoundation
 import IDeviceSwift
 #endif
 
-/// On-device installation through APP's built-in local VPN + pairing (idevice),
+/// On-device installation through UNlicense's built-in local VPN + pairing (idevice),
 /// matching AppAssassin / TetherLess NativeInstaller call shape.
 @MainActor
 final class NativeInstaller: ObservableObject {

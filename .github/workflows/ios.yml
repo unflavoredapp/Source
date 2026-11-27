@@ -64,7 +64,7 @@ jobs:
 
       - name: Compile unsigned IPA
         env:
-          APP_NAME: APP
+          APP_NAME: UNlicense
           SCHEME: APP
           CONFIG: Release
           ADHOC_ENTITLEMENTS: ${{ inputs.adhoc_entitlements == false && '0' || '1' }}
@@ -77,14 +77,16 @@ jobs:
       - name: Verify IPA (tunnel + unsigned)
         run: |
           set -euo pipefail
-          IPA=APP.ipa
+          IPA=UNlicense.ipa
           test -f "$IPA"
           rm -rf /tmp/app-ipa-check
           mkdir -p /tmp/app-ipa-check
           unzip -q "$IPA" -d /tmp/app-ipa-check
-          APP_BUNDLE=$(find /tmp/app-ipa-check/Payload -maxdepth 1 -type d -name '*.app' -print -quit)
+          APP_BUNDLE=$(find /tmp/app-ipa-check/Payload -maxdepth 1 -type d -name 'UNlicense.app' -print -quit)
           test -n "$APP_BUNDLE"
           test -f "$APP_BUNDLE/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_BUNDLE/Info.plist" | grep -qx 'cc.unlicense.app'
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP_BUNDLE/Info.plist" | grep -qx 'UNlicense' || true
           test -d "$APP_BUNDLE/PlugIns/APPDeviceTunnel.appex"
           if [ -f "$APP_BUNDLE/embedded.mobileprovision" ]; then
             echo "ERROR: embedded.mobileprovision exists in unsigned IPA"
@@ -96,11 +98,11 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v7
         with:
-          name: APP
-          path: APP.ipa
+          name: UNlicense
+          path: UNlicense.ipa
           if-no-files-found: error
 
-      # Phone-first delivery: drop APP.ipa into Telegram when secrets are set.
+      # Phone-first delivery: drop UNlicense.ipa into Telegram when secrets are set.
       # Do not reference secrets in `if:` — that aborts the whole workflow with 0 jobs.
       - name: Send IPA to Telegram
         if: success() && github.event_name != 'pull_request'
@@ -114,16 +116,16 @@ jobs:
             echo "Telegram secrets not configured; skipping delivery"
             exit 0
           fi
-          SIZE=$(du -h APP.ipa | awk '{print $1}')
-          CAPTION=$(printf 'APP.ipa (%s)\n%s @ %s\n%s' \
+          SIZE=$(du -h UNlicense.ipa | awk '{print $1}')
+          CAPTION=$(printf 'UNlicense.ipa (%s)\n%s @ %s\n%s' \
             "$SIZE" "${GITHUB_REPOSITORY}" "${GITHUB_REF_NAME}" "${GITHUB_SHA:0:7}")
           curl -fsS \
             -F chat_id="${TELEGRAM_CHAT_ID}" \
             -F caption="${CAPTION}" \
-            -F document=@APP.ipa \
+            -F document=@UNlicense.ipa \
             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
             >/tmp/telegram-send.json
-          echo "Sent APP.ipa to Telegram (${SIZE})"
+          echo "Sent UNlicense.ipa to Telegram (${SIZE})"
 
       - name: Upload build log
         if: always()

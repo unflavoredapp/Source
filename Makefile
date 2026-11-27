@@ -20,4 +20,4 @@ native-device:
 	python3 .github/scripts/build_device_native.py
 
 clean:
-	rm -rf build APP.ipa
+	rm -rf build UNlicense.ipa

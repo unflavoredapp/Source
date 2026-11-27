@@ -12,7 +12,7 @@ final class AppPresenceActivityManager {
     private var wasActive = false
     private var dismissed = false
 
-    private let log = Logger(subsystem: "com.pxx917144686.App", category: "island")
+    private let log = Logger(subsystem: "cc.unlicense.app", category: "island")
 
     private init() {
         if let existing = Activity<IslandAttributes>.activities.first(where: { $0.attributes.kind == IslandTaskKind.app }) {
