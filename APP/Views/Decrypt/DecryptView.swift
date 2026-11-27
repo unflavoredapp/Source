@@ -31,7 +31,9 @@ struct DecryptView: SwiftUI.View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Color.clear)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle("tab_decrypt".localized)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

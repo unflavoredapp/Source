@@ -35,28 +35,33 @@ enum TabEnum: String, CaseIterable, Hashable {
             SettingsView()
                 .environmentObject(themeManager)
                 .environmentObject(tabBarStyleManager)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .downloads:
             NavigationStack {
                 DownloadView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .decrypt:
             NavigationStack {
                 DecryptView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .sign:
             NavigationStack {
                 SignView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .search:
             SearchView()
                 .environmentObject(themeManager)
                 .environmentObject(tabBarStyleManager)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
@@ -77,24 +82,19 @@ struct TabbarView: View {
     private static let floatingTabMinWidth: CGFloat = 44
 
     var body: some View {
-        ZStack {
-            LiquidGlassBackdrop()
-                .environmentObject(themeManager)
-            Group {
-                if #available(iOS 18.0, *) {
-                    if tabBarStyleManager.currentStyle == .floatingCard {
-                        floatingCardTabView
-                    } else {
-                        systemTabView
-                    }
-                } else {
-                    standardTabView
-                }
+        Group {
+            if tabBarStyleManager.currentStyle == .floatingCard {
+                // AppAssassin shell: no SwiftUI TabView (it letterboxes content into a card).
+                assassinStyleRoot
+            } else if #available(iOS 18.0, *) {
+                systemTabView
+            } else {
+                standardTabView
             }
         }
-        .navigationViewStyle(.stack)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .tint(themeManager.accentColor)
-        .background(themeManager.backgroundColor)
+        .background(themeManager.backgroundColor.ignoresSafeArea())
         .onAppear {
             AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
             updateTabBarAppearance()
@@ -121,6 +121,33 @@ struct TabbarView: View {
         .onChange(of: tabBarStyleManager.currentStyle) { _, _ in
             updateTabBarAppearance()
         }
+    }
+
+    /// Full-bleed page switch + floating bar inset — same structure as AppAssassin `RootView`.
+    private var assassinStyleRoot: some View {
+        ZStack {
+            LiquidGlassBackdrop()
+                .environmentObject(themeManager)
+                .ignoresSafeArea()
+
+            tabPage(for: selectedTab)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .id(selectedTab)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            floatingTabBarContent
+                .padding(.horizontal, 12)
+                .padding(.bottom, 6)
+                .padding(.top, 2)
+        }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+    }
+
+    @ViewBuilder
+    private func tabPage(for tab: TabEnum) -> some View {
+        TabEnum.view(for: tab, themeManager: themeManager, tabBarStyleManager: tabBarStyleManager)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var systemTabView: some View {
@@ -174,58 +201,12 @@ struct TabbarView: View {
         }
     }
 
-    @available(iOS 18.0, *)
-
-    /// AppAssassin-style: content is edge-to-edge; the floating bar is a bottom safe-area inset
-    /// (not a card wrapping the whole UI).
-    private var floatingCardTabView: some View {
-        GeometryReader { geo in
-            ZStack {
-                LiquidGlassBackdrop()
-                    .environmentObject(themeManager)
-                    .ignoresSafeArea()
-
-                TabView(selection: $selectedTab) {
-                    ForEach(tabOrder.order, id: \.self) { tab in
-                        tabContent(for: tab)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .tag(tab)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .frame(width: geo.size.width, height: geo.size.height)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                floatingTabBarContent
-                    .padding(.horizontal, floatingHorizontalPadding(for: geo.size.width))
-                    .padding(.bottom, max(tabBarStyleManager.floatingConfig.bottomOffset, 4))
-                    .padding(.top, 4)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-    }
-
-    /// Each tab owns its own liquid-glass backdrop: the TabView container is opaque,
-    /// so a background placed on the outermost layer would be covered.
     @ViewBuilder
     private func tabContent(for tab: TabEnum) -> some SwiftUI.View {
         TabEnum.view(for: tab, themeManager: themeManager, tabBarStyleManager: tabBarStyleManager)
-            // In floating mode the system tab bar leaves a blank rectangle — hide it completely
-            .toolbar(
-                tabBarStyleManager.currentStyle == .floatingCard ? .hidden : .visible,
-                for: .tabBar
-            )
-            // iOS 26 glass tab bar ignores UITabBarAppearance; hide the background explicitly
+            .toolbar(.visible, for: .tabBar)
             .toolbarBackground(.hidden, for: .tabBar)
-    }
-
-    private func floatingHorizontalPadding(for width: CGFloat) -> CGFloat {
-        let config = tabBarStyleManager.floatingConfig
-        let tabsMinWidth = CGFloat(TabOrderStore.reorderable.count - 1) * Self.floatingTabMinWidth + 16
-        let contentMinWidth = tabsMinWidth + 16 + config.height
-        let roomForPadding = max(0, width - contentMinWidth)
-        return min(config.horizontalPadding, roomForPadding / 2)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var floatingTabBarContent: some View {
