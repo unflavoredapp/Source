@@ -83,6 +83,36 @@ def prepare(archive=None):
     return source
 
 
+def resolve_idevice_header(source=None):
+    """Prefer prepared source, then local include cache, then XCFramework Headers."""
+    candidates = []
+    if source is not None:
+        candidates.append(Path(source) / "ffi/idevice.h")
+    candidates.append(WORK / "include/idevice.h")
+    if OUTPUT.exists():
+        candidates.extend(OUTPUT.glob("*/Headers/idevice.h"))
+    for candidate in candidates:
+        if candidate.is_file() and candidate.stat().st_size > 64:
+            return candidate
+    raise RuntimeError("idevice.h not found for IDevice clang module")
+
+
+def install_clang_module_headers(source=None):
+    """Copy real idevice.h into IDeviceModule even on XCFramework cache hits.
+
+    integrate_devicekit.py only writes a placeholder header; skipping this on
+    cache reuse leaves IDeviceSwift compiling against an empty module.
+    """
+    header = resolve_idevice_header(source)
+    module_include = ROOT / "IDeviceKit/Sources/IDeviceModule/include"
+    module_include.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(header, module_include / "idevice.h")
+    (module_include / "module.modulemap").write_text(
+        'module IDevice {\n\theader "idevice.h"\n\texport *\n}\n'
+    )
+    return module_include / "idevice.h"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive")
@@ -101,6 +131,7 @@ def main():
     stamp_path = WORK / "built-stamp"
     if OUTPUT.exists() and stamp_path.exists() and stamp_path.read_text() == stamp:
         print("Using cached Ksign iDevice framework")
+        install_clang_module_headers(source)
         return
     targets = [("aarch64-apple-ios", "iphoneos"), ("aarch64-apple-ios-sim", "iphonesimulator")]
     run("rustup", "target", "add", "--toolchain", toolchain, *(target for target, _ in targets))
@@ -130,12 +161,7 @@ def main():
     for target, _ in targets:
         command += ["-library", str(source / f"target/{target}/release/libidevice_ffi.a"), "-headers", str(headers)]
     run(*command, "-output", str(OUTPUT))
-    module_include = ROOT / "IDeviceKit/Sources/IDeviceModule/include"
-    module_include.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(headers / "idevice.h", module_include / "idevice.h")
-    (module_include / "module.modulemap").write_text(
-        'module IDevice {\n\theader "idevice.h"\n\texport *\n}\n'
-    )
+    install_clang_module_headers(source)
     stamp_path.write_text(stamp)
 
 
