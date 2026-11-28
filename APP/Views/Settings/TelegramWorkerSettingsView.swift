@@ -55,7 +55,8 @@ struct TelegramWorkerSettingsView: View {
                 }
 
                 Button("telegram_worker_save".localized) {
-                    TelegramWorkerConfig.botToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+                    TelegramWorkerConfig.botToken = TelegramBotClient.normalizedToken(token)
+                    token = TelegramWorkerConfig.botToken
                     TelegramWorkerConfig.allowedChatIDsRaw = chatIDs
                     TelegramWorkerConfig.isEnabled = enabled
                     worker.reconcile()
