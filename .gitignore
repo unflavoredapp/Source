@@ -17,5 +17,7 @@ UNlicense.ipa
 .DS_Store
 /tmp/
 Tools/telegram-ipa-relay/data/
+Tools/telegram-ipa-relay/.env
+Tools/telegram-ipa-relay/node_modules/
 __pycache__/
 *.pyc
