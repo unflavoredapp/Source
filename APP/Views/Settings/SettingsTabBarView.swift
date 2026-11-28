@@ -148,7 +148,7 @@ struct SettingsTabBarView: View {
                 VStack(spacing: 0) {
                     Spacer()
                     HStack(spacing: 0) {
-                        ForEach(TabEnum.allCases, id: \.self) { tab in
+                        ForEach(TabEnum.barTabs, id: \.self) { tab in
                             VStack(spacing: 3) {
                                 Image(systemName: tab.icon)
                                     .font(.system(size: 12))
@@ -171,7 +171,7 @@ struct SettingsTabBarView: View {
                     Spacer()
                     HStack(spacing: 6) {
                         HStack(spacing: 0) {
-                            ForEach([TabEnum.settings, .downloads, .decrypt, .sign], id: \.self) { tab in
+                            ForEach(TabEnum.barTabs, id: \.self) { tab in
                                 VStack(spacing: 1) {
                                     Image(systemName: tab.icon)
                                         .font(.system(size: 9))

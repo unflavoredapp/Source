@@ -39,6 +39,39 @@ struct AppRelease: Decodable, Identifiable, Sendable {
     }
 }
 
+/// Lightweight feed published at https://unlicense.cc/updates (JSON).
+private struct UnlicenseUpdateFeed: Decodable {
+    let version: String
+    let url: URL?
+    let html_url: URL?
+    let notes: String?
+    let body: String?
+    let ipa: URL?
+    let name: String?
+
+    var pageURL: URL {
+        html_url ?? url ?? URL(string: "https://unlicense.cc/updates")!
+    }
+
+    var asRelease: AppRelease {
+        let tag = version.trimmingCharacters(in: CharacterSet(charactersIn: "vV "))
+        var assets: [AppReleaseAsset] = []
+        if let ipa {
+            assets.append(AppReleaseAsset(name: ipa.lastPathComponent, size: 0, browserDownloadURL: ipa))
+        }
+        return AppRelease(
+            id: tag.hashValue,
+            tagName: tag,
+            name: name ?? "UNlicense \(tag)",
+            body: notes ?? body,
+            prerelease: false,
+            draft: false,
+            htmlURL: pageURL,
+            assets: assets
+        )
+    }
+}
+
 @MainActor
 final class UpdateChecker: ObservableObject {
     static let shared = UpdateChecker()
@@ -55,8 +88,8 @@ final class UpdateChecker: ObservableObject {
     @Published private(set) var releases: [AppRelease] = []
     @Published private(set) var lastCheckedAt: Date?
 
-    private let releasesAPI = URL(string: "https://api.github.com/repos/pxx917144686/APP/releases?per_page=30")!
-    private let releasesPage = URL(string: "https://github.com/pxx917144686/APP/releases")!
+    /// Primary update feed (JSON preferred). Opens in browser as fallback.
+    private let updatesFeed = URL(string: "https://unlicense.cc/updates")!
     private let lastCheckKey = "APP.update.lastCheckAt"
 
     var currentVersion: String {
@@ -86,11 +119,11 @@ final class UpdateChecker: ObservableObject {
         guard state != .checking else { return }
         state = .checking
 
-        var request = URLRequest(url: releasesAPI)
+        var request = URLRequest(url: updatesFeed)
         request.timeoutInterval = 20
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("APP/\(currentVersion)", forHTTPHeaderField: "User-Agent")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("UNlicense/\(currentVersion)", forHTTPHeaderField: "User-Agent")
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -98,13 +131,12 @@ final class UpdateChecker: ObservableObject {
                 state = .failed("no response")
                 return
             }
-            guard http.statusCode == 200 else {
+            guard (200...299).contains(http.statusCode) else {
                 state = .failed("HTTP \(http.statusCode)")
                 return
             }
 
-            let list = try JSONDecoder().decode([AppRelease].self, from: data)
-            let visible = list.filter { !$0.draft && !$0.prerelease }
+            let visible = try decodeReleases(from: data)
             releases = visible
             lastCheckedAt = Date()
             UserDefaults.standard.set(Date(), forKey: lastCheckKey)
@@ -138,7 +170,24 @@ final class UpdateChecker: ObservableObject {
     }
 
     func openReleasesPage() {
-        UIApplication.shared.open(releasesPage)
+        UIApplication.shared.open(updatesFeed)
+    }
+
+    private func decodeReleases(from data: Data) throws -> [AppRelease] {
+        let decoder = JSONDecoder()
+        // GitHub Releases array
+        if let list = try? decoder.decode([AppRelease].self, from: data) {
+            return list.filter { !$0.draft && !$0.prerelease }
+        }
+        // Single GitHub release object
+        if let one = try? decoder.decode(AppRelease.self, from: data), !one.draft {
+            return [one]
+        }
+        // unlicense.cc feed
+        if let feed = try? decoder.decode(UnlicenseUpdateFeed.self, from: data) {
+            return [feed.asRelease]
+        }
+        throw URLError(.cannotParseResponse)
     }
 
     static func isNewer(_ candidate: String, than current: String) -> Bool {

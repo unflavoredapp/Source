@@ -3,74 +3,54 @@ import SwiftUI
 struct SigningHistoryRow: View {
     let options: SigningHistoryRowOptions
 
+    private var signedBadge: String {
+        let date = options.record.date.formatted(date: .numeric, time: .omitted)
+        return String(format: "sign_history_signed_badge".localized, date)
+    }
+
     var body: some View {
         Button(action: options.onSelect) {
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 8) {
-                    Image(systemName: "app.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(options.accentColor)
-                        .frame(width: 32, height: 32)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(options.accentColor.opacity(0.10))
-                        )
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: "app.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(options.accentColor)
+                    .frame(width: 48, height: 48)
+                    .background(
+                        RoundedRectangle(cornerRadius: 11, style: .continuous)
+                            .fill(options.accentColor.opacity(0.12))
+                    )
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(options.record.displayName)
-                            .font(.system(size: 12, weight: .semibold))
-                            .lineLimit(1)
-                        Text(options.record.bundleId.isEmpty ? options.record.outputName : options.record.bundleId)
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-
-                    Spacer(minLength: 4)
-
-                    if options.hasRetainedSource {
-                        Text("sign_history_source_ready".localized)
-                            .font(.system(size: 7.5, weight: .semibold))
-                            .foregroundStyle(.green)
-                    }
-                    if options.isAvailable {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(.tertiary)
-                    } else {
-                        Text("sign_history_file_missing".localized)
-                            .font(.system(size: 8, weight: .semibold))
-                            .foregroundStyle(.red)
-                    }
-                }
-
-                HStack(spacing: 8) {
-                    if !options.record.version.isEmpty {
-                        meta("v\(options.record.version)")
-                    }
-                    meta(options.record.date.formatted(date: .abbreviated, time: .shortened))
-                    if let profile = options.record.profileName {
-                        meta(profile, limit: 18)
-                    }
-                }
-
-                if let certificate = options.record.certificateName, !certificate.isEmpty {
-                    Text(certificate)
-                        .font(.system(size: 8, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(options.record.displayName)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
+
+                    Text(metaLine)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+
+                    Text(signedBadge)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(Color.primary.opacity(0.08))
+                        )
                 }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.tertiary)
             }
-            .padding(10)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.ultraThinMaterial)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5)
-            )
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -86,12 +66,12 @@ struct SigningHistoryRow: View {
         }
     }
 
-    private func meta(_ text: String, limit: Int = 40) -> some View {
-        Text(text)
-            .font(.system(size: 8, design: .monospaced))
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .truncationMode(.middle)
-            .frame(maxWidth: CGFloat(limit) * 5, alignment: .leading)
+    private var metaLine: String {
+        let version = options.record.version.isEmpty ? nil : options.record.version
+        let bundle = options.record.bundleId.isEmpty ? options.record.outputName : options.record.bundleId
+        if let version, !bundle.isEmpty {
+            return "\(version) · \(bundle)"
+        }
+        return bundle.isEmpty ? (version ?? "—") : bundle
     }
 }

@@ -1,5 +1,7 @@
 "tab_settings" = "Settings";
 "tab_downloads" = "Downloads";
+"tab_library" = "Library";
+"tab_signed" = "Signed";
 "tab_search" = "Search";
 
 "cancel" = "Cancel";
@@ -141,7 +143,15 @@
 "country" = "Country/Region";
 
 
-"search_placeholder" = "Search apps, games, developers";
+"search_placeholder" = "App Store";
+"library_status_downloaded" = "Downloaded";
+"settings_section_general" = "General";
+"settings_section_install" = "Install";
+"settings_appearance_hint" = "Appearance and tint color";
+"settings_tab_bar_hint" = "Style and tab order";
+"settings_sound_hint" = "Feedback sounds";
+"settings_island_hint" = "Live Activity / Dynamic Island";
+"settings_app_icon_hint" = "Home Screen icon";
 "search_history" = "Search History";
 "search_suggestions" = "Search Suggestions";
 "no_results" = "No Results Found";
@@ -545,7 +555,7 @@
 "tab_order_title" = "Tab Bar Order";
 "tab_order_hint" = "Drag the handles to reorder.";
 "tab_order_reset" = "Reset to Default";
-"tab_order_search_hint" = "Fixed on the right in floating style";
+"tab_order_search_hint" = "App Store search — separate from Library & Signed lists";
 "delisted_apps_short" = "Delisted";
 "legacy_apps_delisted" = "Delisted Apps";
 "install_failed_title" = "Installation failed";
@@ -579,6 +589,7 @@
 "dc_phase_done" = "Done";
 "dc_scanning" = "Scanning";
 "tab_sign" = "Sign";
+"sign_history_signed_badge" = "Signed %@";
 "sign_title" = "Signing Studio";
 "sign_subtitle" = "Import a certificate and profile, pick an IPA, sign and install.";
 "sign_cert_section" = "Certificate";

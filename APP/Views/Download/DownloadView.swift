@@ -925,7 +925,7 @@ struct DownloadView: SwiftUI.View {
             }
         }
 
-        .navigationTitle("download_title".localized)
+        .navigationTitle("tab_library".localized)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -1706,20 +1706,14 @@ struct DownloadCardView: SwiftUI.View {
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.primary.opacity(colorScheme == .dark ? 0.05 : 0.03))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(
-                    Color.primary.opacity(colorScheme == .dark ? 0.07 : 0.05),
-                    lineWidth: 0.5
-                )
+        .padding(.horizontal, 4)
+        .padding(.vertical, 6)
+        .background(Color.clear)
+        .overlay(alignment: .bottom) {
+            Divider()
+                .padding(.leading, 62)
                 .allowsHitTesting(false)
-        )
+        }
         .onAppear {
             loadExistingDecrypted()
             fileSizeText = request.localFilePath.flatMap { getFileSize(path: $0) }
@@ -1972,34 +1966,41 @@ struct DownloadCardView: SwiftUI.View {
     }
 
     private var appInfoView: some SwiftUI.View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(request.package.name)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.primary)
                 .lineLimit(1)
 
-            Text(request.package.bundleIdentifier)
-                .font(.system(size: 12))
+            Text(libraryMetaLine)
+                .font(.system(size: 13))
                 .foregroundColor(.secondary)
                 .lineLimit(1)
+                .truncationMode(.middle)
 
-            HStack(spacing: 6) {
-                Text(String(format: "version_x".localized, request.version))
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-                if let fileSizeText {
-                    Text("·")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                    Text(String(format: "file_size_x".localized, fileSizeText))
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
+            if status == DownloadStatus.completed {
+                Text("library_status_downloaded".localized)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Color.primary.opacity(0.08))
+                    )
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var libraryMetaLine: String {
+        let version = request.version
+        let bundle = request.package.bundleIdentifier
+        if !version.isEmpty, !bundle.isEmpty {
+            return "\(version) · \(bundle)"
+        }
+        if !bundle.isEmpty { return bundle }
+        return version.isEmpty ? "—" : version
     }
 
     @ViewBuilder
@@ -2448,6 +2449,59 @@ struct DownloadCardView: SwiftUI.View {
                 await MainActor.run {
                     installationProgress = 0.4
                     installationMessage = "starting_install_service".localized
+                }
+
+                // Native VPN + idevice path when selected in Settings › Install Method.
+                if NativeInstaller.isSelected {
+                    do {
+                        try await NativeInstaller.install(
+                            ipaURL: ipaURL,
+                            bundleID: bundleIdentifier,
+                            name: displayName,
+                            version: version
+                        ) { phase in
+                            Task { @MainActor in
+                                switch phase {
+                                case .idle:
+                                    break
+                                case .preparing:
+                                    installationProgress = 0.45
+                                    installationMessage = "preparing_install".localized
+                                case .connecting:
+                                    installationProgress = 0.55
+                                    installationMessage = "starting_install_service".localized
+                                case .transferring(let fraction):
+                                    installationProgress = 0.55 + (0.35 * max(0, min(1, fraction)))
+                                    installationMessage = "install_stage_in_progress".localized
+                                case .awaitingSystem:
+                                    installationProgress = 0.92
+                                    installationMessage = "install_stage_opening_system".localized
+                                case .delivered:
+                                    installationProgress = 1.0
+                                    installationMessage = "install_stage_completed".localized
+                                case .failed(let message):
+                                    installationMessage = message
+                                }
+                            }
+                        }
+                        await MainActor.run {
+                            SoundEffects.play(.success)
+                            installationProgress = 1.0
+                            installationMessage = "install_stage_completed".localized
+                            GlobalInstallationManager.shared.finishInstallation(for: request.id)
+                            isInstalling = false
+                        }
+                        if backgroundTaskID != .invalid {
+                            await MainActor.run {
+                                UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                                backgroundTaskID = .invalid
+                            }
+                        }
+                        return
+                    } catch {
+                        // Fall through to OTA itms-services if native stack isn't ready.
+                        print("[Install] Native failed, falling back to OTA: \(error.localizedDescription)")
+                    }
                 }
 
                 let port = HTTPServerManager.shared.allocatePort()
