@@ -17,3 +17,5 @@ UNlicense.ipa
 .DS_Store
 /tmp/
 Tools/telegram-ipa-relay/data/
+__pycache__/
+*.pyc
