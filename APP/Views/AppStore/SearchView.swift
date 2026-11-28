@@ -327,6 +327,12 @@ struct SearchView: SwiftUI.View {
             .navigationTitle("tab_search".localized)
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(.visible, for: .navigationBar)
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("BrowseOpenAppStoreSearch"))) { note in
+                if let term = note.userInfo?["term"] as? String, !term.isEmpty {
+                    searchKey = term
+                    Task { await performSearch() }
+                }
+            }
             .sheet(isPresented: $showVersionPicker) {
                 versionPickerSheet
                     .environmentObject(appStore)
