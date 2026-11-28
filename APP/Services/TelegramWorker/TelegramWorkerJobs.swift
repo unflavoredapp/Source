@@ -58,7 +58,11 @@ enum TelegramWorkerJobs {
 
         // Silent password re-login before every fetch so we don't prompt for 2FA again.
         do {
-            _ = try await AppStore.this.ensureFreshStoreSession(force: true)
+            do {
+                _ = try await AppStore.this.ensureFreshStoreSession(force: false)
+            } catch {
+                _ = try await AppStore.this.ensureFreshStoreSession(force: true)
+            }
             await onProgress("Store session refreshed", 0)
         } catch {
             throw JobError.downloadFailed(error.localizedDescription)

@@ -51,7 +51,7 @@ class AppStore: ObservableObject {
 
     private func restoreSessionIfNeeded() async {
         guard let account = selectedAccount else { return }
-        AuthenticationManager.shared.setCookies(account.cookies)
+        AuthenticationManager.shared.hydrateCookies(for: account)
         let isValid = await AuthenticationManager.shared.validateAccount(account)
         if isValid {
             let refreshed = AuthenticationManager.shared.refreshCookies(for: account)
@@ -61,14 +61,17 @@ class AppStore: ObservableObject {
             }
             try? AuthenticationManager.shared.saveAllAccounts(savedAccounts)
             _ = SessionManager.shared
-        } else if savedAccounts.count > 1 {
-            logoutAccount()
-        } else {
-            for c in HTTPCookieStorage.shared.cookies ?? [] where c.domain.lowercased().contains("apple.com") {
-                HTTPCookieStorage.shared.deleteCookie(c)
-            }
-            NotificationCenter.default.post(name: .sessionInvalid, object: nil)
+            return
         }
+        // Cookie jar empty / stale — silent password reauth. Never delete the account for this.
+        if let refreshed = try? await ensureFreshStoreSession(force: true) {
+            selectedAccount = refreshed
+            _ = SessionManager.shared
+            return
+        }
+        // Keep the saved account; UI may prompt for interactive sign-in if Apple needs 2FA.
+        NotificationCenter.default.post(name: .sessionInvalid, object: nil)
+        _ = SessionManager.shared
     }
 
     func loginAccount(email: String, password: String, code: String?) async throws {
@@ -95,10 +98,16 @@ class AppStore: ObservableObject {
             savedAccounts.append(account)
             selectedAccountIndex = savedAccounts.count - 1
         }
-        selectedAccount = account
+        // Capture cookies from the auth response jar onto the saved account.
+        let withCookies = AuthenticationManager.shared.refreshCookies(for: account)
+        if let idx = savedAccounts.firstIndex(where: { $0.email == withCookies.email }) {
+            savedAccounts[idx] = withCookies
+        }
+        selectedAccount = withCookies
         persistSelectedIndex()
-        StoreRequest.shared.savePassword(password, for: account.email)
+        StoreRequest.shared.savePassword(password, for: withCookies.email)
         try? AuthenticationManager.shared.saveAllAccounts(savedAccounts)
+        SessionManager.shared.resetSessionState()
     }
 
     func logoutAccount() {
@@ -158,7 +167,7 @@ class AppStore: ObservableObject {
             return
         }
 
-        AuthenticationManager.shared.setCookies(account.cookies)
+        AuthenticationManager.shared.hydrateCookies(for: account)
 
         if await AuthenticationManager.shared.validateAccount(account) {
             let updatedAccount = AuthenticationManager.shared.refreshCookies(for: account)
@@ -174,7 +183,8 @@ class AppStore: ObservableObject {
                 selectedAccount = refreshed
                 return
             }
-            logoutAccount()
+            // Keep account on disk — don't force logout when silent reauth needs 2FA.
+            NotificationCenter.default.post(name: .sessionInvalid, object: nil)
         }
     }
 
@@ -186,7 +196,7 @@ class AppStore: ObservableObject {
             throw StoreError.authenticationFailedWithDetails("session_err_no_account".localized)
         }
         guard let password = StoreRequest.shared.storedPassword(for: account.email), !password.isEmpty else {
-            AuthenticationManager.shared.setCookies(account.cookies)
+            AuthenticationManager.shared.hydrateCookies(for: account)
             if await AuthenticationManager.shared.validateAccount(account) {
                 return account
             }
@@ -197,7 +207,7 @@ class AppStore: ObservableObject {
         if !force,
            let last = lastSilentReauthAt[email],
            Date().timeIntervalSince(last) < silentReauthCooldown {
-            AuthenticationManager.shared.setCookies(account.cookies)
+            AuthenticationManager.shared.hydrateCookies(for: account)
             return account
         }
 
