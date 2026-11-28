@@ -96,46 +96,56 @@ struct TabbarView: View {
 
     private static let floatingTabMinWidth: CGFloat = 44
 
+    // Split body so the type checker can finish (CI: "unable to type-check in reasonable time").
     var body: some View {
-        Group {
-            if tabBarStyleManager.currentStyle == .floatingCard {
-                assassinStyleRoot
-            } else if #available(iOS 18.0, *) {
-                systemTabView
-            } else {
-                standardTabView
+        withLifecycle(rootChrome)
+    }
+
+    private var rootChrome: some View {
+        rootContent
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .tint(themeManager.accentColor)
+            .background(FlatChrome.canvas.ignoresSafeArea())
+            .preferredColorScheme(themeManager.liquidGlassEnabled ? nil : .dark)
+    }
+
+    @ViewBuilder
+    private var rootContent: some View {
+        if tabBarStyleManager.currentStyle == .floatingCard {
+            assassinStyleRoot
+        } else {
+            standardTabView
+        }
+    }
+
+    private func withLifecycle<Content: View>(_ content: Content) -> some View {
+        content
+            .onAppear {
+                AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
+                updateTabBarAppearance()
             }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .tint(themeManager.accentColor)
-        .background(FlatChrome.canvas.ignoresSafeArea())
-        .preferredColorScheme(themeManager.liquidGlassEnabled ? nil : .dark)
-        .onAppear {
-            AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
-            updateTabBarAppearance()
-        }
-        .onReceive(router.$pendingTab) { requested in
-            if let requested {
-                selectedTab = requested
-                router.pendingTab = nil
+            .onReceive(router.$requested) { requested in
+                if let requested {
+                    selectedTab = requested
+                    router.requested = nil
+                }
             }
-        }
-        .onChange(of: selectedTab) { _, newValue in
-            AnalyticsManager.shared.trackScreen(newValue.rawValue)
-            UserDefaults.standard.set(newValue.rawValue, forKey: "initialTab")
-        }
-        .onChange(of: router.pendingTab) { _, newValue in
-            if let newValue {
-                selectedTab = newValue
-                router.pendingTab = nil
+            .onChange(of: selectedTab) { _, newValue in
+                AnalyticsManager.shared.trackScreen(newValue.rawValue)
+                UserDefaults.standard.set(newValue.rawValue, forKey: "initialTab")
             }
-        }
-        .onChange(of: themeManager.accentColor) { _, _ in
-            updateTabBarAppearance()
-        }
-        .onChange(of: tabBarStyleManager.currentStyle) { _, _ in
-            updateTabBarAppearance()
-        }
+            .onChange(of: router.requested) { _, newValue in
+                if let newValue {
+                    selectedTab = newValue
+                    router.requested = nil
+                }
+            }
+            .onChange(of: themeManager.accentColor) { _, _ in
+                updateTabBarAppearance()
+            }
+            .onChange(of: tabBarStyleManager.currentStyle) { _, _ in
+                updateTabBarAppearance()
+            }
     }
 
     private var assassinStyleRoot: some View {
@@ -158,10 +168,6 @@ struct TabbarView: View {
     private func tabPage(for tab: TabEnum) -> some View {
         TabEnum.view(for: tab, themeManager: themeManager, tabBarStyleManager: tabBarStyleManager)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var systemTabView: some View {
-        standardTabView
     }
 
     @ViewBuilder
