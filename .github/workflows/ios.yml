@@ -58,9 +58,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build/DerivedData
-          key: xcode-dd-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('APP.xcodeproj/project.pbxproj', 'APP.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'build.sh') }}
+          # v2: IDevice is a clang wrapper + IDeviceFFI binary; do not restore v1 caches
+          # that still expect a binary-only IDevice.o layout.
+          key: xcode-dd-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('APP.xcodeproj/project.pbxproj', 'APP.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'build.sh', '.github/scripts/integrate_devicekit.py', '.github/scripts/build_device_native.py', 'Native/Device/**') }}
           restore-keys: |
-            xcode-dd-v1-${{ runner.os }}-${{ runner.arch }}-
+            xcode-dd-v2-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Compile unsigned IPA
         env:
