@@ -96,14 +96,13 @@ enum TelegramWorkerConfig {
         set { UserDefaults.standard.set(max(0, newValue), forKey: appsCountKey) }
     }
 
-    /// Prefer lifetime completions; fall back to on-device download list size.
+    /// Apps count shown next to DELvEK on sharp cards.
     static var displayedAppsCount: Int {
-        let downloads = UnifiedDownloadManager.shared.downloadRequests.count
-        return max(completedAppsCount, downloads)
+        completedAppsCount
     }
 
     static func recordCompletedApp() {
-        completedAppsCount = displayedAppsCount + 1
+        completedAppsCount += 1
     }
 
     private enum Keychain {

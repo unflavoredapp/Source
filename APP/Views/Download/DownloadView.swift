@@ -2002,6 +2002,7 @@ struct DownloadCardView: SwiftUI.View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    @ViewBuilder
     private var actionButtonView: some SwiftUI.View {
         // Completed decrypt/install live in the card footer — keep top clean.
         if status == DownloadStatus.completed, request.localFilePath != nil {
