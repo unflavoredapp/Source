@@ -109,6 +109,27 @@ extension View {
         }
     }
 
+    /// Translucent glass without the opaque grey card fill (for floating tab chrome).
+    @ViewBuilder
+    func clearLiquidGlassSurface(cornerRadius: CGFloat = 16) -> some View {
+        if #available(iOS 26.0, *) {
+            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        } else {
+            self
+                .background {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(Color.white.opacity(0.08))
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                        .compositingGroup()
+                        .opacity(0.72)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.22), lineWidth: 0.6)
+                )
+        }
+    }
+
     @ViewBuilder
     func liquidGlassCircle() -> some View {
         if #available(iOS 26.0, *) {
@@ -117,6 +138,23 @@ extension View {
             self
                 .background(.ultraThinMaterial, in: Circle())
                 .overlay(Circle().strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5))
+        }
+    }
+
+    @ViewBuilder
+    func clearLiquidGlassCircle() -> some View {
+        if #available(iOS 26.0, *) {
+            self.glassEffect(.regular, in: Circle())
+        } else {
+            self
+                .background {
+                    Circle()
+                        .fill(Color.white.opacity(0.08))
+                        .background(.ultraThinMaterial, in: Circle())
+                        .compositingGroup()
+                        .opacity(0.72)
+                }
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5))
         }
     }
 }

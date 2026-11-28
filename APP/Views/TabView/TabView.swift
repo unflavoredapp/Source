@@ -222,8 +222,11 @@ struct TabbarView: View {
                         .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
                 }
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 10)
             .frame(height: tabHeight)
+            // Clear glass — keep frost, drop the solid grey backdrop.
+            .clearLiquidGlassSurface(cornerRadius: config.cornerRadius)
 
             Button(action: {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
@@ -234,9 +237,14 @@ struct TabbarView: View {
             }) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: tabHeight * 0.42, weight: .semibold))
-                    .foregroundStyle(selectedTab == .search ? themeManager.accentColor : Color.secondary.opacity(0.7))
-                    .frame(width: tabHeight * 0.7, height: tabHeight)
-                    .contentShape(Rectangle())
+                    .foregroundStyle(selectedTab == .search ? Color.white : Color.primary.opacity(0.7))
+                    .frame(width: tabHeight, height: tabHeight)
+                    .background {
+                        if selectedTab == .search {
+                            Circle().fill(themeManager.accentColor)
+                        }
+                    }
+                    .clearLiquidGlassCircle()
             }
             .buttonStyle(PlainButtonStyle())
         }
