@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// DELvEK-style Browse feed — app cards with screenshots. App Store search lives on the separate Search control.
+/// DELvEK **repo** browse — separate from App Store Search (`SearchView` + floating top bar).
 struct BrowseView: View {
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var appStore: AppStore
@@ -9,6 +9,7 @@ struct BrowseView: View {
     @State private var errorText: String?
     @State private var selectedApp: iTunesSearchResult?
     @State private var downloadingIds: Set<Int> = []
+    @State private var showAppStoreSearch = false
 
     private let catalogCount = 1776
 
@@ -19,7 +20,7 @@ struct BrowseView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
-                        header
+                        repoHeader
 
                         if loading && apps.isEmpty {
                             ProgressView()
@@ -56,27 +57,47 @@ struct BrowseView: View {
                             .resizable()
                             .scaledToFill()
                             .frame(width: 28, height: 28)
-                            .clipShape(Circle())
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         Text("DELvEK.NET")
                             .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(.white)
                     }
                 }
+            }
+            .fullScreenCover(isPresented: $showAppStoreSearch) {
+                SearchView(showsDismissButton: true)
+                    .environmentObject(themeManager)
+                    .environmentObject(appStore)
             }
             .task { await loadFeatured(force: false) }
         }
     }
 
-    private var header: some View {
+    /// Matches DELvEK: “1,776 Apps” · red handle on the right.
+    private var repoHeader: some View {
         HStack {
             Text(String(format: "browse_apps_count".localized, catalogCount.formatted()))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.85))
             Spacer()
-            Text("powered_by_delvek".localized)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(themeManager.accentColor)
+            Text(repoHandle)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(red: 1.0, green: 0.23, blue: 0.19))
         }
         .padding(.horizontal, 16)
+    }
+
+    private var repoHandle: String {
+        if let account = appStore.selectedAccount {
+            let name = account.fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty { return name }
+            let email = account.email
+            if let at = email.firstIndex(of: "@") {
+                return String(email[..<at])
+            }
+            return email
+        }
+        return "browse_repo_handle".localized
     }
 
     private func loadFeatured(force: Bool) async {
@@ -121,9 +142,8 @@ struct BrowseView: View {
 
     private func startGet(_ app: iTunesSearchResult) {
         downloadingIds.insert(app.trackId)
-        // Handoff: jump to Search so the existing download/purchase flow can continue.
-        TabRouter.shared.select(.search)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        showAppStoreSearch = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             NotificationCenter.default.post(
                 name: Notification.Name("BrowseOpenAppStoreSearch"),
                 object: nil,

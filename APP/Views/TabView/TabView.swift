@@ -6,7 +6,7 @@ enum TabEnum: String, CaseIterable, Hashable {
     case downloads
     case sign
     case settings
-    /// Separate floating Search control — App Store results mockup / live search.
+    /// App Store Search — equal tab between Library and Signed.
     case search
     /// Kept for deep links / Island; not shown in the tab bar.
     case decrypt
@@ -24,18 +24,17 @@ enum TabEnum: String, CaseIterable, Hashable {
 
     var icon: String {
         switch self {
-        case .browse:    return "square.grid.3x3.fill"
-        case .settings:  return "gearshape.fill"
+        case .browse:    return "circle.grid.3x3.fill"
         case .downloads: return "square.grid.2x2.fill"
-        case .decrypt:   return "lock.rectangle.stack.fill"
-        case .sign:
-            return UIImage(systemName: "signature.zh") != nil ? "signature.zh" : "signature"
         case .search:    return "magnifyingglass"
+        case .sign:      return "signature"
+        case .settings:  return "gearshape.fill"
+        case .decrypt:   return "folder.fill"
         }
     }
 
-    /// Pill tabs only — Search is the separate floating control.
-    static var barTabs: [TabEnum] { [.browse, .downloads, .sign, .settings] }
+    /// Browse · Library · Search · Signed · Settings
+    static var barTabs: [TabEnum] { [.browse, .downloads, .search, .sign, .settings] }
 
     @ViewBuilder
     static func view(for tab: TabEnum, themeManager: ThemeManager, tabBarStyleManager: TabBarStyleManager) -> some View {
@@ -72,6 +71,7 @@ enum TabEnum: String, CaseIterable, Hashable {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .search:
+            // App Store search — separate from DELvEK repo Browse.
             SearchView()
                 .environmentObject(themeManager)
                 .environmentObject(tabBarStyleManager)
@@ -84,7 +84,7 @@ struct TabbarView: View {
     @State private var selectedTab: TabEnum = {
         if let raw = UserDefaults.standard.string(forKey: "initialTab"),
            let tab = TabEnum(rawValue: raw),
-           TabEnum.barTabs.contains(tab) || tab == .search || tab == .decrypt {
+           TabEnum.barTabs.contains(tab) || tab == .decrypt {
             return tab
         }
         return .browse
@@ -147,12 +147,9 @@ struct TabbarView: View {
                 .id(selectedTab)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // App Store floating top bar lives inside SearchView only — not on repo Browse.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            let config = tabBarStyleManager.floatingConfig
             floatingTabBarContent
-                .padding(.horizontal, config.horizontalPadding)
-                .padding(.bottom, max(0, config.bottomOffset))
-                .padding(.top, 2)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }
@@ -176,7 +173,6 @@ struct TabbarView: View {
         }
     }
 
-    /// Bar tabs + dedicated Search (`role: .search`) for the App Store mockup.
     @available(iOS 18.0, *)
     private var modernStandardTabView: some View {
         TabView(selection: $selectedTab) {
@@ -187,19 +183,13 @@ struct TabbarView: View {
                     Label(tab.title, systemImage: tab.icon)
                 }
             }
-
-            Tab(value: TabEnum.search, role: .search) {
-                tabContent(for: .search)
-            } label: {
-                Label(TabEnum.search.title, systemImage: TabEnum.search.icon)
-            }
         }
     }
 
     @ViewBuilder
     private var legacyStandardTabView: some View {
         TabView(selection: $selectedTab) {
-            ForEach(tabOrder.order + [.search], id: \.self) { tab in
+            ForEach(tabOrder.order, id: \.self) { tab in
                 tabContent(for: tab)
                     .tabItem {
                         Label {
@@ -223,61 +213,47 @@ struct TabbarView: View {
 
     private var floatingTabBarContent: some View {
         let config = tabBarStyleManager.floatingConfig
-        let tabHeight = config.height
+        let tabHeight = max(config.height, 52)
 
-        return HStack(spacing: 16) {
-            HStack(spacing: 0) {
-                ForEach(tabOrder.order, id: \.self) { tab in
-                    tabButton(for: tab, height: tabHeight)
-                        .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
-                }
+        // Equal SF Symbol tabs — Search sits between Library and Signed (no circle background).
+        return HStack(spacing: 0) {
+            ForEach(tabOrder.order, id: \.self) { tab in
+                tabButton(for: tab, height: tabHeight)
+                    .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 10)
-            .frame(height: tabHeight)
-            .clearLiquidGlassSurface(cornerRadius: config.cornerRadius)
-
-            Button(action: {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
-                    selectedTab = .search
-                }
-                let impactMed = UIImpactFeedbackGenerator(style: .light)
-                impactMed.impactOccurred()
-            }) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: tabHeight * 0.42, weight: .semibold))
-                    .foregroundStyle(selectedTab == .search ? Color.white : Color.primary.opacity(0.7))
-                    .frame(width: tabHeight, height: tabHeight)
-                    .background {
-                        if selectedTab == .search {
-                            Circle().fill(themeManager.accentColor)
-                        }
-                    }
-                    .clearLiquidGlassCircle()
-            }
-            .buttonStyle(PlainButtonStyle())
-            .accessibilityLabel("tab_search".localized)
+        }
+        .padding(.horizontal, 4)
+        .padding(.top, 4)
+        .padding(.bottom, 2)
+        .frame(height: tabHeight)
+        .frame(maxWidth: .infinity)
+        .background(FlatChrome.tabBar)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(FlatChrome.hairline)
+                .frame(height: 0.5)
         }
     }
 
     private func tabButton(for tab: TabEnum, height: CGFloat) -> some View {
-        Button(action: {
+        let active = selectedTab == tab
+        return Button(action: {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
                 selectedTab = tab
             }
-            let impactMed = UIImpactFeedbackGenerator(style: .light)
-            impactMed.impactOccurred()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: min(22, height * 0.42), weight: selectedTab == tab ? .semibold : .regular))
-                    .foregroundStyle(selectedTab == tab ? themeManager.accentColor : .secondary.opacity(0.7))
+                    .font(.system(size: 20, weight: .regular))
+                    .symbolRenderingMode(.monochrome)
+                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.40))
 
                 Text(tab.title)
-                    .font(.system(size: min(11, height * 0.2), weight: selectedTab == tab ? .semibold : .regular))
-                    .foregroundStyle(selectedTab == tab ? themeManager.accentColor : .secondary.opacity(0.7))
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.40))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.75)
             }
             .contentShape(Rectangle())
             .frame(maxHeight: .infinity)

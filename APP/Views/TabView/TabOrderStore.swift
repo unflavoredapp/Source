@@ -5,12 +5,12 @@ import SwiftUI
 final class TabOrderStore: ObservableObject {
     static let shared = TabOrderStore()
 
-    /// Browse · Library · Signed · Settings — Search stays on the separate floating control.
+    /// Browse · Library · Search · Signed · Settings
     static let reorderable: [TabEnum] = TabEnum.barTabs
 
     @Published private(set) var order: [TabEnum]
 
-    private let storageKey = "tab_order_v7"
+    private let storageKey = "tab_order_v8"
 
     private init() {
         let saved = UserDefaults.standard.stringArray(forKey: storageKey) ?? []
@@ -18,6 +18,13 @@ final class TabOrderStore: ObservableObject {
         restored = restored.filter { Self.reorderable.contains($0) }
         for (index, tab) in Self.reorderable.enumerated() where !restored.contains(tab) {
             restored.insert(tab, at: min(index, restored.count))
+        }
+        // Prefer canonical middle Search placement when migrating from older orders.
+        if !saved.contains("search") || restored != Self.reorderable {
+            let hasCustomOrder = !saved.isEmpty && Set(saved) == Set(Self.reorderable.map(\.rawValue))
+            if !hasCustomOrder {
+                restored = Self.reorderable
+            }
         }
         if restored.isEmpty {
             restored = Self.reorderable
