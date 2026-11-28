@@ -143,8 +143,11 @@ def apply(kit):
             source = MARKER + source
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source)
-    # Clang module stub; idevice.h is filled in by build_device_native.py.
-    include = kit / "Sources/IDeviceModule/include"
+    # Clang module wrapper; idevice.h is filled in by build_device_native.py.
+    # A tiny .c anchor is required so archive produces IDevice.o (header-only
+    # targets leave the app linker looking for a missing object file).
+    module = kit / "Sources/IDeviceModule"
+    include = module / "include"
     include.mkdir(parents=True, exist_ok=True)
     (include / "module.modulemap").write_text(
         'module IDevice {\n\theader "idevice.h"\n\texport *\n}\n'
@@ -155,6 +158,10 @@ def apply(kit):
             "/* Placeholder — replaced after build_device_native.py builds the XCFramework. */\n"
             "#pragma once\n"
         )
+    (module / "stub.c").write_text(
+        "/* Anchor object for the IDevice clang target (symbols live in IDeviceFFI). */\n"
+        "void unlicense_idevice_module_anchor(void) {}\n"
+    )
     print("Applied Ksign device installation overlays")
 
 
