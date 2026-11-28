@@ -78,7 +78,6 @@ struct KLineDownloadProgressView: View {
 
             HeartbeatTracePanel(
                 samples: samples,
-                progress: max(0, min(1, progress)),
                 completedBytes: completedBytes,
                 totalBytes: totalBytes,
                 color: color,
@@ -122,13 +121,17 @@ struct KLineDownloadProgressView: View {
 
 private struct HeartbeatTracePanel: View {
     let samples: [DownloadRuntime.SpeedSample]
-    let progress: Double
     let completedBytes: Int64
     let totalBytes: Int64
     let color: Color
     let isLive: Bool
 
-    private let maxPoints = 480
+    @State private var scrubFraction: CGFloat?
+    @State private var plotWidth: CGFloat = 1
+    @State private var plotOriginX: CGFloat = 0
+
+    private let maxPoints = 360
+    private let emaAlpha = 0.28
     private let leftInset: CGFloat = 30
     private let rightInset: CGFloat = 6
     private let topInset: CGFloat = 23
@@ -138,51 +141,95 @@ private struct HeartbeatTracePanel: View {
         var current: Double
         var average: Double
         var peak: Double
-        var peakFraction: Double
+        var peakTimeFraction: Double
         var elapsed: Double
         var remainingBytes: Int64
     }
 
-    private var denominator: Double {
-        if totalBytes > 0 { return Double(totalBytes) }
-        return Double(max(completedBytes, samples.last?.bytes ?? 0, 1))
+    private struct PlotPoint {
+        var timeFraction: Double
+        var speed: Double
+        var rawSpeed: Double
+        var bytes: Int64
+        var elapsed: Double
     }
 
-    private var lastFraction: Double {
-        guard let last = samples.last else { return 0 }
-        return max(0, min(1, Double(last.bytes) / denominator))
+    private var t0: Double { samples.first?.time ?? 0 }
+    private var t1: Double { samples.last?.time ?? t0 }
+    private var duration: Double { max(t1 - t0, 0.001) }
+
+    private var plotSeries: [PlotPoint] {
+        guard samples.count >= 2 else { return [] }
+        let step = max(1, samples.count / maxPoints)
+        var picked: [DownloadRuntime.SpeedSample] = []
+        var index = 0
+        while index < samples.count {
+            picked.append(samples[index])
+            index += step
+        }
+        if let last = samples.last, picked.last?.time != last.time {
+            picked.append(last)
+        }
+
+        var ema = max(0, picked[0].speed)
+        var points: [PlotPoint] = []
+        points.reserveCapacity(picked.count)
+        for sample in picked {
+            let raw = max(0, sample.speed)
+            ema = emaAlpha * raw + (1 - emaAlpha) * ema
+            let elapsed = max(0, sample.time - t0)
+            points.append(PlotPoint(
+                timeFraction: elapsed / duration,
+                speed: ema,
+                rawSpeed: raw,
+                bytes: sample.bytes,
+                elapsed: elapsed
+            ))
+        }
+        return points
     }
 
     private var stats: Stats {
-        let speeds = samples.map { max(0, $0.speed) }
-        let peakSample = samples.max { $0.speed < $1.speed }
-        let peakFraction = peakSample.map { max(0, min(1, Double($0.bytes) / denominator)) } ?? 0
-        let elapsed = max(0, (samples.last?.time ?? 0) - (samples.first?.time ?? 0))
+        let series = plotSeries
         let remaining: Int64
         if totalBytes > 0 {
             remaining = max(0, totalBytes - max(0, completedBytes))
         } else {
             remaining = 0
         }
-        guard !speeds.isEmpty else {
-            return Stats(current: 0, average: 0, peak: 0, peakFraction: peakFraction,
+        guard !series.isEmpty else {
+            return Stats(current: 0, average: 0, peak: 0, peakTimeFraction: 0,
                          elapsed: 0, remainingBytes: remaining)
         }
-        let average = speeds.reduce(0, +) / Double(speeds.count)
-        return Stats(current: speeds.last ?? 0, average: average, peak: speeds.max() ?? 0,
-                     peakFraction: peakFraction, elapsed: elapsed, remainingBytes: remaining)
+        let rawSpeeds = samples.map { max(0, $0.speed) }
+        let peakRaw = rawSpeeds.max() ?? 0
+        let peakSample = samples.max { $0.speed < $1.speed }
+        let peakFraction = peakSample.map { max(0, min(1, ($0.time - t0) / duration)) } ?? 0
+        let average = rawSpeeds.isEmpty ? 0 : rawSpeeds.reduce(0, +) / Double(rawSpeeds.count)
+        return Stats(
+            current: series.last?.rawSpeed ?? 0,
+            average: average,
+            peak: peakRaw,
+            peakTimeFraction: peakFraction,
+            elapsed: duration,
+            remainingBytes: remaining
+        )
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !isLive)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !isLive || scrubFraction != nil)) { timeline in
             Canvas { context, size in
-                let plot = CGRect(x: leftInset, y: topInset,
-                                  width: max(1, size.width - leftInset - rightInset),
-                                  height: max(1, size.height - topInset - bottomInset))
+                let plot = CGRect(
+                    x: leftInset,
+                    y: topInset,
+                    width: max(1, size.width - leftInset - rightInset),
+                    height: max(1, size.height - topInset - bottomInset)
+                )
                 let range = axisRange()
                 let stats = stats
+                let series = plotSeries
+                let points = makePoints(series: series, plot: plot, range: range)
 
-                let points = makePoints(plot: plot, range: range)
                 drawHUD(&context, plot: plot, stats: stats, hasData: points.count >= 2)
 
                 guard points.count >= 2 else {
@@ -195,14 +242,49 @@ private struct HeartbeatTracePanel: View {
                 drawAverageLine(&context, plot: plot, range: range, stats: stats)
                 drawArea(&context, plot: plot, points: points)
                 drawTrace(&context, points: points)
-                drawNodes(&context, points: points)
                 drawPeak(&context, plot: plot, range: range, stats: stats)
-                drawHead(&context, plot: plot, points: points,
-                         pulse: Self.pulsePhase(at: timeline.date))
+
+                if let scrub = scrubFraction {
+                    drawScrub(
+                        &context,
+                        plot: plot,
+                        range: range,
+                        series: series,
+                        fraction: Double(scrub)
+                    )
+                } else {
+                    drawHead(
+                        &context,
+                        plot: plot,
+                        points: points,
+                        pulse: Self.pulsePhase(at: timeline.date)
+                    )
+                }
             }
         }
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(key: ChartSizeKey.self, value: geo.size)
+            }
+        )
+        .onPreferenceChange(ChartSizeKey.self) { size in
+            plotWidth = max(1, size.width - leftInset - rightInset)
+            plotOriginX = leftInset
+        }
+        .gesture(scrubGesture)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .accessibilityHidden(true)
+    }
+
+    private var scrubGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                let x = value.location.x - plotOriginX
+                scrubFraction = CGFloat(max(0, min(1, x / max(plotWidth, 1))))
+            }
+            .onEnded { _ in
+                scrubFraction = nil
+            }
     }
 
     private static func pulsePhase(at date: Date) -> Double {
@@ -211,7 +293,7 @@ private struct HeartbeatTracePanel: View {
     }
 
     private func axisRange() -> (lower: Double, upper: Double, step: Double) {
-        let speeds = samples.map { max(0, $0.speed) }
+        let speeds = plotSeries.map(\.speed)
         guard let maxSpeed = speeds.max(), let minSpeed = speeds.min() else {
             return (0, 1_048_576, 262_144)
         }
@@ -239,23 +321,14 @@ private struct HeartbeatTracePanel: View {
         return nice * base
     }
 
-    private func makePoints(plot: CGRect, range: (lower: Double, upper: Double, step: Double)) -> [CGPoint] {
-        guard samples.count >= 2 else { return [] }
-        let step = max(1, samples.count / maxPoints)
-        var picked: [DownloadRuntime.SpeedSample] = []
-        var index = 0
-        while index < samples.count {
-            picked.append(samples[index])
-            index += step
-        }
-        if let last = samples.last, picked.last?.bytes != last.bytes {
-            picked.append(last)
-        }
-
-        return picked.map { sample in
-            let fraction = max(0, min(1, Double(sample.bytes) / denominator))
-            let x = plot.minX + plot.width * CGFloat(fraction)
-            let ratio = CGFloat(max(0, min(1, (max(0, sample.speed) - range.lower) / (range.upper - range.lower))))
+    private func makePoints(
+        series: [PlotPoint],
+        plot: CGRect,
+        range: (lower: Double, upper: Double, step: Double)
+    ) -> [CGPoint] {
+        series.map { point in
+            let x = plot.minX + plot.width * CGFloat(max(0, min(1, point.timeFraction)))
+            let ratio = CGFloat(max(0, min(1, (point.speed - range.lower) / (range.upper - range.lower))))
             let y = plot.maxY - plot.height * ratio
             return CGPoint(x: x, y: y)
         }
@@ -263,6 +336,28 @@ private struct HeartbeatTracePanel: View {
 
     private func drawHUD(_ context: inout GraphicsContext, plot: CGRect,
                          stats: Stats, hasData: Bool) {
+        if let scrub = scrubFraction, let point = sample(at: Double(scrub)) {
+            let title = Text(String(
+                format: "chart_hud_scrub".localized,
+                speedText(point.rawSpeed),
+                elapsedText(point.elapsed),
+                DownloadByteFormatter.file.string(fromByteCount: max(0, point.bytes))
+            ))
+            .font(.system(size: 7.5, weight: .semibold, design: .monospaced))
+            .foregroundColor(color)
+            context.draw(title, at: CGPoint(x: plot.minX, y: 2), anchor: .topLeading)
+
+            let detail = Text(String(
+                format: "chart_hud_detail".localized,
+                DownloadByteFormatter.file.string(fromByteCount: max(0, stats.remainingBytes)),
+                elapsedText(stats.elapsed)
+            ))
+            .font(.system(size: 6.5, weight: .medium, design: .monospaced))
+            .foregroundColor(.secondary.opacity(0.75))
+            context.draw(detail, at: CGPoint(x: plot.minX, y: 12), anchor: .topLeading)
+            return
+        }
+
         let title: Text
         if hasData {
             title = Text(String(
@@ -271,8 +366,8 @@ private struct HeartbeatTracePanel: View {
                 speedText(stats.average),
                 speedText(stats.peak)
             ))
-                .font(.system(size: 7.5, weight: .medium, design: .monospaced))
-                .foregroundColor(.secondary)
+            .font(.system(size: 7.5, weight: .medium, design: .monospaced))
+            .foregroundColor(.secondary)
         } else {
             title = Text("download_waiting_sample".localized)
                 .font(.system(size: 7.5, weight: .medium, design: .monospaced))
@@ -329,15 +424,16 @@ private struct HeartbeatTracePanel: View {
 
         guard hasCurve else { return }
 
+        // True time axis — ticks at equal elapsed-time fractions.
         let fractions: [Double] = plot.width < 280 ? [0, 1.0 / 3.0, 2.0 / 3.0, 1] : [0, 0.25, 0.5, 0.75, 1]
         var vertical = Path()
         for fraction in fractions {
-            let x = plot.minX + plot.width * CGFloat(lastFraction * fraction)
+            let x = plot.minX + plot.width * CGFloat(fraction)
             vertical.move(to: CGPoint(x: x, y: plot.minY))
             vertical.addLine(to: CGPoint(x: x, y: plot.maxY))
 
             let anchor: UnitPoint = fraction == 0 ? .topLeading : (fraction == 1 ? .topTrailing : .top)
-            let label = Text(elapsedLabel(at: fraction))
+            let label = Text(elapsedText(duration * fraction))
                 .font(.system(size: 6.5, weight: .medium, design: .monospaced))
                 .foregroundColor(.secondary)
             context.draw(label, at: CGPoint(x: x, y: plot.maxY + 3), anchor: anchor)
@@ -373,7 +469,7 @@ private struct HeartbeatTracePanel: View {
     }
 
     private func drawArea(_ context: inout GraphicsContext, plot: CGRect, points: [CGPoint]) {
-        var area = tracePath(points)
+        var area = smoothTracePath(points)
         guard let first = points.first, let last = points.last else { return }
         area.addLine(to: CGPoint(x: last.x, y: plot.maxY))
         area.addLine(to: CGPoint(x: first.x, y: plot.maxY))
@@ -389,28 +485,19 @@ private struct HeartbeatTracePanel: View {
     }
 
     private func drawTrace(_ context: inout GraphicsContext, points: [CGPoint]) {
-        let path = tracePath(points)
+        let path = smoothTracePath(points)
         var glow = context
         glow.addFilter(.shadow(color: color.opacity(0.55), radius: 3))
-        glow.stroke(path, with: .color(color.opacity(0.30)),
-                    style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+        glow.stroke(path, with: .color(color.opacity(0.28)),
+                    style: StrokeStyle(lineWidth: 3.2, lineCap: .round, lineJoin: .round))
         glow.stroke(path, with: .color(color),
-                    style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
-    }
-
-    private func drawNodes(_ context: inout GraphicsContext, points: [CGPoint]) {
-        let radius: CGFloat = points.count > 240 ? 1.0 : 1.2
-        for point in points {
-            let dot = CGRect(x: point.x - radius, y: point.y - radius,
-                             width: radius * 2, height: radius * 2)
-            context.fill(Path(ellipseIn: dot), with: .color(color.opacity(0.95)))
-        }
+                    style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
     }
 
     private func drawPeak(_ context: inout GraphicsContext, plot: CGRect,
                           range: (lower: Double, upper: Double, step: Double), stats: Stats) {
         guard stats.peak > 0 else { return }
-        let x = plot.minX + plot.width * CGFloat(stats.peakFraction)
+        let x = plot.minX + plot.width * CGFloat(stats.peakTimeFraction)
         let ratio = CGFloat(max(0, min(1, (stats.peak - range.lower) / (range.upper - range.lower))))
         let y = plot.maxY - plot.height * ratio
         let ring = CGRect(x: x - 2.6, y: y - 2.6, width: 5.2, height: 5.2)
@@ -419,6 +506,30 @@ private struct HeartbeatTracePanel: View {
             .font(.system(size: 6, weight: .semibold, design: .monospaced))
             .foregroundColor(color.opacity(0.85))
         context.draw(label, at: CGPoint(x: x, y: max(plot.minY + 6, y - 4)), anchor: .bottom)
+    }
+
+    private func drawScrub(
+        _ context: inout GraphicsContext,
+        plot: CGRect,
+        range: (lower: Double, upper: Double, step: Double),
+        series: [PlotPoint],
+        fraction: Double
+    ) {
+        guard let point = sample(at: fraction, series: series) else { return }
+        let x = plot.minX + plot.width * CGFloat(max(0, min(1, fraction)))
+        let ratio = CGFloat(max(0, min(1, (point.speed - range.lower) / (range.upper - range.lower))))
+        let y = plot.maxY - plot.height * ratio
+
+        var guide = Path()
+        guide.move(to: CGPoint(x: x, y: plot.minY))
+        guide.addLine(to: CGPoint(x: x, y: plot.maxY))
+        context.stroke(guide, with: .color(Color.white.opacity(0.35)),
+                       style: StrokeStyle(lineWidth: 0.8, dash: [3, 3]))
+
+        let dot = CGRect(x: x - 3.5, y: y - 3.5, width: 7, height: 7)
+        context.fill(Path(ellipseIn: dot), with: .color(color))
+        let core = CGRect(x: x - 1.5, y: y - 1.5, width: 3, height: 3)
+        context.fill(Path(ellipseIn: core), with: .color(Color.white.opacity(0.95)))
     }
 
     private func drawHead(_ context: inout GraphicsContext, plot: CGRect,
@@ -455,22 +566,37 @@ private struct HeartbeatTracePanel: View {
         }
     }
 
-    private func tracePath(_ points: [CGPoint]) -> Path {
+    /// Catmull-Rom-ish smooth polyline via mid-point quad curves.
+    private func smoothTracePath(_ points: [CGPoint]) -> Path {
         var path = Path()
         guard let first = points.first else { return path }
         path.move(to: first)
         guard points.count > 1 else { return path }
-        for index in 1..<points.count {
-            path.addLine(to: points[index])
+        if points.count == 2 {
+            path.addLine(to: points[1])
+            return path
+        }
+        for index in 0..<(points.count - 1) {
+            let current = points[index]
+            let next = points[index + 1]
+            let mid = CGPoint(x: (current.x + next.x) / 2, y: (current.y + next.y) / 2)
+            if index == 0 {
+                path.addLine(to: mid)
+            } else {
+                path.addQuadCurve(to: mid, control: current)
+            }
+        }
+        if let last = points.last {
+            path.addLine(to: last)
         }
         return path
     }
 
-    private func elapsedLabel(at fraction: Double) -> String {
-        guard let first = samples.first, let last = samples.last, fraction > 0 else { return "0:00" }
-        let target = first.bytes + Int64(Double(last.bytes - first.bytes) * fraction)
-        let nearest = samples.min { abs($0.bytes - target) < abs($1.bytes - target) }
-        return elapsedText(max(0, (nearest?.time ?? first.time) - first.time))
+    private func sample(at fraction: Double, series: [PlotPoint]? = nil) -> PlotPoint? {
+        let points = series ?? plotSeries
+        guard !points.isEmpty else { return nil }
+        let clamped = max(0, min(1, fraction))
+        return points.min { abs($0.timeFraction - clamped) < abs($1.timeFraction - clamped) }
     }
 
     private func elapsedText(_ seconds: Double) -> String {
@@ -493,5 +619,12 @@ private struct HeartbeatTracePanel: View {
             return String(format: "%.0fK", value / 1024)
         }
         return String(format: "%.0fB", value)
+    }
+}
+
+private struct ChartSizeKey: PreferenceKey {
+    static var defaultValue: CGSize = .zero
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
+        value = nextValue()
     }
 }

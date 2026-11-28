@@ -149,18 +149,21 @@ struct TabbarView: View {
     }
 
     private var assassinStyleRoot: some View {
-        ZStack {
+        let tabHeight = max(tabBarStyleManager.floatingConfig.height, 56)
+        return ZStack(alignment: .bottom) {
             FlatChrome.canvas.ignoresSafeArea()
 
             tabPage(for: selectedTab)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .id(selectedTab)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // App Store floating top bar lives inside SearchView only — not on repo Browse.
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+                // Reserve space so list content can still scroll under the frosted bar.
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    Color.clear.frame(height: tabHeight)
+                }
+
             floatingTabBarContent
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 
@@ -219,24 +222,30 @@ struct TabbarView: View {
 
     private var floatingTabBarContent: some View {
         let config = tabBarStyleManager.floatingConfig
-        let tabHeight = max(config.height, 52)
+        let tabHeight = max(config.height, 56)
 
-        // Equal SF Symbol tabs — Search sits between Library and Signed (no circle background).
+        // MSIGN-style dock: roomier equal tabs + frosted transparent blur.
         return HStack(spacing: 0) {
             ForEach(tabOrder.order, id: \.self) { tab in
                 tabButton(for: tab, height: tabHeight)
                     .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
             }
         }
-        .padding(.horizontal, 4)
-        .padding(.top, 4)
-        .padding(.bottom, 2)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 6)
         .frame(height: tabHeight)
         .frame(maxWidth: .infinity)
-        .background(FlatChrome.tabBar)
+        .background {
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial)
+                Color.black.opacity(0.22)
+            }
+            .ignoresSafeArea(edges: .bottom)
+        }
         .overlay(alignment: .top) {
             Rectangle()
-                .fill(FlatChrome.hairline)
+                .fill(Color.white.opacity(0.14))
                 .frame(height: 0.5)
         }
     }
@@ -249,20 +258,21 @@ struct TabbarView: View {
             }
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }) {
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: 20, weight: .regular))
+                    .font(.system(size: 19, weight: .regular))
                     .symbolRenderingMode(.monochrome)
-                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.40))
+                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.42))
 
                 Text(tab.title)
-                    .font(.system(size: 10, weight: .regular))
-                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.40))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.42))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                    .minimumScaleFactor(0.7)
             }
+            .padding(.horizontal, 4)
             .contentShape(Rectangle())
-            .frame(maxHeight: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .buttonStyle(PlainButtonStyle())
     }

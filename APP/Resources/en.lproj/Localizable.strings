@@ -1154,6 +1154,7 @@ Re-sign the app with a developer certificate that carries it (free certificates 
 "chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
 "chart_hud_avg" = "Avg %@";
 "chart_hud_detail" = "%@ left · %@ elapsed";
+"chart_hud_scrub" = "%@ @ %@ · %@ in";
 "download_waiting_sample" = "Waiting for samples…";
 "settings_appearance_color" = "Appearance & Color";
 "settings_tab_bar" = "Tab Bar";
