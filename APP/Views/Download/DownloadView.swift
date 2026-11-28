@@ -928,7 +928,37 @@ struct DownloadView: SwiftUI.View {
         .navigationTitle("download_title".localized)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    SoundEffects.play(.tap)
+                    withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
+                        showFloatingDecryptMenu.toggle()
+                    }
+                } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image("XcodeIcon")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 28, height: 28)
+
+                        if decryptedCount > 0 {
+                            Text(decryptedCount > 99 ? "99+" : "\(decryptedCount)")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 3)
+                                .frame(minWidth: 15, minHeight: 15)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.red)
+                                        .overlay(Capsule().strokeBorder(Color.white, lineWidth: 1))
+                                )
+                                .offset(x: 6, y: -5)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("decrypted_files_title".localized)
+
                 Button(action: {
                     let impactMed = UIImpactFeedbackGenerator(style: .light)
                     impactMed.impactOccurred()
@@ -938,7 +968,7 @@ struct DownloadView: SwiftUI.View {
                     }
                 }) {
                     Image(systemName: themeManager.selectedTheme == .light ? "sun.max.fill" : "moon.fill")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(themeManager.selectedTheme == .light ? .orange : .blue)
                 }
                 .buttonStyle(.plain)
@@ -972,9 +1002,6 @@ struct DownloadView: SwiftUI.View {
             if showFloatingDecryptMenu {
                 decryptFullScreenMenu
             }
-        }
-        .overlay(alignment: .bottomTrailing) {
-            decryptedFilesButton
         }
         .sheet(item: $activeSheet, onDismiss: { handleSheetDismissed() }) { sheet in
             sheetContent(sheet)
@@ -1304,40 +1331,6 @@ struct DownloadView: SwiftUI.View {
                 .shadow(color: themeManager.accentColor.opacity(0.45), radius: 6, x: 0, y: 2)
                 .padding(.trailing, 7)
         }
-    }
-
-    private var decryptedFilesButton: some SwiftUI.View {
-        Button {
-            SoundEffects.play(.tap)
-            withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
-                showFloatingDecryptMenu.toggle()
-            }
-        } label: {
-            ZStack(alignment: .topTrailing) {
-                Image("XcodeIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 54, height: 54)
-                    .shadow(color: Color.black.opacity(0.28), radius: 10, y: 4)
-
-                if decryptedCount > 0 {
-                    Text(decryptedCount > 99 ? "99+" : "\(decryptedCount)")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 4)
-                        .frame(minWidth: 19, minHeight: 19)
-                        .background(
-                            Capsule()
-                                .fill(Color.red)
-                                .overlay(Capsule().strokeBorder(Color.white, lineWidth: 1.5))
-                        )
-                        .offset(x: 5, y: -5)
-                }
-            }
-        }
-        .buttonStyle(.plain)
-        .padding(.trailing, 18)
-        .padding(.bottom, tabBarStyleManager.currentStyle == .floatingCard ? 112 : 24)
     }
 
     private func refreshDecryptedCount() {
@@ -1990,68 +1983,32 @@ struct DownloadCardView: SwiftUI.View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
 
-            Text(String(format: "version_x".localized, request.version))
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
-                .lineLimit(1)
-
-            if let fileSizeText {
-                Text(String(format: "file_size_x".localized, fileSizeText))
-                    .font(.system(size: 11))
+            HStack(spacing: 6) {
+                Text(String(format: "version_x".localized, request.version))
+                    .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
+                if let fileSizeText {
+                    Text("·")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Text(String(format: "file_size_x".localized, fileSizeText))
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var actionButtonView: some SwiftUI.View {
-        HStack(spacing: 6) {
-            if status == DownloadStatus.completed, request.localFilePath != nil {
-                decryptButton
-            }
+        // Completed decrypt/install live in the card footer — keep top clean.
+        if status == DownloadStatus.completed, request.localFilePath != nil {
+            EmptyView()
+        } else {
             primaryActionButton
         }
-    }
-
-    private var decryptGradient: [Color] {
-        if isDecrypting {
-            return [Color(red: 0.95, green: 0.31, blue: 0.28),
-                    Color(red: 0.82, green: 0.18, blue: 0.20)]
-        }
-        return [themeManager.accentColor, themeManager.accentColor.opacity(0.85)]
-    }
-
-    private var decryptButton: some SwiftUI.View {
-        Button {
-            if isDecrypting {
-                DecryptCoordinator.shared.cancel()
-                return
-            }
-            startDecrypt()
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: isDecrypting
-                      ? "xmark.circle.fill"
-                      : (decryptedURL != nil ? "checkmark.circle.fill" : "lock.open.fill"))
-                    .font(.system(size: 12, weight: .bold))
-
-                Text(isDecrypting ? "dc_cancel".localized : "dc_action".localized)
-                    .font(.system(size: 13, weight: .bold))
-                    .lineLimit(1)
-            }
-            .foregroundColor(.white)
-            .frame(width: 88, height: 34)
-            .background(
-                LinearGradient(colors: decryptGradient,
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-            )
-            .clipShape(Capsule())
-            .shadow(color: decryptGradient[1].opacity(0.35), radius: 6, x: 0, y: 3)
-        }
-        .buttonStyle(.plain)
-        .disabled(DecryptCoordinator.shared.isBusy
-                  && DecryptCoordinator.shared.activeRequestID != request.id)
     }
 
     private func startDecrypt() {
@@ -2243,48 +2200,10 @@ struct DownloadCardView: SwiftUI.View {
             .accessibilityLabel("retry".localized)
 
         case .completed:
-            if request.isTestFlight {
-                EmptyView()
-            } else if request.localFilePath != nil {
-                Button {
-                    guard !isInstalling else { return }
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    startInstallation(for: request)
-                } label: {
-                    HStack(spacing: 4) {
-                        if isInstalling {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.7)
-                        } else {
-                            Image(systemName: "arrow.down.forward.app.fill")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        Text(isInstalling ? "installing".localized : "install".localized)
-                            .font(.system(size: 13, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(width: 84, height: 34)
-                    .background(
-                        LinearGradient(
-                            colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.85)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .clipShape(Capsule())
-                    .shadow(color: themeManager.accentColor.opacity(0.4), radius: 6, x: 0, y: 3)
-                    .opacity(isInstalling ? 0.85 : 1.0)
-                }
-                .buttonStyle(ScaleButtonStyle())
-                .disabled(isInstalling)
-                .accessibilityLabel(isInstalling ? "installing".localized : "install".localized)
-            } else {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.green)
-                    .accessibilityLabel("download_completed".localized)
-            }
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.green)
+                .accessibilityLabel("download_completed".localized)
         }
     }
 
@@ -2322,7 +2241,82 @@ struct DownloadCardView: SwiftUI.View {
                 .opacity(request.localFilePath == nil ? 0 : 1)
                 .accessibilityLabel("detail_action".localized)
             }
+
+            if !request.isTestFlight, request.localFilePath != nil {
+                completedFooterActions
+                    .padding(.top, 10)
+            }
         }
+    }
+
+    /// Footer: Decrypt · powered by DELvEK.NET · Install
+    private var completedFooterActions: some SwiftUI.View {
+        HStack(alignment: .center, spacing: 8) {
+            Button {
+                if isDecrypting {
+                    DecryptCoordinator.shared.cancel()
+                    return
+                }
+                startDecrypt()
+            } label: {
+                VStack(spacing: 4) {
+                    Image(systemName: isDecrypting
+                          ? "xmark.circle.fill"
+                          : (decryptedURL != nil ? "checkmark.circle.fill" : "lock.fill"))
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(themeManager.accentColor)
+                        .frame(width: 36, height: 36)
+                    Text(isDecrypting ? "dc_cancel".localized : "dc_action".localized)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+                .frame(minWidth: 64)
+            }
+            .buttonStyle(.plain)
+            .disabled(DecryptCoordinator.shared.isBusy
+                      && DecryptCoordinator.shared.activeRequestID != request.id)
+
+            Spacer(minLength: 4)
+
+            Text("powered_by_delvek".localized)
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.red)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+
+            Spacer(minLength: 4)
+
+            Button {
+                guard !isInstalling else { return }
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                startInstallation(for: request)
+            } label: {
+                VStack(spacing: 4) {
+                    Group {
+                        if isInstalling {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: themeManager.accentColor))
+                                .scaleEffect(0.9)
+                        } else {
+                            Image(systemName: "arrow.down.app.fill")
+                                .font(.system(size: 22, weight: .semibold))
+                                .foregroundStyle(themeManager.accentColor)
+                        }
+                    }
+                    .frame(width: 36, height: 36)
+                    Text(isInstalling ? "installing".localized : "card_footer_install".localized)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+                .frame(minWidth: 64)
+            }
+            .buttonStyle(.plain)
+            .disabled(isInstalling)
+        }
+        .padding(.horizontal, 4)
     }
 
     private var installStatusView: some SwiftUI.View {

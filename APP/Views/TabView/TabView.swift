@@ -20,11 +20,13 @@ enum TabEnum: String, CaseIterable, Hashable {
 
     var icon: String {
         switch self {
-        case .settings:  return "gearshape.fill"
-        case .downloads:  return "arrow.down.circle.fill"
-        case .decrypt:    return "lock.open.fill"
-        case .sign:       return "signature"
-        case .search:     return "magnifyingglass.circle.fill"
+        case .settings:  return "gearshape.2.fill"
+        case .downloads:  return "arrow.down.to.line.circle.fill"
+        case .decrypt:    return "lock.rectangle.stack.fill"
+        case .sign:
+            // Prefer Chinese calligraphy signature glyph when available.
+            return UIImage(systemName: "signature.zh") != nil ? "signature.zh" : "signature"
+        case .search:     return "magnifyingglass"
         }
     }
 
