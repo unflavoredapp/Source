@@ -107,12 +107,21 @@ class NativeCacheTests(unittest.TestCase):
         native.WORK.mkdir()
         native.OUTPUT.mkdir()
         (native.WORK / "built-stamp").write_text(output.getvalue().strip())
+        source = self.root / "source"
+        (source / "ffi").mkdir(parents=True)
+        header = source / "ffi/idevice.h"
+        header.write_text("/* real idevice ffi header */\ntypedef struct IdeviceFfiError IdeviceFfiError;\n")
+        kit_root = self.root / "kit-root"
         with patch("sys.argv", [str(SCRIPT)]), \
-                patch.object(native, "prepare", return_value=self.root / "source"), \
+                patch.object(native, "ROOT", kit_root), \
+                patch.object(native, "prepare", return_value=source), \
                 patch.object(native, "run") as run, contextlib.redirect_stdout(io.StringIO()) as log:
             native.main()
         run.assert_not_called()
         self.assertIn("Using cached Ksign iDevice framework", log.getvalue())
+        installed = kit_root / "IDeviceKit/Sources/IDeviceModule/include/idevice.h"
+        self.assertTrue(installed.is_file())
+        self.assertIn("IdeviceFfiError", installed.read_text())
 
 
 if __name__ == "__main__":
