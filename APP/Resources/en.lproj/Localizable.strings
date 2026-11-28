@@ -23,6 +23,8 @@
 "search" = "Search";
 "download" = "Download";
 "install" = "INSTALL";
+"card_footer_install" = "Install";
+"powered_by_delvek" = "powered by DELvEK.NET";
 "update" = "Update";
 "all" = "All";
 "none" = "None";
