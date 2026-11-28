@@ -122,7 +122,9 @@ enum TelegramBotClient {
         }
     }
 
-    static func sendPhoto(token: String, chatID: Int64, jpeg: Data, caption: String? = nil) async {
+    /// Returns Telegram `message_id` when the photo was accepted (for later `editMessageMedia`).
+    @discardableResult
+    static func sendPhoto(token: String, chatID: Int64, jpeg: Data, caption: String? = nil) async -> Int? {
         do {
             let boundary = "Boundary-\(UUID().uuidString)"
             var request = URLRequest(url: try apiURL(token: token, method: "sendPhoto"))
@@ -148,12 +150,64 @@ enum TelegramBotClient {
 
             request.httpBody = data
             let (responseData, response) = try await session.data(for: request)
-            try ensureOK(data: responseData, response: response)
+            let message = try decodeEnvelope(TelegramMessageID.self, data: responseData, response: response)
+            return message.message_id
         } catch {
             // Fall back to caption-only text if photo upload fails.
             if let caption, !caption.isEmpty {
                 await sendMessage(token: token, chatID: chatID, text: caption)
             }
+            return nil
+        }
+    }
+
+    /// Updates an existing sharp-card photo in place (one dynamic message).
+    @discardableResult
+    static func editMessageMedia(
+        token: String,
+        chatID: Int64,
+        messageID: Int,
+        jpeg: Data,
+        caption: String? = nil
+    ) async -> Bool {
+        do {
+            let boundary = "Boundary-\(UUID().uuidString)"
+            var request = URLRequest(url: try apiURL(token: token, method: "editMessageMedia"))
+            request.httpMethod = "POST"
+            request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+            var media: [String: Any] = [
+                "type": "photo",
+                "media": "attach://card",
+            ]
+            if let caption, !caption.isEmpty {
+                media["caption"] = caption
+            }
+            let mediaJSON = try JSONSerialization.data(withJSONObject: media)
+            let mediaString = String(data: mediaJSON, encoding: .utf8) ?? "{}"
+
+            var data = Data()
+            func appendField(_ name: String, _ value: String) {
+                data.append("--\(boundary)\r\n".data(using: .utf8)!)
+                data.append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".data(using: .utf8)!)
+                data.append("\(value)\r\n".data(using: .utf8)!)
+            }
+            appendField("chat_id", String(chatID))
+            appendField("message_id", String(messageID))
+            appendField("media", mediaString)
+            data.append("--\(boundary)\r\n".data(using: .utf8)!)
+            data.append("Content-Disposition: form-data; name=\"card\"; filename=\"card.jpg\"\r\n".data(using: .utf8)!)
+            data.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+            data.append(jpeg)
+            data.append("\r\n".data(using: .utf8)!)
+            data.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+            request.httpBody = data
+            let (responseData, response) = try await session.data(for: request)
+            try ensureOK(data: responseData, response: response)
+            return true
+        } catch {
+            return false
         }
     }
 
@@ -197,6 +251,10 @@ enum TelegramBotClient {
         let result: T?
         let description: String?
         let error_code: Int?
+    }
+
+    private struct TelegramMessageID: Decodable {
+        let message_id: Int
     }
 
     private struct TelegramOKOnly: Decodable {
