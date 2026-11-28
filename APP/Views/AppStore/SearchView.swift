@@ -1620,46 +1620,38 @@ struct SearchView: SwiftUI.View {
     }
 
     var versionPickerSheet: some SwiftUI.View {
-        NavigationView {
+        NavigationStack {
             ZStack {
+                FlatChrome.canvas.ignoresSafeArea()
 
-                LinearGradient(
-                    colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-
-                VStack {
-
+                VStack(spacing: 0) {
                     versionPickerAccountIndicator
 
                     if isLoadingVersions {
                         loadingVersionsView
                     } else if let error = versionError {
-                        AnyView(errorView(error: error))
+                        errorView(error: error)
                     } else if availableVersions.isEmpty {
-                        AnyView(errorView(error: "versions_unavailable_retry".localized))
+                        errorView(error: "versions_unavailable_retry".localized)
                     } else {
                         versionsListView
                     }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(FlatChrome.row)
-                )
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
             }
-            .navigationTitle("")
+            .navigationTitle("version_history".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("back".localized) {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
                         showVersionPicker = false
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text("back".localized)
+                        }
+                        .foregroundStyle(themeManager.accentColor)
                     }
-                    .foregroundColor(themeManager.accentColor)
-                    .font(.system(size: 16, weight: .medium))
                 }
             }
         }
@@ -1698,140 +1690,123 @@ struct SearchView: SwiftUI.View {
     }
     private var versionsListView: some SwiftUI.View {
         ScrollView {
-            LazyVStack(spacing: 16) {
-
-                VStack(spacing: 16) {
-
+            LazyVStack(spacing: 12) {
+                VStack(spacing: 12) {
                     ResourceImage(
                         url: URL(string: selectedApp?.artworkUrl512 ?? ""),
-                        pointSize: CGSize(width: 100, height: 100),
+                        pointSize: CGSize(width: 88, height: 88),
                         contentMode: .fit,
-                        cornerRadius: 20
+                        cornerRadius: 18
                     )
-                    .frame(width: 100, height: 100)
-                    .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                    .frame(width: 88, height: 88)
 
-                    VStack(spacing: 8) {
+                    VStack(spacing: 6) {
                         Text(selectedApp?.trackName ?? "APP")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.primary)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundStyle(.white)
                             .multilineTextAlignment(.center)
 
                         Text(selectedApp?.artistName ?? "Unknown Developer")
-                            .font(.body)
-                            .foregroundColor(.secondary)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-
-                HStack {
-                    Text("version_history".localized)
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.primary)
-
-                    Spacer()
-
-                    Text(String(format: "x_versions".localized, String(availableVersions.count)))
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(themeManager.accentColor.opacity(0.1))
-                        )
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-
-                ForEach(availableVersions, id: \.id) {
-                    AnyView(createModernVersionRow(version: $0))
-                }
-            }
-            .padding(.bottom, 24)
-        }
-    }
-    private func createModernVersionRow(version: StoreAppVersion) -> any SwiftUI.View {
-        HStack(spacing: 16) {
-
-            VStack(alignment: .leading, spacing: 8) {
-
-                VStack(alignment: .leading, spacing: 4) {
-
-                    Text(getVersionNumber(version: version))
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(themeManager.accentColor)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule()
-                                .fill(themeManager.accentColor.opacity(0.1))
-                        )
-
-                    if let date = getVersionDate(version: version) {
-                        Text(date)
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundColor(themeManager.accentColor)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(
-                                Capsule()
-                                    .fill(themeManager.accentColor.opacity(0.1))
-                            )
-                    }
-                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
 
                 HStack(spacing: 8) {
-                    Image(systemName: "number.circle.fill")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    Text("version_history".localized)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.white)
 
-                    Text("ID: \(version.versionId)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Text(String(format: "x_versions".localized, String(availableVersions.count)))
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(FlatChrome.elevated))
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
+                ForEach(availableVersions, id: \.id) { version in
+                    createModernVersionRow(version: version)
                 }
             }
+            .padding(.bottom, 28)
+        }
+    }
 
-            Spacer()
+    private func createModernVersionRow(version: StoreAppVersion) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(getVersionNumber(version: version))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(themeManager.accentColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Capsule().fill(themeManager.accentColor.opacity(0.14)))
 
-            Button(action: {
+                if let date = getVersionDate(version: version) {
+                    Text(date)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(themeManager.accentColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(themeManager.accentColor.opacity(0.14)))
+                }
+
+                if !version.versionId.isEmpty {
+                    HStack(spacing: 5) {
+                        Image(systemName: "number")
+                            .font(.caption2)
+                        Text("ID: \(version.versionId)")
+                            .font(.caption)
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+            .layoutPriority(1)
+
+            Spacer(minLength: 8)
+
+            Button {
                 Task {
                     if let app = selectedApp {
                         await downloadVersion(app: app, version: version)
                     }
                 }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.caption)
+            } label: {
+                VStack(spacing: 4) {
+                    Image(systemName: "arrow.down.circle")
+                        .font(.system(size: 22, weight: .regular))
                     Text("download".localized)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 10, weight: .medium))
+                        .lineLimit(1)
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    LinearGradient(
-                        colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .clipShape(Capsule())
-                .shadow(color: themeManager.accentColor.opacity(0.3), radius: 4, x: 0, y: 2)
+                .foregroundStyle(themeManager.accentColor)
+                .frame(minWidth: 52)
+                .contentShape(Rectangle())
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(.plain)
+            .fixedSize()
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGray6))
-                .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(FlatChrome.row)
         )
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 16)
     }
 
     private func getVersionNumber(version: StoreAppVersion) -> String {
@@ -1849,29 +1824,13 @@ struct SearchView: SwiftUI.View {
             return h.formattedDate
         }
 
-        if let h = versionHistory.first(where: { versionStr.hasPrefix($0.version) || $0.version.hasPrefix(versionStr) }) {
+        // Exact prefix only when history entry is a full component match (avoid 17.1 → 17.17).
+        if let h = versionHistory.first(where: {
+            $0.version == versionStr
+                || versionStr.hasPrefix($0.version + ".")
+                || $0.version.hasPrefix(versionStr + ".")
+        }) {
             return h.formattedDate
-        }
-
-        let versionComponents = versionStr.split(separator: ".").map(String.init)
-        for h in versionHistory {
-            let hComponents = h.version.split(separator: ".").map(String.init)
-            let minCount = min(versionComponents.count, hComponents.count)
-            var matchCount = 0
-            for i in 0..<minCount {
-                if versionComponents[i] == hComponents[i] {
-                    matchCount += 1
-                } else {
-                    break
-                }
-            }
-            if matchCount >= 2 {
-                return h.formattedDate
-            }
-        }
-
-        if let latestVersion = versionHistory.first {
-            return latestVersion.formattedDate
         }
 
         return nil
@@ -1965,18 +1924,17 @@ struct SearchView: SwiftUI.View {
     }
 
     private var versionPickerAccountIndicator: some SwiftUI.View {
-        HStack(spacing: 12) {
-
+        HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 if let account = appStore.selectedAccount {
                     Text("use_account".localized)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
 
                     HStack(spacing: 6) {
                         Text(account.email)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.white)
                             .lineLimit(1)
 
                         Text(flag(country: account.countryCode))
@@ -1984,24 +1942,25 @@ struct SearchView: SwiftUI.View {
 
                         Text(RegionNames.localizedName(for: account.countryCode))
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                 } else {
                     Image(systemName: "person.circle")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(FlatChrome.row)
         .padding(.horizontal, 16)
-        .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(themeManager.surfaceSecondary)
-        )
-        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
     @MainActor
