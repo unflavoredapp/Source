@@ -18,7 +18,7 @@ struct TabOrderSettingsView: View {
                             Text(tab.title)
                                 .font(.system(size: 16))
 
-                            if tab == .search {
+                            if tab == .browse {
                                 Text("tab_order_search_hint".localized)
                                     .font(.system(size: 11))
                                     .foregroundStyle(.secondary)

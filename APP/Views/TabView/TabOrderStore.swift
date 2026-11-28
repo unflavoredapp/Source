@@ -5,12 +5,12 @@ import SwiftUI
 final class TabOrderStore: ObservableObject {
     static let shared = TabOrderStore()
 
-    /// Search (App Store) · Library · Signed · Settings — no Files / Decrypt tab.
+    /// Browse · Library · Signed · Settings — Search stays on the separate floating control.
     static let reorderable: [TabEnum] = TabEnum.barTabs
 
     @Published private(set) var order: [TabEnum]
 
-    private let storageKey = "tab_order_v6"
+    private let storageKey = "tab_order_v7"
 
     private init() {
         let saved = UserDefaults.standard.stringArray(forKey: storageKey) ?? []

@@ -1,8 +1,11 @@
 "tab_settings" = "Settings";
 "tab_downloads" = "Downloads";
+"tab_browse" = "Browse";
 "tab_library" = "Library";
 "tab_signed" = "Signed";
 "tab_search" = "Search";
+"browse_apps_count" = "%@ Apps";
+"browse_load_failed" = "Could not load browse feed.";
 
 "cancel" = "Cancel";
 "confirm" = "Confirm";
@@ -555,7 +558,7 @@
 "tab_order_title" = "Tab Bar Order";
 "tab_order_hint" = "Drag the handles to reorder.";
 "tab_order_reset" = "Reset to Default";
-"tab_order_search_hint" = "App Store search — separate from Library & Signed lists";
+"tab_order_search_hint" = "Search is the separate floating control (App Store)";
 "delisted_apps_short" = "Delisted";
 "legacy_apps_delisted" = "Delisted Apps";
 "install_failed_title" = "Installation failed";
