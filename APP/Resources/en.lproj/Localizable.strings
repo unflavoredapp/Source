@@ -58,6 +58,7 @@
 "confirm_switch" = "Confirm Switch";
 "icon_default" = "Default";
 "icon_author" = "Icon";
+"icon_dark" = "Dark";
 "icon_love" = "Love";
 "icon_peek" = "Peek";
 "icon_set_success" = "Icon set successfully";

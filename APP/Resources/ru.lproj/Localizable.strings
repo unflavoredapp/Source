@@ -57,6 +57,7 @@
 "confirm_switch" = "Подтвердить смену";
 "icon_default" = "По умолчанию";
 "icon_author" = "Значок";
+"icon_dark" = "Тёмная";
 "icon_love" = "Любовь";
 "icon_peek" = "Взгляд";
 "icon_set_success" = "Значок успешно установлен";

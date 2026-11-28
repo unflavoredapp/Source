@@ -57,6 +57,7 @@
 "confirm_switch" = "Confirmer le changement";
 "icon_default" = "Par défaut";
 "icon_author" = "Icône";
+"icon_dark" = "Sombre";
 "icon_love" = "Amour";
 "icon_peek" = "Regard";
 "icon_set_success" = "Icône définie avec succès";

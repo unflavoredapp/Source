@@ -57,6 +57,7 @@
 "confirm_switch" = "Bekræft skift";
 "icon_default" = "Standard";
 "icon_author" = "Ikon";
+"icon_dark" = "Mørk";
 "icon_love" = "Kærlighed";
 "icon_peek" = "Kig";
 "icon_set_success" = "Ikonet er indstillet";

@@ -57,6 +57,7 @@
 "confirm_switch" = "Підтвердити зміну";
 "icon_default" = "За замовчуванням";
 "icon_author" = "Значок";
+"icon_dark" = "Темна";
 "icon_love" = "Любов";
 "icon_peek" = "Піглянути";
 "icon_set_success" = "Значок успішно встановлено";

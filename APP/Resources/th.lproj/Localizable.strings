@@ -57,6 +57,7 @@
 "confirm_switch" = "ยืนยันการเปลี่ยน";
 "icon_default" = "ค่าเริ่มต้น";
 "icon_author" = "ไอคอน";
+"icon_dark" = "มืด";
 "icon_love" = "รัก";
 "icon_peek" = "แอบมอง";
 "icon_set_success" = "ตั้งค่าไอคอนสำเร็จ";

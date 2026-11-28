@@ -36,6 +36,11 @@ struct SettingsView: View {
                 key: "app"
             ),
             AltIcon(
+                displayName: "icon_dark".localized,
+                author: "icon_author".localized,
+                key: "unlicense_dark"
+            ),
+            AltIcon(
                 displayName: "icon_love".localized,
                 author: "icon_author".localized,
                 key: "kana_love"
