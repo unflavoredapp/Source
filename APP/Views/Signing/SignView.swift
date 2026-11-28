@@ -335,7 +335,7 @@ struct SignView: SwiftUI.View {
                 .padding(.bottom, tabBarStyleManager.currentStyle == .floatingCard ? 110 : 28)
             }
         }
-        .navigationTitle("tab_sign".localized)
+        .navigationTitle("tab_signed".localized)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showCertificateImporter) {
             DocumentPicker(types: [.item], allowsMultipleSelection: true) { urls in

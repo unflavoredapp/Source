@@ -925,7 +925,7 @@ struct DownloadView: SwiftUI.View {
             }
         }
 
-        .navigationTitle("download_title".localized)
+        .navigationTitle("tab_library".localized)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -1706,20 +1706,14 @@ struct DownloadCardView: SwiftUI.View {
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.primary.opacity(colorScheme == .dark ? 0.05 : 0.03))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(
-                    Color.primary.opacity(colorScheme == .dark ? 0.07 : 0.05),
-                    lineWidth: 0.5
-                )
+        .padding(.horizontal, 4)
+        .padding(.vertical, 6)
+        .background(Color.clear)
+        .overlay(alignment: .bottom) {
+            Divider()
+                .padding(.leading, 62)
                 .allowsHitTesting(false)
-        )
+        }
         .onAppear {
             loadExistingDecrypted()
             fileSizeText = request.localFilePath.flatMap { getFileSize(path: $0) }
@@ -1972,34 +1966,41 @@ struct DownloadCardView: SwiftUI.View {
     }
 
     private var appInfoView: some SwiftUI.View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(request.package.name)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.primary)
                 .lineLimit(1)
 
-            Text(request.package.bundleIdentifier)
-                .font(.system(size: 12))
+            Text(libraryMetaLine)
+                .font(.system(size: 13))
                 .foregroundColor(.secondary)
                 .lineLimit(1)
+                .truncationMode(.middle)
 
-            HStack(spacing: 6) {
-                Text(String(format: "version_x".localized, request.version))
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-                if let fileSizeText {
-                    Text("·")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                    Text(String(format: "file_size_x".localized, fileSizeText))
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
+            if status == DownloadStatus.completed {
+                Text("library_status_downloaded".localized)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Color.primary.opacity(0.08))
+                    )
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var libraryMetaLine: String {
+        let version = request.version
+        let bundle = request.package.bundleIdentifier
+        if !version.isEmpty, !bundle.isEmpty {
+            return "\(version) · \(bundle)"
+        }
+        if !bundle.isEmpty { return bundle }
+        return version.isEmpty ? "—" : version
     }
 
     @ViewBuilder

@@ -23,27 +23,29 @@ struct SettingsView: View {
                     .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 22) {
                         accountHeaderSection
 
-                        VStack(spacing: 0) {
+                        settingsSection(header: "settings_section_general".localized, trailing: "UNlicense \(UpdateChecker.shared.currentVersion)") {
                             settingsLink(
                                 title: "settings_appearance_color".localized,
-                                systemImage: "paintpalette.fill",
+                                subtitle: "settings_appearance_hint".localized,
+                                systemImage: "paintbrush.fill",
                                 destination: AppearanceView()
                                     .environmentObject(themeManager)
                             )
                             divider
                             settingsLink(
                                 title: "language".localized,
+                                subtitle: LanguageManager.shared.currentLanguage.nativeName,
                                 systemImage: "globe",
                                 destination: LanguageSettingsView()
-                                    .environmentObject(themeManager),
-                                trailing: LanguageManager.shared.currentLanguage.nativeName
+                                    .environmentObject(themeManager)
                             )
                             divider
                             settingsLink(
                                 title: "settings_tab_bar".localized,
+                                subtitle: "settings_tab_bar_hint".localized,
                                 systemImage: "rectangle.bottomthird.inset.filled",
                                 destination: SettingsTabBarView()
                                     .environmentObject(themeManager)
@@ -52,6 +54,7 @@ struct SettingsView: View {
                             divider
                             settingsLink(
                                 title: "settings_sound".localized,
+                                subtitle: "settings_sound_hint".localized,
                                 systemImage: "speaker.wave.2.fill",
                                 destination: SettingsSoundView()
                                     .environmentObject(themeManager)
@@ -59,6 +62,7 @@ struct SettingsView: View {
                             divider
                             settingsLink(
                                 title: "settings_island".localized,
+                                subtitle: "settings_island_hint".localized,
                                 systemImage: "dot.radiowaves.left.and.right",
                                 destination: SettingsIslandView()
                                     .environmentObject(themeManager)
@@ -66,31 +70,25 @@ struct SettingsView: View {
                             divider
                             settingsLink(
                                 title: "settings_app_icon".localized,
+                                subtitle: "settings_app_icon_hint".localized,
                                 systemImage: "app.fill",
                                 destination: AppIconView(currentIcon: $currentIcon)
                                     .environmentObject(themeManager)
                             )
                         }
-                        .liquidGlassSurface(cornerRadius: 16)
-                        .cornerRadius(16)
-                        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
 
-                        VStack(spacing: 0) {
+                        settingsSection(header: "settings_section_install".localized) {
                             installMethodRow
                             divider
                             telegramWorkerRow
                             divider
                             updateRow
                         }
-                        .liquidGlassSurface(cornerRadius: 16)
-                        .cornerRadius(16)
-                        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
 
                         versionFooter
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 16)
                     .padding(.top, 8)
-                    // Clear the floating tab bar so the version footer isn't clipped.
                     .padding(.bottom, 120)
                 }
                 .background(Color.clear)
@@ -123,41 +121,80 @@ struct SettingsView: View {
     }
 
     private var divider: some View {
-        Divider().padding(.leading, 56)
+        Divider().padding(.leading, 60)
+    }
+
+    private func settingsSection<Content: View>(
+        header: String,
+        trailing: String? = nil,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(header.uppercased())
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.6)
+                Spacer()
+                if let trailing {
+                    Text(trailing)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 4)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.primary.opacity(0.06))
+            )
+        }
+    }
+
+    private func settingsGlyph(_ systemImage: String) -> some View {
+        Image(systemName: systemImage)
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(.white)
+            .frame(width: 30, height: 30)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(themeManager.accentColor)
+            )
     }
 
     private func settingsLink<Destination: View>(
         title: String,
+        subtitle: String? = nil,
         systemImage: String,
-        destination: Destination,
-        trailing: String? = nil
+        destination: Destination
     ) -> some View {
         NavigationLink(destination: destination) {
-            HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(themeManager.accentColor))
+            HStack(alignment: .center, spacing: 12) {
+                settingsGlyph(systemImage)
 
-                Text(title)
-                    .font(.system(size: 16))
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                if let trailing {
-                    Text(trailing)
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.primary)
+                    if let subtitle, !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
                 }
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.6))
+                Spacer(minLength: 8)
+
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.55))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle(), sound: .tick)
@@ -277,31 +314,27 @@ struct SettingsView: View {
             destination: InstallMethodSettingsView()
                 .environmentObject(themeManager)
         ) {
-            HStack(spacing: 12) {
-                Image(systemName: "iphone.and.arrow.forward")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(themeManager.accentColor))
+            HStack(alignment: .center, spacing: 12) {
+                settingsGlyph("iphone.and.arrow.forward")
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("install_method_title".localized)
-                        .font(.system(size: 16))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.primary)
                     Text(InstallMethod.current.subtitle)
-                        .font(.caption)
+                        .font(.system(size: 12))
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
 
-                Spacer()
+                Spacer(minLength: 8)
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.6))
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.55))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
         }
         .buttonStyle(.plain)
     }
@@ -311,35 +344,31 @@ struct SettingsView: View {
             destination: TelegramWorkerSettingsView()
                 .environmentObject(themeManager)
         ) {
-            HStack(spacing: 12) {
-                Image(systemName: "paperplane.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(themeManager.accentColor))
+            HStack(alignment: .center, spacing: 12) {
+                settingsGlyph("paperplane.fill")
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("telegram_worker_title".localized)
-                        .font(.system(size: 16))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.primary)
                     Text(
                         TelegramWorkerConfig.isEnabled
                             ? "telegram_worker_running".localized
                             : "telegram_worker_stopped".localized
                     )
-                    .font(.caption)
+                    .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .lineLimit(2)
                 }
 
-                Spacer()
+                Spacer(minLength: 8)
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.6))
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.55))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
         }
         .buttonStyle(.plain)
     }
@@ -358,28 +387,24 @@ struct SettingsView: View {
                 }
             }
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(themeManager.accentColor))
+            HStack(alignment: .center, spacing: 12) {
+                settingsGlyph("arrow.triangle.2.circlepath")
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("check_updates".localized)
-                        .font(.system(size: 16))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.primary)
                     Text("unlicense.cc/updates")
-                        .font(.caption)
+                        .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
 
-                Spacer()
+                Spacer(minLength: 8)
 
                 updateStatusView
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain, sound: .tap)

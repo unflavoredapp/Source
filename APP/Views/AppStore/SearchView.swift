@@ -324,9 +324,9 @@ struct SearchView: SwiftUI.View {
                     }
                 }
             }
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationTitle("tab_search".localized)
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.visible, for: .navigationBar)
             .sheet(isPresented: $showVersionPicker) {
                 versionPickerSheet
                     .environmentObject(appStore)

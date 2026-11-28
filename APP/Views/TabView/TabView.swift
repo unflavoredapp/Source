@@ -2,33 +2,36 @@ import SwiftUI
 import UIKit
 
 enum TabEnum: String, CaseIterable, Hashable {
-    case settings
-    case downloads
-    case decrypt
-    case sign
     case search
+    case downloads
+    case sign
+    case settings
+    /// Kept for deep links / Island; not shown in the tab bar (Files-style surface removed).
+    case decrypt
 
     var title: String {
         switch self {
         case .settings:  return "tab_settings".localized
-        case .downloads:  return "tab_downloads".localized
-        case .decrypt:    return "tab_decrypt".localized
-        case .sign:       return "tab_sign".localized
-        case .search:     return "tab_search".localized
+        case .downloads: return "tab_library".localized
+        case .decrypt:   return "tab_decrypt".localized
+        case .sign:      return "tab_signed".localized
+        case .search:    return "tab_search".localized
         }
     }
 
     var icon: String {
         switch self {
-        case .settings:  return "gearshape.2.fill"
-        case .downloads:  return "arrow.down.to.line.circle.fill"
-        case .decrypt:    return "lock.rectangle.stack.fill"
+        case .settings:  return "gearshape.fill"
+        case .downloads: return "square.grid.2x2.fill"
+        case .decrypt:   return "lock.rectangle.stack.fill"
         case .sign:
-            // Prefer Chinese calligraphy signature glyph when available.
             return UIImage(systemName: "signature.zh") != nil ? "signature.zh" : "signature"
-        case .search:     return "magnifyingglass"
+        case .search:    return "magnifyingglass"
         }
     }
+
+    /// Tabs shown in the bar — no Files / Decrypt (Decrypt lives under Library).
+    static var barTabs: [TabEnum] { [.search, .downloads, .sign, .settings] }
 
     @ViewBuilder
     static func view(for tab: TabEnum, themeManager: ThemeManager, tabBarStyleManager: TabBarStyleManager) -> some View {
@@ -71,10 +74,11 @@ enum TabEnum: String, CaseIterable, Hashable {
 struct TabbarView: View {
     @State private var selectedTab: TabEnum = {
         if let raw = UserDefaults.standard.string(forKey: "initialTab"),
-           let tab = TabEnum(rawValue: raw) {
+           let tab = TabEnum(rawValue: raw),
+           TabEnum.barTabs.contains(tab) || tab == .decrypt {
             return tab
         }
-        return .settings
+        return .search
     }()
     @ObservedObject private var tabOrder = TabOrderStore.shared
     @ObservedObject private var router = TabRouter.shared
@@ -86,7 +90,6 @@ struct TabbarView: View {
     var body: some View {
         Group {
             if tabBarStyleManager.currentStyle == .floatingCard {
-                // AppAssassin shell: no SwiftUI TabView (it letterboxes content into a card).
                 assassinStyleRoot
             } else if #available(iOS 18.0, *) {
                 systemTabView
@@ -100,21 +103,21 @@ struct TabbarView: View {
         .onAppear {
             AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
             updateTabBarAppearance()
-            if let requested = router.requested {
-                router.requested = nil
+        }
+        .onReceive(router.$pendingTab) { requested in
+            if let requested {
                 selectedTab = requested
+                router.pendingTab = nil
             }
         }
         .onChange(of: selectedTab) { _, newValue in
             AnalyticsManager.shared.trackScreen(newValue.rawValue)
-            SoundEffects.play(.tick)
-            updateTabBarAppearance()
+            UserDefaults.standard.set(newValue.rawValue, forKey: "initialTab")
         }
-        .onChange(of: router.requested) { _, newValue in
-            guard let newValue else { return }
-            router.requested = nil
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
+        .onChange(of: router.pendingTab) { _, newValue in
+            if let newValue {
                 selectedTab = newValue
+                router.pendingTab = nil
             }
         }
         .onChange(of: themeManager.accentColor) { _, _ in
@@ -166,23 +169,16 @@ struct TabbarView: View {
         }
     }
 
-    /// iOS 18+: Search uses `role: .search` as its own button and does not occupy one of the first five slots,
-    /// so six tabs are not forced into the legacy “More” table page.
+    /// Search is a normal equal tab (not `role: .search`) so App Store results stay separate from Library/Signed lists.
     @available(iOS 18.0, *)
     private var modernStandardTabView: some View {
         TabView(selection: $selectedTab) {
-            ForEach(tabOrder.order.filter { $0 != .search }, id: \.self) { tab in
+            ForEach(tabOrder.order, id: \.self) { tab in
                 Tab(value: tab) {
                     tabContent(for: tab)
                 } label: {
                     Label(tab.title, systemImage: tab.icon)
                 }
-            }
-
-            Tab(value: TabEnum.search, role: .search) {
-                tabContent(for: .search)
-            } label: {
-                Label(TabEnum.search.title, systemImage: TabEnum.search.icon)
             }
         }
     }
@@ -216,39 +212,16 @@ struct TabbarView: View {
         let config = tabBarStyleManager.floatingConfig
         let tabHeight = config.height
 
-        return HStack(spacing: 16) {
-            HStack(spacing: 0) {
-                ForEach(tabOrder.order.filter { $0 != .search }, id: \.self) { tab in
-                    tabButton(for: tab, height: tabHeight)
-                        .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
-                }
+        return HStack(spacing: 0) {
+            ForEach(tabOrder.order, id: \.self) { tab in
+                tabButton(for: tab, height: tabHeight)
+                    .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 10)
-            .frame(height: tabHeight)
-            // Clear glass — keep frost, drop the solid grey backdrop.
-            .clearLiquidGlassSurface(cornerRadius: config.cornerRadius)
-
-            Button(action: {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
-                    selectedTab = .search
-                }
-                let impactMed = UIImpactFeedbackGenerator(style: .light)
-                impactMed.impactOccurred()
-            }) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: tabHeight * 0.42, weight: .semibold))
-                    .foregroundStyle(selectedTab == .search ? Color.white : Color.primary.opacity(0.7))
-                    .frame(width: tabHeight, height: tabHeight)
-                    .background {
-                        if selectedTab == .search {
-                            Circle().fill(themeManager.accentColor)
-                        }
-                    }
-                    .clearLiquidGlassCircle()
-            }
-            .buttonStyle(PlainButtonStyle())
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 10)
+        .frame(height: tabHeight)
+        .clearLiquidGlassSurface(cornerRadius: config.cornerRadius)
     }
 
     private func tabButton(for tab: TabEnum, height: CGFloat) -> some View {
@@ -267,7 +240,8 @@ struct TabbarView: View {
                 Text(tab.title)
                     .font(.system(size: min(11, height * 0.2), weight: selectedTab == tab ? .semibold : .regular))
                     .foregroundStyle(selectedTab == tab ? themeManager.accentColor : .secondary.opacity(0.7))
-                    .offset(x: 1)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .contentShape(Rectangle())
             .frame(maxHeight: .infinity)

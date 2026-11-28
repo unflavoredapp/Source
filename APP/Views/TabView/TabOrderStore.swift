@@ -5,11 +5,12 @@ import SwiftUI
 final class TabOrderStore: ObservableObject {
     static let shared = TabOrderStore()
 
-    static let reorderable: [TabEnum] = [.settings, .downloads, .decrypt, .sign, .search]
+    /// Search (App Store) · Library · Signed · Settings — no Files / Decrypt tab.
+    static let reorderable: [TabEnum] = TabEnum.barTabs
 
     @Published private(set) var order: [TabEnum]
 
-    private let storageKey = "tab_order_v5"
+    private let storageKey = "tab_order_v6"
 
     private init() {
         let saved = UserDefaults.standard.stringArray(forKey: storageKey) ?? []
@@ -17,6 +18,9 @@ final class TabOrderStore: ObservableObject {
         restored = restored.filter { Self.reorderable.contains($0) }
         for (index, tab) in Self.reorderable.enumerated() where !restored.contains(tab) {
             restored.insert(tab, at: min(index, restored.count))
+        }
+        if restored.isEmpty {
+            restored = Self.reorderable
         }
         order = restored
     }
