@@ -411,6 +411,8 @@ final class CardSession {
     private var percent: Int = 0
     private var lastSentAt: Date = .distantPast
     private var lastSentPercent: Int = -1
+    /// Single Telegram message that we keep editing in place.
+    private var messageID: Int?
 
     init(token: String, chatID: Int64, app: iTunesSearchResult) {
         self.token = token
@@ -466,16 +468,17 @@ final class CardSession {
     private func push(force: Bool, failed: Bool = false) async {
         let now = Date()
         let delta = abs(percent - lastSentPercent)
-        // Dynamic ring: refresh when % moves, but don't flood Telegram (~every 2–3%).
+        // One dynamic message: throttle edits so Telegram rate limits stay happy.
         let shouldSend = force
             || failed
-            || delta >= 2
-            || (delta >= 1 && now.timeIntervalSince(lastSentAt) > 2.0)
-            || (percent != lastSentPercent && now.timeIntervalSince(lastSentAt) > 3.0)
+            || delta >= 3
+            || (delta >= 1 && now.timeIntervalSince(lastSentAt) > 2.5)
+            || (percent != lastSentPercent && now.timeIntervalSince(lastSentAt) > 4.0)
         guard shouldSend else { return }
         lastSentAt = now
         lastSentPercent = percent
 
+        let caption = "\(percent)% · \(lines.last ?? appName)"
         let model = TelegramSharpCard.ProgressModel(
             appName: appName,
             version: version,
@@ -492,12 +495,28 @@ final class CardSession {
             )
             return
         }
-        await TelegramBotClient.sendPhoto(
+
+        if let messageID {
+            let edited = await TelegramBotClient.editMessageMedia(
+                token: token,
+                chatID: chatID,
+                messageID: messageID,
+                jpeg: jpeg,
+                caption: caption
+            )
+            if edited { return }
+            // Edit failed (deleted / rate limit) — fall through and send a fresh card.
+            self.messageID = nil
+        }
+
+        if let id = await TelegramBotClient.sendPhoto(
             token: token,
             chatID: chatID,
             jpeg: jpeg,
-            caption: "\(percent)% · \(lines.last ?? appName)"
-        )
+            caption: caption
+        ) {
+            messageID = id
+        }
     }
 
     private func loadIcon(_ urlString: String?) async {
