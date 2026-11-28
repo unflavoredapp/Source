@@ -222,16 +222,8 @@ struct TabbarView: View {
                         .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 4)
             .frame(height: tabHeight)
-            .liquidGlassSurface(cornerRadius: config.cornerRadius)
-            .shadow(color: Color.black.opacity(0.18), radius: 20, x: 0, y: 8)
-            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 3)
-            .overlay(
-                RoundedRectangle(cornerRadius: config.cornerRadius, style: .continuous)
-                    .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
-            )
 
             Button(action: {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
@@ -240,26 +232,11 @@ struct TabbarView: View {
                 let impactMed = UIImpactFeedbackGenerator(style: .light)
                 impactMed.impactOccurred()
             }) {
-                ZStack {
-                    if selectedTab == .search {
-                        Circle()
-                            .fill(themeManager.accentColor)
-                    } else {
-                        Circle()
-                            .fill(.ultraThinMaterial)
-                    }
-
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: tabHeight * 0.42, weight: .semibold))
-                        .foregroundStyle(selectedTab == .search ? Color.white : Color.primary.opacity(0.7))
-                }
-                .frame(width: tabHeight, height: tabHeight)
-                .overlay(
-                    Circle()
-                        .stroke(Color.white.opacity(selectedTab == .search ? 0 : 0.15), lineWidth: 0.5)
-                )
-                .shadow(color: Color.black.opacity(0.18), radius: 20, x: 0, y: 8)
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 3)
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: tabHeight * 0.42, weight: .semibold))
+                    .foregroundStyle(selectedTab == .search ? themeManager.accentColor : Color.secondary.opacity(0.7))
+                    .frame(width: tabHeight * 0.7, height: tabHeight)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(PlainButtonStyle())
         }
