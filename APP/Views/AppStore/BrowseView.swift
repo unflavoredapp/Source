@@ -57,21 +57,11 @@ struct BrowseView: View {
                             .resizable()
                             .scaledToFill()
                             .frame(width: 28, height: 28)
-                            .clipShape(Circle())
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         Text("DELvEK.NET")
                             .font(.system(size: 17, weight: .bold))
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    // Opens App Store Search — not repo search.
-                    Button {
-                        showAppStoreSearch = true
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(.white)
                     }
-                    .accessibilityLabel("tab_search".localized)
                 }
             }
             .fullScreenCover(isPresented: $showAppStoreSearch) {
@@ -83,17 +73,31 @@ struct BrowseView: View {
         }
     }
 
+    /// Matches DELvEK: “1,776 Apps” · red handle on the right.
     private var repoHeader: some View {
         HStack {
             Text(String(format: "browse_apps_count".localized, catalogCount.formatted()))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.85))
             Spacer()
-            Text("browse_repo_label".localized)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(themeManager.accentColor)
+            Text(repoHandle)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(red: 1.0, green: 0.23, blue: 0.19))
         }
         .padding(.horizontal, 16)
+    }
+
+    private var repoHandle: String {
+        if let account = appStore.selectedAccount {
+            let name = account.fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty { return name }
+            let email = account.email
+            if let at = email.firstIndex(of: "@") {
+                return String(email[..<at])
+            }
+            return email
+        }
+        return "browse_repo_handle".localized
     }
 
     private func loadFeatured(force: Bool) async {

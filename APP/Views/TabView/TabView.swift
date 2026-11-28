@@ -24,17 +24,17 @@ enum TabEnum: String, CaseIterable, Hashable {
 
     var icon: String {
         switch self {
-        // Match MSIGN / DELvEK flat tab glyphs (no separate Search button).
-        case .browse:    return "circle.grid.3x3.fill"
-        case .settings:  return "gearshape"
-        case .downloads: return "square.grid.2x2.fill"
+        // Correct DELvEK/MSIGN glyphs (the mock had these scrambled).
+        case .browse:    return "circle.grid.3x3.fill"   // 3×3 dots
+        case .downloads: return "square.grid.2x2.fill"   // 2×2 squares
+        case .sign:      return "signature"              // scribble
+        case .settings:  return "gearshape.fill"         // gear (not signature)
         case .decrypt:   return "folder.fill"
-        case .sign:      return "signature"
         case .search:    return "magnifyingglass"
         }
     }
 
-    /// Browse · Library · Signed · Settings — no Files, no floating Search.
+    /// Browse · Library · Signed · Settings — Search is the separate circle control.
     static var barTabs: [TabEnum] { [.browse, .downloads, .sign, .settings] }
 
     @ViewBuilder
@@ -214,19 +214,43 @@ struct TabbarView: View {
 
     private var floatingTabBarContent: some View {
         let config = tabBarStyleManager.floatingConfig
-        let tabHeight = config.height
+        let tabHeight = max(config.height, 52)
 
-        // Flat docked tab bar (not floating) — Search lives in the floating top bar.
-        return HStack(spacing: 0) {
-            ForEach(tabOrder.order, id: \.self) { tab in
-                tabButton(for: tab, height: tabHeight)
-                    .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
+        // DELvEK-style dock: four labeled tabs + separate Search circle (App Store).
+        return HStack(spacing: 10) {
+            HStack(spacing: 0) {
+                ForEach(tabOrder.order, id: \.self) { tab in
+                    tabButton(for: tab, height: tabHeight)
+                        .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
+                }
             }
+            .padding(.horizontal, 2)
+            .padding(.top, 4)
+            .padding(.bottom, 2)
+            .frame(height: tabHeight)
+            .frame(maxWidth: .infinity)
+
+            Button(action: {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
+                    selectedTab = .search
+                }
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            }) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle().fill(
+                            selectedTab == .search ? themeManager.accentColor : FlatChrome.elevated
+                        )
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("tab_search".localized)
+            .padding(.trailing, 6)
         }
-        .padding(.horizontal, 4)
-        .padding(.top, 6)
-        .padding(.bottom, 2)
-        .frame(height: tabHeight)
+        .padding(.leading, 4)
         .frame(maxWidth: .infinity)
         .background(FlatChrome.tabBar)
         .overlay(alignment: .top) {
@@ -242,19 +266,19 @@ struct TabbarView: View {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
                 selectedTab = tab
             }
-            let impactMed = UIImpactFeedbackGenerator(style: .light)
-            impactMed.impactOccurred()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }) {
-            VStack(spacing: 3) {
+            VStack(spacing: 2) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: min(22, height * 0.40), weight: .regular))
-                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.45))
+                    .font(.system(size: 20, weight: .regular))
+                    .symbolRenderingMode(.monochrome)
+                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.40))
 
                 Text(tab.title)
-                    .font(.system(size: min(10, height * 0.18), weight: .regular))
-                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.45))
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundStyle(active ? Color.white : Color.white.opacity(0.40))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.75)
             }
             .contentShape(Rectangle())
             .frame(maxHeight: .infinity)

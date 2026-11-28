@@ -6,6 +6,7 @@
 "tab_search" = "Search";
 "browse_apps_count" = "%@ Apps";
 "browse_repo_label" = "DELvEK repo";
+"browse_repo_handle" = "MRZefv";
 "browse_load_failed" = "Could not load browse feed.";
 
 "cancel" = "Cancel";
