@@ -41,6 +41,21 @@ struct SettingsView: View {
                 key: "unlicense_dark"
             ),
             AltIcon(
+                displayName: "icon_gta".localized,
+                author: "icon_author".localized,
+                key: "unlicense_gta"
+            ),
+            AltIcon(
+                displayName: "icon_diddy".localized,
+                author: "icon_author".localized,
+                key: "unlicense_diddy"
+            ),
+            AltIcon(
+                displayName: "icon_tcap".localized,
+                author: "icon_author".localized,
+                key: "unlicense_tcap"
+            ),
+            AltIcon(
                 displayName: "icon_love".localized,
                 author: "icon_author".localized,
                 key: "kana_love"

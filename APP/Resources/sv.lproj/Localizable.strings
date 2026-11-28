@@ -58,6 +58,9 @@
 "icon_default" = "Standard";
 "icon_author" = "Ikon";
 "icon_dark" = "Mörk";
+"icon_gta" = "GTA VI";
+"icon_diddy" = "Baby Oil";
+"icon_tcap" = "Dateline";
 "icon_love" = "Kärlek";
 "icon_peek" = "Titta";
 "icon_set_success" = "Ikonen har angetts";

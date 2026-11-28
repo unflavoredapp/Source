@@ -58,6 +58,9 @@
 "icon_default" = "Alapértelmezett";
 "icon_author" = "Ikon";
 "icon_dark" = "Sötét";
+"icon_gta" = "GTA VI";
+"icon_diddy" = "Baby Oil";
+"icon_tcap" = "Dateline";
 "icon_love" = "Szerelem";
 "icon_peek" = "Kukorica";
 "icon_set_success" = "Ikon beállítása sikeres";

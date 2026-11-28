@@ -60,6 +60,51 @@
 				<key>UIPrerenderedIcon</key>
 				<true/>
 			</dict>
+			<key>unlicense_gta</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>unlicense_gta20x20</string>
+					<string>unlicense_gta29x29</string>
+					<string>unlicense_gta40x40</string>
+					<string>unlicense_gta60x60</string>
+					<string>unlicense_gta76x76</string>
+					<string>unlicense_gta83.5x83.5</string>
+					<string>unlicense_gta1024x1024</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>unlicense_diddy</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>unlicense_diddy20x20</string>
+					<string>unlicense_diddy29x29</string>
+					<string>unlicense_diddy40x40</string>
+					<string>unlicense_diddy60x60</string>
+					<string>unlicense_diddy76x76</string>
+					<string>unlicense_diddy83.5x83.5</string>
+					<string>unlicense_diddy1024x1024</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>unlicense_tcap</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>unlicense_tcap20x20</string>
+					<string>unlicense_tcap29x29</string>
+					<string>unlicense_tcap40x40</string>
+					<string>unlicense_tcap60x60</string>
+					<string>unlicense_tcap76x76</string>
+					<string>unlicense_tcap83.5x83.5</string>
+					<string>unlicense_tcap1024x1024</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
 		</dict>
 		<key>CFBundlePrimaryIcon</key>
 		<dict>
