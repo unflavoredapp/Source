@@ -58,6 +58,9 @@
 "icon_default" = "Domyślna";
 "icon_author" = "Ikona";
 "icon_dark" = "Ciemna";
+"icon_gta" = "GTA VI";
+"icon_diddy" = "Baby Oil";
+"icon_tcap" = "Dateline";
 "icon_love" = "Miłość";
 "icon_peek" = "Podgląd";
 "icon_set_success" = "Ikona została ustawiona";

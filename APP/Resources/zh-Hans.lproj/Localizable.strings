@@ -59,6 +59,9 @@
 "icon_default" = "默认";
 "icon_author" = "图标";
 "icon_dark" = "深色";
+"icon_gta" = "GTA VI";
+"icon_diddy" = "Baby Oil";
+"icon_tcap" = "Dateline";
 "icon_love" = "爱心";
 "icon_peek" = "偷看";
 "icon_set_success" = "图标设置成功";

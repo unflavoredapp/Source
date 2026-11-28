@@ -56,6 +56,9 @@ extension AppIconView {
 		let iconInfo: [(key: String?, displayNameKey: String, authorKey: String)] = [
 			(nil, "icon_default", "icon_author"),
 			("unlicense_dark", "icon_dark", "icon_author"),
+			("unlicense_gta", "icon_gta", "icon_author"),
+			("unlicense_diddy", "icon_diddy", "icon_author"),
+			("unlicense_tcap", "icon_tcap", "icon_author"),
 			("kana_love", "icon_love", "icon_author"),
 			("kana_peek", "icon_peek", "icon_author")
 		]
