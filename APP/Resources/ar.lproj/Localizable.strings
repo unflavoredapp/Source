@@ -57,6 +57,7 @@
 "confirm_switch" = "تأكيد التبديل";
 "icon_default" = "افتراضي";
 "icon_author" = "أيقونة";
+"icon_dark" = "داكن";
 "icon_love" = "حب";
 "icon_peek" = "نظرة";
 "icon_set_success" = "تم تعيين الأيقونة بنجاح";

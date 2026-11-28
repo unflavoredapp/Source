@@ -57,6 +57,7 @@
 "confirm_switch" = "Wijziging bevestigen";
 "icon_default" = "Standaard";
 "icon_author" = "Pictogram";
+"icon_dark" = "Donker";
 "icon_love" = "Liefde";
 "icon_peek" = "Piepen";
 "icon_set_success" = "Pictogram succesvol ingesteld";

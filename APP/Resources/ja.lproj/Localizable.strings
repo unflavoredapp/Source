@@ -57,6 +57,7 @@
 "confirm_switch" = "切り替えを確定";
 "icon_default" = "デフォルト";
 "icon_author" = "アイコン";
+"icon_dark" = "ダーク";
 "icon_love" = "Love";
 "icon_peek" = "Peek";
 "icon_set_success" = "アイコン設定完了";

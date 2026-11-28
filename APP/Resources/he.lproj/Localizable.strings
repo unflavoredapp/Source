@@ -57,6 +57,7 @@
 "confirm_switch" = "אשר שינוי";
 "icon_default" = "ברירת מחדל";
 "icon_author" = "סמל";
+"icon_dark" = "כהה";
 "icon_love" = "אהבה";
 "icon_peek" = "הצצה";
 "icon_set_success" = "הסמל הוגדר בהצלחה";

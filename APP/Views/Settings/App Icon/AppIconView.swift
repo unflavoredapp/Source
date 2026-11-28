@@ -55,6 +55,7 @@ extension AppIconView {
 	static func getAllIconsFromFolder() -> [AltIcon] {
 		let iconInfo: [(key: String?, displayNameKey: String, authorKey: String)] = [
 			(nil, "icon_default", "icon_author"),
+			("unlicense_dark", "icon_dark", "icon_author"),
 			("kana_love", "icon_love", "icon_author"),
 			("kana_peek", "icon_peek", "icon_author")
 		]

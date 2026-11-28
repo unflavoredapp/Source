@@ -57,6 +57,7 @@
 "confirm_switch" = "Bekräfta byte";
 "icon_default" = "Standard";
 "icon_author" = "Ikon";
+"icon_dark" = "Mörk";
 "icon_love" = "Kärlek";
 "icon_peek" = "Titta";
 "icon_set_success" = "Ikonen har angetts";

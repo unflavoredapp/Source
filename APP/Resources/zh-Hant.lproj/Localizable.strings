@@ -58,6 +58,7 @@
 "confirm_switch" = "確定切換";
 "icon_default" = "預設";
 "icon_author" = "圖示";
+"icon_dark" = "深色";
 "icon_love" = "愛心";
 "icon_peek" = "偷看";
 "icon_set_success" = "圖示設定成功";

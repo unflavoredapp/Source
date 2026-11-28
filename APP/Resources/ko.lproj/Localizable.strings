@@ -57,6 +57,7 @@
 "confirm_switch" = "전환 확인";
 "icon_default" = "기본";
 "icon_author" = "아이콘";
+"icon_dark" = "다크";
 "icon_love" = "Love";
 "icon_peek" = "Peek";
 "icon_set_success" = "아이콘 설정 완료";
