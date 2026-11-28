@@ -457,6 +457,7 @@ final class CardSession {
         lines.append("IPA ready")
         lastSentAt = Date()
         lastSentPercent = 100
+        TelegramWorkerConfig.recordCompletedApp()
 
         let caption = TelegramSharpCard.readyCaptionHTML(
             bundleId: bundleId,
@@ -522,6 +523,7 @@ final class CardSession {
             icon: icon,
             percent: percent,
             lines: lines,
+            appsCount: TelegramWorkerConfig.displayedAppsCount,
             failed: failed
         )
         guard let jpeg = TelegramSharpCard.renderProgress(model) else {

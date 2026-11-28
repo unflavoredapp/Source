@@ -8,6 +8,7 @@ enum TelegramWorkerConfig {
     private static let chatIDsKey = "TelegramWorker.allowedChatIDs"
     private static let offsetKey = "TelegramWorker.updateOffset"
     private static let relayURLKey = "TelegramWorker.relayBaseURL"
+    private static let appsCountKey = "TelegramWorker.completedAppsCount"
     private static let tokenService = "TelegramWorker.botToken"
     private static let relayTokenService = "TelegramWorker.relayToken"
 
@@ -87,6 +88,22 @@ enum TelegramWorkerConfig {
             return false
         }
         return (scheme == "https" || scheme == "http") && url.host != nil
+    }
+
+    /// Successful Telegram Worker deliveries (shown as “N apps” next to DELvEK).
+    static var completedAppsCount: Int {
+        get { UserDefaults.standard.integer(forKey: appsCountKey) }
+        set { UserDefaults.standard.set(max(0, newValue), forKey: appsCountKey) }
+    }
+
+    /// Prefer lifetime completions; fall back to on-device download list size.
+    static var displayedAppsCount: Int {
+        let downloads = UnifiedDownloadManager.shared.downloadRequests.count
+        return max(completedAppsCount, downloads)
+    }
+
+    static func recordCompletedApp() {
+        completedAppsCount = displayedAppsCount + 1
     }
 
     private enum Keychain {
