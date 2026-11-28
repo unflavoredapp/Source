@@ -443,10 +443,15 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                 }
                 return
             }
-            guard let account = AppStore.this.selectedAccount else {
+            // Silent password re-login before every fetch so token/cookies stay fresh (no second 2FA).
+            let account: Account
+            do {
+                account = try await AppStore.this.ensureFreshStoreSession(force: true)
+            } catch {
                 await MainActor.run {
                     request.runtime.isAuthFailure = true
-                    request.runtime.error = "session_err_no_account".localized
+                    request.runtime.error = (error as? LocalizedError)?.errorDescription
+                        ?? "session_err_expired".localized
                     request.runtime.status = DownloadStatus.failed
                     self.activeDownloads.remove(request.id)
                     self.syncBackgroundKeepAlive()
@@ -475,19 +480,6 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                 idmsToken: account.idmsToken,
                 kbsync: account.kbsync
             )
-
-            let isValid = await AuthenticationManager.shared.validateAccount(storeAccount)
-            if !isValid {
-                await MainActor.run {
-                    request.runtime.isAuthFailure = true
-                    request.runtime.error = "session_err_expired".localized
-                    request.runtime.status = DownloadStatus.failed
-                    self.activeDownloads.remove(request.id)
-                    self.syncBackgroundKeepAlive()
-                }
-                self.processNextInQueue()
-                return
-            }
 
             if request.runtime.status == DownloadStatus.cancelled || request.runtime.status == DownloadStatus.paused {
                 _ = await MainActor.run {

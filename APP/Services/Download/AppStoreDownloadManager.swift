@@ -583,9 +583,8 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
             }
             do {
 
-                let dsPersonId = account.dsPersonId
-                let passwordToken = account.passwordToken
-                let storeFront = account.storeResponse.storeFront
+                // Prefer the live selected account (may have been silently reauthed).
+                let liveAccount = await MainActor.run { AppStore.this.selectedAccount } ?? account
 
                 let plistResponse: [String: Any]
                 if let prefetchedSongList, !prefetchedSongList.isEmpty {
@@ -593,10 +592,8 @@ class AppStoreDownloadManager: NSObject, ObservableObject, URLSessionDownloadDel
                 } else {
                     plistResponse = try await StoreRequest.shared.downloadRawPlist(
                         appIdentifier: appIdentifier,
-                        directoryServicesIdentifier: dsPersonId,
-                        appVersion: appVersion,
-                        passwordToken: passwordToken,
-                        storeFront: storeFront
+                        account: liveAccount,
+                        appVersion: appVersion
                     )
                 }
 

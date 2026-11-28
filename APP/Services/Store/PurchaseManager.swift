@@ -229,6 +229,20 @@ class PurchaseManager: @unchecked Sendable {
     }
 
     private func attemptRefreshToken(account: Account) async -> Account? {
+        // Prefer silent password reauth (no second 2FA on a trusted device).
+        if let fresh = try? await AppStore.this.ensureFreshStoreSession(force: true) {
+            return fresh
+        }
+        if let pwd = StoreRequest.shared.storedPassword(for: account.email), !pwd.isEmpty,
+           let fresh = try? await AuthenticationManager.shared.reauthenticate(email: account.email, password: pwd) {
+            await MainActor.run {
+                AppStore.this.updateAccount(fresh)
+                if AppStore.this.selectedAccount?.email == fresh.email {
+                    AppStore.this.selectedAccount = fresh
+                }
+            }
+            return fresh
+        }
         let refreshed = AuthenticationManager.shared.refreshCookies(for: account)
         let isValid = await AuthenticationManager.shared.validateAccount(refreshed)
         return isValid ? refreshed : nil
