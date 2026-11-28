@@ -138,9 +138,10 @@ struct TabbarView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom, spacing: 0) {
+            let config = tabBarStyleManager.floatingConfig
             floatingTabBarContent
-                .padding(.horizontal, 12)
-                .padding(.bottom, 6)
+                .padding(.horizontal, config.horizontalPadding)
+                .padding(.bottom, max(0, config.bottomOffset))
                 .padding(.top, 2)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)

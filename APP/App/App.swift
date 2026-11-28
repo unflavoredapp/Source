@@ -88,6 +88,12 @@ struct App: SwiftUI.App {
             }
         }
 
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            Task { @MainActor in
+                await UpdateChecker.shared.autoCheckIfNeeded()
+            }
+        }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             Task { @MainActor in
                 TelegramWorker.shared.reconcile()

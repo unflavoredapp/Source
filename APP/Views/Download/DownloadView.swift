@@ -2450,6 +2450,59 @@ struct DownloadCardView: SwiftUI.View {
                     installationMessage = "starting_install_service".localized
                 }
 
+                // Native VPN + idevice path when selected in Settings › Install Method.
+                if NativeInstaller.isSelected {
+                    do {
+                        try await NativeInstaller.install(
+                            ipaURL: ipaURL,
+                            bundleID: bundleIdentifier,
+                            name: displayName,
+                            version: version
+                        ) { phase in
+                            Task { @MainActor in
+                                switch phase {
+                                case .idle:
+                                    break
+                                case .preparing:
+                                    installationProgress = 0.45
+                                    installationMessage = "preparing_install".localized
+                                case .connecting:
+                                    installationProgress = 0.55
+                                    installationMessage = "starting_install_service".localized
+                                case .transferring(let fraction):
+                                    installationProgress = 0.55 + (0.35 * max(0, min(1, fraction)))
+                                    installationMessage = "install_stage_in_progress".localized
+                                case .awaitingSystem:
+                                    installationProgress = 0.92
+                                    installationMessage = "install_stage_opening_system".localized
+                                case .delivered:
+                                    installationProgress = 1.0
+                                    installationMessage = "install_stage_completed".localized
+                                case .failed(let message):
+                                    installationMessage = message
+                                }
+                            }
+                        }
+                        await MainActor.run {
+                            SoundEffects.play(.success)
+                            installationProgress = 1.0
+                            installationMessage = "install_stage_completed".localized
+                            GlobalInstallationManager.shared.finishInstallation(for: request.id)
+                            isInstalling = false
+                        }
+                        if backgroundTaskID != .invalid {
+                            await MainActor.run {
+                                UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                                backgroundTaskID = .invalid
+                            }
+                        }
+                        return
+                    } catch {
+                        // Fall through to OTA itms-services if native stack isn't ready.
+                        print("[Install] Native failed, falling back to OTA: \(error.localizedDescription)")
+                    }
+                }
+
                 let port = HTTPServerManager.shared.allocatePort()
                 let host = currentLocalIPv4() ?? "127.0.0.1"
 

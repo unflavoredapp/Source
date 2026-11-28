@@ -10,6 +10,7 @@ struct SettingsView: View {
 
     @ObservedObject private var updateChecker = UpdateChecker.shared
     @State private var showAccountSheet = false
+    @State private var showUpdateSheet = false
     @State private var showingIconSuccess = false
     @State private var showingIconError = false
     @State private var iconErrorMessage = ""
@@ -89,19 +90,25 @@ struct SettingsView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
-                    .padding(.bottom, 20)
+                    // Clear the floating tab bar so the version footer isn't clipped.
+                    .padding(.bottom, 120)
                 }
                 .background(Color.clear)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarHidden(true)
+            .navigationTitle("tab_settings".localized)
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.visible, for: .navigationBar)
             .onAppear {
                 currentIcon = AppIconManager.shared.currentAlternateIconName
             }
             .fullScreenCover(isPresented: $showAccountSheet) {
                 AccountSheetView()
                     .environmentObject(appStore)
+                    .environmentObject(themeManager)
+            }
+            .sheet(isPresented: $showUpdateSheet) {
+                UpdateSheet(checker: updateChecker)
                     .environmentObject(themeManager)
             }
             .alert("icon_set_success".localized, isPresented: $showingIconSuccess) {
@@ -256,7 +263,7 @@ struct SettingsView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            Text("0.0.2")
+            Text(UpdateChecker.shared.currentVersion)
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(.secondary)
         }
@@ -340,10 +347,15 @@ struct SettingsView: View {
     private var updateRow: some View {
         Button {
             switch updateChecker.state {
-            case .available(_, let url):
-                UIApplication.shared.open(url)
+            case .available:
+                showUpdateSheet = true
             default:
-                Task { await updateChecker.check() }
+                Task {
+                    await updateChecker.check()
+                    if case .available = updateChecker.state {
+                        showUpdateSheet = true
+                    }
+                }
             }
         } label: {
             HStack(spacing: 12) {
@@ -353,9 +365,14 @@ struct SettingsView: View {
                     .frame(width: 28, height: 28)
                     .background(Circle().fill(themeManager.accentColor))
 
-                Text("check_updates".localized)
-                    .font(.system(size: 16))
-                    .foregroundColor(.primary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("check_updates".localized)
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary)
+                    Text("unlicense.cc/updates")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
 
                 Spacer()
 
