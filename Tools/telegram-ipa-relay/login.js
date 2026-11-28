@@ -74,30 +74,35 @@ async function main() {
   console.log(`TELEGRAM_API_HASH=${apiHash}`);
   console.log(`TELEGRAM_SESSION=${session}`);
   console.log("");
-  console.log("Also set TELEGRAM_CHANNEL_ID=-100… and TELEGRAM_BOT_TOKEN=…");
+  console.log("Also set TELEGRAM_CHANNEL_INVITE (or TELEGRAM_CHANNEL_ID) + TELEGRAM_BOT_TOKEN in .env");
   console.log("Bot must be admin in that channel; this Premium account posts IPAs there.");
 
+  // Always persist credentials — the `input` confirm() API is options-only and
+  // used to throw here, which left TELEGRAM_SESSION missing from .env.
   const envPath = path.join(__dirname, ".env");
-  const write = await input.confirm("Write/update TELEGRAM_* keys in .env now?", false);
-  if (write) {
-    let existing = "";
+  let existing = "";
+  try {
+    existing = fs.readFileSync(envPath, "utf8");
+  } catch {
     try {
-      existing = fs.readFileSync(envPath, "utf8");
+      existing = fs.readFileSync(path.join(__dirname, ".env.example"), "utf8");
     } catch {
       existing = "";
     }
-    const upsert = (text, key, value) => {
-      const re = new RegExp(`^${key}=.*$`, "m");
-      const line = `${key}=${value}`;
-      return re.test(text) ? text.replace(re, line) : `${text.trimEnd()}\n${line}\n`;
-    };
-    let next = existing || "";
-    next = upsert(next, "TELEGRAM_API_ID", apiId);
-    next = upsert(next, "TELEGRAM_API_HASH", apiHash);
-    next = upsert(next, "TELEGRAM_SESSION", session);
-    fs.writeFileSync(envPath, next.startsWith("\n") ? next.slice(1) : next, { mode: 0o600 });
-    console.log(`Updated ${envPath}`);
   }
+  const upsert = (text, key, value) => {
+    const re = new RegExp(`^${key}=.*$`, "m");
+    const line = `${key}=${value}`;
+    return re.test(text) ? text.replace(re, line) : `${text.trimEnd()}\n${line}\n`;
+  };
+  let next = existing || "";
+  next = upsert(next, "TELEGRAM_API_ID", apiId);
+  next = upsert(next, "TELEGRAM_API_HASH", apiHash);
+  next = upsert(next, "TELEGRAM_SESSION", session);
+  fs.writeFileSync(envPath, next.startsWith("\n") ? next.slice(1) : next, { mode: 0o600 });
+  console.log("");
+  console.log(`Wrote TELEGRAM_API_ID / TELEGRAM_API_HASH / TELEGRAM_SESSION → ${envPath}`);
+  console.log("Next: ensure RELAY_TOKEN, PUBLIC_BASE_URL, TELEGRAM_BOT_TOKEN, and CHANNEL_INVITE are set, then ./setup-vps.sh");
 }
 
 main().catch((err) => {
