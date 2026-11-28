@@ -57,12 +57,12 @@
 "confirm_switch" = "Bekræft skift";
 "icon_default" = "Standard";
 "icon_author" = "Ikon";
-"icon_dark" = "Mørk";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Kærlighed";
-"icon_peek" = "Kig";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Ikonet er indstillet";
 "system_language" = "Systemsprog";
 "lang_chinese_simplified" = "Kinesisk (forenklet)";

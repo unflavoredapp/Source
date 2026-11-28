@@ -57,12 +57,12 @@
 "confirm_switch" = "Подтвердить смену";
 "icon_default" = "По умолчанию";
 "icon_author" = "Значок";
-"icon_dark" = "Тёмная";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Любовь";
-"icon_peek" = "Взгляд";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Значок успешно установлен";
 "system_language" = "Язык системы";
 "lang_chinese_simplified" = "Китайский (упрощённый)";

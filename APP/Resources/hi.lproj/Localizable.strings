@@ -57,12 +57,12 @@
 "confirm_switch" = "स्विच की पुष्टि करें";
 "icon_default" = "डिफ़ॉल्ट";
 "icon_author" = "आइकन";
-"icon_dark" = "डार्क";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "लव";
-"icon_peek" = "पीक";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "आइकन सफलतापूर्वक सेट हो गया";
 "system_language" = "सिस्टम भाषा";
 "lang_chinese_simplified" = "चीनी, सरलीकृत";

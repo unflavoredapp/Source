@@ -57,12 +57,12 @@
 "confirm_switch" = "Konfirmasi Ganti";
 "icon_default" = "Default";
 "icon_author" = "Ikon";
-"icon_dark" = "Gelap";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Cinta";
-"icon_peek" = "Mengintip";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Ikon berhasil diatur";
 "system_language" = "Bahasa Sistem";
 "lang_chinese_simplified" = "Tiongkok (Sederhana)";

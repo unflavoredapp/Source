@@ -57,12 +57,12 @@
 "confirm_switch" = "Επιβεβαίωση αλλαγής";
 "icon_default" = "Προεπιλογή";
 "icon_author" = "Εικονίδιο";
-"icon_dark" = "Σκοτεινό";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Αγάπη";
-"icon_peek" = "Κουράνα";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Το εικονίδιο ορίστηκε με επιτυχία";
 "system_language" = "Γλώσσα συστήματος";
 "lang_chinese_simplified" = "Κινέζικα (απλοποιημένα)";

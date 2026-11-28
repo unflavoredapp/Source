@@ -57,12 +57,12 @@
 "confirm_switch" = "Potvrdi promjenu";
 "icon_default" = "Zadana";
 "icon_author" = "Ikona";
-"icon_dark" = "Tamna";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Ljubav";
-"icon_peek" = "Pogledaj";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Ikona je uspješno postavljena";
 "system_language" = "Jezik sustava";
 "lang_chinese_simplified" = "Kineski (pojednostavljeni)";

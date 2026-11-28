@@ -57,12 +57,12 @@
 "confirm_switch" = "Підтвердити зміну";
 "icon_default" = "За замовчуванням";
 "icon_author" = "Значок";
-"icon_dark" = "Темна";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Любов";
-"icon_peek" = "Піглянути";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Значок успішно встановлено";
 "system_language" = "Мова системи";
 "lang_chinese_simplified" = "Китайська (спрощена)";

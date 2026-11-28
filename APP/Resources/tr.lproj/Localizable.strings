@@ -57,12 +57,12 @@
 "confirm_switch" = "Değişikliği Onayla";
 "icon_default" = "Varsayılan";
 "icon_author" = "Simge";
-"icon_dark" = "Koyu";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Sevgi";
-"icon_peek" = "Göz at";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Simge başarıyla ayarlandı";
 "system_language" = "Sistem Dili";
 "lang_chinese_simplified" = "Basitleştirilmiş Çince";
