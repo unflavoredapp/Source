@@ -8,6 +8,14 @@
 "browse_repo_label" = "DELvEK repo";
 "browse_repo_handle" = "MRZefv";
 "browse_load_failed" = "Could not load browse feed.";
+"sources_title" = "Sources";
+"sources_add" = "Add Source";
+"sources_empty" = "No sources yet";
+"sources_reset_defaults" = "Restore DELvEK & TubeVault";
+"sources_field_name" = "Name";
+"sources_field_subtitle" = "Subtitle";
+"sources_field_handle" = "Handle";
+"sources_default_subtitle" = "Custom IPA repository";
 
 "cancel" = "Cancel";
 "confirm" = "Confirm";
@@ -1154,6 +1162,7 @@ Re-sign the app with a developer certificate that carries it (free certificates 
 "chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
 "chart_hud_avg" = "Avg %@";
 "chart_hud_detail" = "%@ left · %@ elapsed";
+"chart_hud_scrub" = "%@ @ %@ · %@ in";
 "download_waiting_sample" = "Waiting for samples…";
 "settings_appearance_color" = "Appearance & Color";
 "settings_tab_bar" = "Tab Bar";
