@@ -56,6 +56,14 @@ enum TelegramWorkerJobs {
     static func fetch(app: iTunesSearchResult, onProgress: @escaping ProgressHandler) async throws -> URL {
         guard AppStore.this.selectedAccount != nil else { throw JobError.noAccount }
 
+        // Silent password re-login before every fetch so we don't prompt for 2FA again.
+        do {
+            _ = try await AppStore.this.ensureFreshStoreSession(force: true)
+            await onProgress("Store session refreshed", 0)
+        } catch {
+            throw JobError.downloadFailed(error.localizedDescription)
+        }
+
         let downloadId = UnifiedDownloadManager.shared.addDownload(
             bundleIdentifier: app.bundleId,
             name: app.trackName,

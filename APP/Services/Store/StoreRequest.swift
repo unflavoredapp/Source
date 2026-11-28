@@ -253,8 +253,18 @@ class StoreRequest {
 
     func downloadRawPlist(appIdentifier: String, directoryServicesIdentifier: String,
                           appVersion: String? = nil, passwordToken: String? = nil,
-                          storeFront: String? = nil) async throws -> [String: Any] {
-        let account = accountStub(dsid: directoryServicesIdentifier, token: passwordToken, storeFront: storeFront)
+                          storeFront: String? = nil, accountEmail: String? = nil) async throws -> [String: Any] {
+        var account = accountStub(
+            dsid: directoryServicesIdentifier,
+            token: passwordToken,
+            storeFront: storeFront,
+            email: accountEmail ?? ""
+        )
+        return try await downloadRawPlist(appIdentifier: appIdentifier, account: account, appVersion: appVersion, retried: false)
+    }
+
+    func downloadRawPlist(appIdentifier: String, account: Account,
+                          appVersion: String? = nil, retried: Bool = false) async throws -> [String: Any] {
         let guid = GUIDCache.shared.get()
         var body = downloadBody(appIdentifier: appIdentifier, appVersion: appVersion)
         body["guid"] = guid
@@ -263,11 +273,28 @@ class StoreRequest {
         let url = URL(string: "https://downloaddispatch.itunes.apple.com/WebObjects/DownloadDispatch.woa/wa/ent/download?guid=\(guid)")!
         let (plist, _) = try await storePlist(url, body: HTTPClient.encodePlist(body),
                                               headers: authHeaders(account), guid: guid)
+        let ft = plistString(plist["failureType"])
+        if ["2034", "2042"].contains(ft), !retried,
+           let pwd = storedPassword(for: account.email), !pwd.isEmpty,
+           let fresh = try? await AuthenticationManager.shared.reauthenticate(email: account.email, password: pwd) {
+            await MainActor.run {
+                AppStore.this.updateAccount(fresh)
+                if AppStore.this.selectedAccount?.email == fresh.email {
+                    AppStore.this.selectedAccount = fresh
+                }
+            }
+            return try await downloadRawPlist(
+                appIdentifier: appIdentifier,
+                account: fresh,
+                appVersion: appVersion,
+                retried: true
+            )
+        }
         return plist
     }
 
-    private func accountStub(dsid: String, token: String?, storeFront: String?) -> Account {
-        Account(name: "", email: "", firstName: "", lastName: "",
+    private func accountStub(dsid: String, token: String?, storeFront: String?, email: String = "") -> Account {
+        Account(name: "", email: email, firstName: "", lastName: "",
                 passwordToken: token ?? "", directoryServicesIdentifier: dsid,
                 dsPersonId: dsid, cookies: [], countryCode: "", pod: "",
                 storeResponse: Account.AccountStoreResponse(

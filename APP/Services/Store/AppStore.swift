@@ -15,6 +15,10 @@ class AppStore: ObservableObject {
 
     @Published var selectedAccountIndex: Int = 0
 
+    /// Last successful silent password reauth per email (avoid hammering Apple mid-queue).
+    private var lastSilentReauthAt: [String: Date] = [:]
+    private let silentReauthCooldown: TimeInterval = 90
+
     private init() {
         loadAccounts()
         Task { await restoreSessionIfNeeded() }
@@ -165,7 +169,55 @@ class AppStore: ObservableObject {
             try? AuthenticationManager.shared.saveAllAccounts(savedAccounts)
             persistSelectedIndex()
         } else {
+            // Prefer silent password re-login over logging the user out.
+            if let refreshed = try? await ensureFreshStoreSession(force: true) {
+                selectedAccount = refreshed
+                return
+            }
             logoutAccount()
+        }
+    }
+
+    /// Re-login with the saved password (no 2FA when this device is still trusted).
+    /// Call before each App Store fetch so passwordToken / cookies stay fresh.
+    @discardableResult
+    func ensureFreshStoreSession(force: Bool = false) async throws -> Account {
+        guard let account = selectedAccount else {
+            throw StoreError.authenticationFailedWithDetails("session_err_no_account".localized)
+        }
+        guard let password = StoreRequest.shared.storedPassword(for: account.email), !password.isEmpty else {
+            AuthenticationManager.shared.setCookies(account.cookies)
+            if await AuthenticationManager.shared.validateAccount(account) {
+                return account
+            }
+            throw StoreError.authenticationFailedWithDetails("session_err_expired".localized)
+        }
+
+        let email = account.email
+        if !force,
+           let last = lastSilentReauthAt[email],
+           Date().timeIntervalSince(last) < silentReauthCooldown {
+            AuthenticationManager.shared.setCookies(account.cookies)
+            return account
+        }
+
+        do {
+            let fresh = try await AuthenticationManager.shared.reauthenticate(
+                email: email,
+                password: password
+            )
+            updateAccount(fresh)
+            selectedAccount = fresh
+            lastSilentReauthAt[email] = Date()
+            NotificationCenter.default.post(name: .accountStoreTokensRefreshed, object: fresh)
+            return fresh
+        } catch let error as StoreError {
+            // codeRequired means Apple wants a new 2FA — cannot silent-refresh.
+            throw error
+        } catch {
+            throw StoreError.authenticationFailedWithDetails(
+                (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            )
         }
     }
 
