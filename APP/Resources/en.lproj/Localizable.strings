@@ -5,6 +5,7 @@
 "tab_signed" = "Signed";
 "tab_search" = "Search";
 "browse_apps_count" = "%@ Apps";
+"browse_repo_label" = "DELvEK repo";
 "browse_load_failed" = "Could not load browse feed.";
 
 "cancel" = "Cancel";

@@ -49,14 +49,12 @@ enum TabEnum: String, CaseIterable, Hashable {
             SettingsView()
                 .environmentObject(themeManager)
                 .environmentObject(tabBarStyleManager)
-                .toolbar(.hidden, for: .navigationBar)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .downloads:
             NavigationStack {
                 DownloadView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
-                    .toolbar(.hidden, for: .navigationBar)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .decrypt:
@@ -64,7 +62,6 @@ enum TabEnum: String, CaseIterable, Hashable {
                 DecryptView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
-                    .toolbar(.hidden, for: .navigationBar)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .sign:
@@ -72,10 +69,10 @@ enum TabEnum: String, CaseIterable, Hashable {
                 SignView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
-                    .toolbar(.hidden, for: .navigationBar)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .search:
+            // App Store search — separate from DELvEK repo Browse.
             SearchView()
                 .environmentObject(themeManager)
                 .environmentObject(tabBarStyleManager)
@@ -93,25 +90,12 @@ struct TabbarView: View {
         }
         return .browse
     }()
-    @State private var topSearchExpanded = false
-    @State private var topSearchText = ""
     @ObservedObject private var tabOrder = TabOrderStore.shared
     @ObservedObject private var router = TabRouter.shared
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var tabBarStyleManager: TabBarStyleManager
 
     private static let floatingTabMinWidth: CGFloat = 44
-
-    private var floatingTopTitle: String {
-        switch selectedTab {
-        case .browse: return "DELvEK.NET"
-        case .downloads: return "tab_library".localized
-        case .sign: return "tab_signed".localized
-        case .settings: return "tab_settings".localized
-        case .search: return "UNlicense"
-        case .decrypt: return "tab_decrypt".localized
-        }
-    }
 
     var body: some View {
         Group {
@@ -164,43 +148,11 @@ struct TabbarView: View {
                 .id(selectedTab)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // Only the top bar floats.
-        .safeAreaInset(edge: .top, spacing: 0) {
-            FloatingAppTopBar(
-                title: floatingTopTitle,
-                searchText: $topSearchText,
-                isSearchExpanded: $topSearchExpanded,
-                onSubmitSearch: submitTopSearch
-            )
-            .environmentObject(themeManager)
-            .padding(.top, 4)
-            .padding(.bottom, 6)
-        }
+        // App Store floating top bar lives inside SearchView only — not on repo Browse.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             floatingTabBarContent
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
-        .onChange(of: selectedTab) { _, newValue in
-            if newValue != .search {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    topSearchExpanded = false
-                }
-            }
-        }
-    }
-
-    private func submitTopSearch() {
-        let term = topSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !term.isEmpty else { return }
-        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-            topSearchExpanded = false
-        }
-        selectedTab = .search
-        NotificationCenter.default.post(
-            name: Notification.Name("BrowseOpenAppStoreSearch"),
-            object: nil,
-            userInfo: ["term": term]
-        )
     }
 
     @ViewBuilder

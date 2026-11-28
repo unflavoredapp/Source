@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The only floating chrome: centered name + magnifying glass that expands into a search field.
+/// App Store floating chrome only (not used on DELvEK repo Browse).
+/// Centered name + magnifying glass that expands into a search field.
 struct FloatingAppTopBar: View {
     let title: String
     @Binding var searchText: String

@@ -290,16 +290,35 @@ struct SearchView: SwiftUI.View {
     @State private var purchaseAlertText: String = ""
     @State var isLoadingVersions = false
     @State var versionError: String?
+    /// App Store floating top bar: name centered; mag expands into search field.
+    @State private var storeTopSearchExpanded = false
+
     var body: some SwiftUI.View {
         NavigationStack {
             ZStack {
                 FlatChrome.canvas.ignoresSafeArea()
 
                 VStack(spacing: 0) {
+                    // App Store only — not used on DELvEK repo Browse.
+                    FloatingAppTopBar(
+                        title: "UNlicense",
+                        searchText: $searchKey,
+                        isSearchExpanded: $storeTopSearchExpanded,
+                        onSubmitSearch: {
+                            storeTopSearchExpanded = false
+                            Task { await performSearch() }
+                        }
+                    )
+                    .environmentObject(themeManager)
+                    .padding(.top, 4)
+                    .padding(.bottom, 8)
 
-                    modernSearchBar
-                        .padding(.horizontal, 16)
-                        .background(FlatChrome.canvas)
+                    if !storeTopSearchExpanded {
+                        // Classic chips / filters stay under the floating bar when collapsed.
+                        modernSearchBarFiltersOnly
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 4)
+                    }
 
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
@@ -339,6 +358,7 @@ struct SearchView: SwiftUI.View {
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("BrowseOpenAppStoreSearch"))) { note in
                 if let term = note.userInfo?["term"] as? String, !term.isEmpty {
                     searchKey = term
+                    storeTopSearchExpanded = false
                     Task { await performSearch() }
                 }
             }
@@ -403,162 +423,89 @@ struct SearchView: SwiftUI.View {
         }
     }
 
-    var modernSearchBar: some SwiftUI.View {
-        VStack(spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.secondary)
-                UIKitTextField(
-                    text: $searchKey,
-                    placeholder: "search_placeholder".localized,
-                    onEditingChanged: { isFocused in
-                        searchKeyFocused = isFocused
-                        if isFocused, !searchKey.isEmpty {
-                            showSearchSuggestions = true
-                            searchSuggestions = getSearchSuggestions(for: searchKey)
-                            if let cached = searchSuggestionsCache.value(forKey: searchKey) {
-                                let combined = Array(Set((searchSuggestions + cached))).sorted()
-                                searchSuggestions = combined
-                            }
-                        }
-                    },
-                    onCommit: {
-                        showSearchSuggestions = false
-                        Task {
-                            await performSearch()
-                        }
-                    },
-                    onTextChange: { newValue in
-                        if !newValue.isEmpty {
-                            showSearchSuggestions = true
-
-                            searchSuggestions = getSearchSuggestions(for: newValue)
-
-                            if let cached = searchSuggestionsCache.value(forKey: newValue) {
-                                let combined = Array(Set((searchSuggestions + cached))).sorted()
-                                searchSuggestions = combined
-                            }
-
-                            suggestionsDebounce.execute {
-                                Task { await fetchRemoteSuggestions(for: newValue) }
-                            }
-                        } else {
-                            suggestionsDebounce.cancel()
-                            showSearchSuggestions = false
-                            searchSuggestions = []
-                        }
-                    }
-                )
-                .frame(maxWidth: .infinity)
-                .frame(height: 22)
-                if !searchKey.isEmpty {
+    /// Filter chips only — the text field lives in the App Store floating top bar.
+    var modernSearchBarFiltersOnly: some SwiftUI.View {
+        HStack(spacing: 8) {
+            Menu {
+                ForEach(DeviceFamily.allCases, id: \.self) { type in
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            searchKey = ""
-                            searchResult = []
-                        }
+                        searchType = type
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
-                    }
-                    .accessibilityLabel("clear".localized)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(searchBarBackgroundColor)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        searchKeyFocused ? themeManager.accentColor : Color.clear,
-                        lineWidth: 2
-                    )
-            )
-            .padding(.top, 8)
-
-            HStack(spacing: 8) {
-
-                Menu {
-                    ForEach(DeviceFamily.allCases, id: \.self) { type in
-                        Button {
-                            searchType = type
-                        } label: {
-                            HStack {
-                                Image(systemName: "iphone")
-                                Text(type.displayName)
-                                if searchType == type {
-                                    Image(systemName: "checkmark")
-                                }
+                        HStack {
+                            Image(systemName: "iphone")
+                            Text(type.displayName)
+                            if searchType == type {
+                                Image(systemName: "checkmark")
                             }
                         }
                     }
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "iphone")
-                            .font(.system(size: 14, weight: .medium))
-                        Text(searchType.displayName)
-                            .font(.caption)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(themeManager.accentColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule()
-                            .fill(themeManager.accentColor.opacity(0.1))
-                    )
                 }
-
-                Spacer()
-
-                Button(action: {
-                    showDirectSheet = true
-                }) {
-                    Text("delisted_apps_short".localized)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(themeManager.accentColor)
-                        .multilineTextAlignment(.center)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "iphone")
+                        .font(.system(size: 14, weight: .medium))
+                    Text(searchType.displayName)
+                        .font(.caption)
                         .lineLimit(1)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(Capsule().fill(themeManager.accentColor.opacity(0.1)))
+                        .fixedSize(horizontal: true, vertical: false)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .medium))
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("legacy_apps_delisted".localized)
+                .foregroundColor(themeManager.accentColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(themeManager.accentColor.opacity(0.1))
+                )
+            }
 
-                Spacer()
+            Spacer()
 
-                Button(action: {
-                    showPurchasedSheet = true
-                }) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "bag.fill")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text("tab_purchased".localized)
-                            .font(.system(size: 13, weight: .medium))
-                    }
+            Button(action: {
+                showDirectSheet = true
+            }) {
+                Text("delisted_apps_short".localized)
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(themeManager.accentColor)
+                    .multilineTextAlignment(.center)
                     .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .padding(.horizontal, 9)
+                    .padding(.horizontal, 10)
                     .padding(.vertical, 8)
                     .background(Capsule().fill(themeManager.accentColor.opacity(0.1)))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("tab_purchased".localized)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+            .buttonStyle(.plain)
+            .accessibilityLabel("legacy_apps_delisted".localized)
+
+            Spacer()
+
+            Button(action: {
+                showPurchasedSheet = true
+            }) {
+                HStack(spacing: 5) {
+                    Image(systemName: "bag.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("tab_purchased".localized)
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .foregroundColor(themeManager.accentColor)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(themeManager.accentColor.opacity(0.1)))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("tab_purchased".localized)
         }
-        .padding(.top, 8)
+        .padding(.bottom, 4)
+    }
+
+    var modernSearchBar: some SwiftUI.View {
+        VStack(spacing: 12) {
+            modernSearchBarFiltersOnly
+        }
+        .padding(.top, 4)
     }
 
     var searchResultsSection: some SwiftUI.View {
