@@ -5,7 +5,7 @@ enum TelegramIPARelayError: LocalizedError {
     case invalidURL
     case httpStatus(Int, String?)
     case badResponse
-    case missingDownloadURL
+    case deliveryFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -18,13 +18,15 @@ enum TelegramIPARelayError: LocalizedError {
             return "Relay HTTP \(code)"
         case .badResponse:
             return "Relay returned an unexpected response."
-        case .missingDownloadURL:
-            return "Relay upload succeeded but no download URL was returned."
+        case .deliveryFailed(let detail):
+            return detail
         }
     }
 }
 
-/// Uploads large IPAs to the VPS relay and returns a public download URL.
+/// Uploads large IPAs to the VPS relay.
+/// When the VPS has Premium channel delivery configured, the IPA is posted to a
+/// private channel by your Premium account and the bot forwards it to `chatID`.
 enum TelegramIPARelay {
     private static let session: URLSession = {
         let config = URLSessionConfiguration.default
@@ -35,19 +37,25 @@ enum TelegramIPARelay {
     }()
 
     struct UploadResult {
-        let url: URL
+        let url: URL?
         let filename: String
         let size: Int64
         let expiresIn: Int?
+        let delivered: Bool
+        let destination: String?
+        let deliverError: String?
+        let channelDelivery: Bool
     }
 
     static var isConfigured: Bool {
         TelegramWorkerConfig.isRelayConfigured
     }
 
-    /// Streams `fileURL` to `PUT {base}/upload?name=…` with Bearer auth.
+    /// Streams `fileURL` to `PUT {base}/upload?name=…&chat_id=…` with Bearer auth.
     static func upload(
         fileURL: URL,
+        chatID: Int64,
+        caption: String = "",
         onProgress: ((Double) -> Void)? = nil
     ) async throws -> UploadResult {
         guard isConfigured else { throw TelegramIPARelayError.notConfigured }
@@ -57,7 +65,14 @@ enum TelegramIPARelay {
             .replacingOccurrences(of: "/+$", with: "", options: .regularExpression)
         let filename = fileURL.lastPathComponent
         var components = URLComponents(string: "\(base)/upload")
-        components?.queryItems = [URLQueryItem(name: "name", value: filename)]
+        var items = [
+            URLQueryItem(name: "name", value: filename),
+            URLQueryItem(name: "chat_id", value: String(chatID)),
+        ]
+        if !caption.isEmpty {
+            items.append(URLQueryItem(name: "caption", value: caption))
+        }
+        components?.queryItems = items
         guard let uploadURL = components?.url else { throw TelegramIPARelayError.invalidURL }
 
         var request = URLRequest(url: uploadURL)
@@ -65,6 +80,7 @@ enum TelegramIPARelay {
         request.setValue("Bearer \(TelegramWorkerConfig.relayToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue(filename, forHTTPHeaderField: "X-Filename")
+        request.setValue(String(chatID), forHTTPHeaderField: "X-Chat-Id")
 
         let attrs = try FileManager.default.attributesOfItem(atPath: fileURL.path)
         let size = (attrs[.size] as? NSNumber)?.int64Value ?? 0
@@ -81,18 +97,30 @@ enum TelegramIPARelay {
 
         guard
             let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-            obj["ok"] as? Bool == true,
-            let urlString = obj["url"] as? String,
-            let downloadURL = URL(string: urlString)
+            obj["ok"] as? Bool == true
         else {
-            throw TelegramIPARelayError.missingDownloadURL
+            throw TelegramIPARelayError.badResponse
+        }
+
+        let urlString = obj["url"] as? String
+        let delivered = obj["delivered"] as? Bool ?? false
+        let deliverError = obj["deliverError"] as? String
+        if !delivered, let deliverError, !deliverError.isEmpty,
+           (obj["channelDelivery"] as? Bool) == true {
+            // Channel path was expected but failed — still return so caller can fall back to link.
+            // Prefer surfacing soft failure via result rather than throw when a URL exists.
+            _ = deliverError
         }
 
         return UploadResult(
-            url: downloadURL,
+            url: urlString.flatMap(URL.init(string:)),
             filename: (obj["filename"] as? String) ?? filename,
             size: (obj["size"] as? NSNumber)?.int64Value ?? size,
-            expiresIn: obj["expiresIn"] as? Int
+            expiresIn: obj["expiresIn"] as? Int,
+            delivered: delivered,
+            destination: obj["destination"] as? String,
+            deliverError: deliverError,
+            channelDelivery: obj["channelDelivery"] as? Bool ?? false
         )
     }
 

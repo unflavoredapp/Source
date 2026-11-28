@@ -1119,14 +1119,14 @@ Re-sign the app with a developer certificate that carries it (free certificates 
 "sign_certificate_id_wildcard" = "This profile is a wildcard. Enter a concrete App ID manually.";
 
 "telegram_worker_title" = "Telegram Worker";
-"telegram_worker_intro" = "Use this iPhone as a fetch + decrypt worker controlled from Telegram. Keep the app open while jobs run. Optional VPS relay hosts IPAs over Telegram’s ~50 MB cap.";
+"telegram_worker_intro" = "Use this iPhone as a fetch + decrypt worker controlled from Telegram. Keep the app open while jobs run. Large IPAs go via VPS: Premium account posts to your channel, bot forwards to you.";
 "telegram_worker_enabled" = "Enable worker";
 "telegram_worker_token" = "Bot token";
 "telegram_worker_token_hint" = "From @BotFather. Stored in the Keychain on this device.";
 "telegram_worker_chats" = "Allowed chat IDs";
 "telegram_worker_chats_hint" = "Comma-separated. Leave empty to lock to the first chat that messages the bot.";
 "telegram_worker_relay_url" = "IPA relay URL (VPS)";
-"telegram_worker_relay_url_hint" = "Public HTTPS origin of Tools/telegram-ipa-relay, e.g. https://ipa.example.com";
+"telegram_worker_relay_url_hint" = "Public HTTPS origin of Tools/telegram-ipa-relay. On the VPS set Premium session + channel + bot token.";
 "telegram_worker_relay_token" = "Relay token";
 "telegram_worker_relay_token_hint" = "Same value as RELAY_TOKEN on the VPS. Stored in Keychain.";
 "telegram_worker_save" = "Save & apply";

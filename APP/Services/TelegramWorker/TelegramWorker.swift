@@ -216,39 +216,65 @@ final class TelegramWorker: ObservableObject {
         }
 
         if TelegramIPARelay.isConfigured {
-            await cards.progress("Uploading to VPS relay…", percent: 99)
+            await cards.progress("Uploading to VPS (channel delivery)…", percent: 99)
             final class ProgressGate: @unchecked Sendable {
                 var last = -1
             }
             let gate = ProgressGate()
-            let uploaded = try await TelegramIPARelay.upload(fileURL: fileURL) { fraction in
+            let uploaded = try await TelegramIPARelay.upload(
+                fileURL: fileURL,
+                chatID: chatID,
+                caption: caption
+            ) { fraction in
                 let pct = Int((fraction * 100).rounded())
                 guard pct != gate.last else { return }
                 gate.last = pct
                 Task { await cards.progress("Relay upload \(pct)%", percent: 99) }
             }
             let mb = Double(uploaded.size) / 1_048_576
-            let expires: String
-            if let seconds = uploaded.expiresIn {
-                let hours = max(1, seconds / 3600)
-                expires = "Expires in ~\(hours)h."
-            } else {
-                expires = ""
+
+            if uploaded.delivered {
+                await cards.finish(percent: 100, line: "forwarded from channel")
+                // The IPA itself arrives as a bot forward from the drop channel.
+                await TelegramBotClient.sendMessage(
+                    token: token,
+                    chatID: chatID,
+                    text: """
+                    ✅ \(caption)
+                    \(String(format: "%.1f MB", mb)) — posted via Premium → channel, then forwarded here.
+                    """.trimmingCharacters(in: .whitespacesAndNewlines)
+                )
+                return
             }
-            await cards.finish(percent: 100, line: "relay link sent")
-            await TelegramBotClient.sendMessage(
-                token: token,
-                chatID: chatID,
-                text: """
-                ✅ \(caption)
-                \(String(format: "%.1f MB", mb)) — over Bot API ~50 MB, hosted on your VPS.
 
-                \(uploaded.url.absoluteString)
+            if let link = uploaded.url {
+                let expires: String
+                if let seconds = uploaded.expiresIn {
+                    let hours = max(1, seconds / 3600)
+                    expires = "Expires in ~\(hours)h."
+                } else {
+                    expires = ""
+                }
+                let note = uploaded.deliverError.map { "Channel delivery failed: \($0)\n" } ?? ""
+                await cards.finish(percent: 100, line: "relay link sent")
+                await TelegramBotClient.sendMessage(
+                    token: token,
+                    chatID: chatID,
+                    text: """
+                    ✅ \(caption)
+                    \(String(format: "%.1f MB", mb)) — over Bot API ~50 MB.
+                    \(note)
+                    \(link.absoluteString)
 
-                \(expires)
-                """.trimmingCharacters(in: .whitespacesAndNewlines)
+                    \(expires)
+                    """.trimmingCharacters(in: .whitespacesAndNewlines)
+                )
+                return
+            }
+
+            throw TelegramIPARelayError.deliveryFailed(
+                uploaded.deliverError ?? "VPS relay did not deliver the IPA"
             )
-            return
         }
 
         await cards.fail(line: "error — IPA over ~50 MB (no VPS relay)")
@@ -261,7 +287,8 @@ final class TelegramWorker: ObservableObject {
             Kept on this iPhone:
             `\(fileURL.path)`
 
-            Set an IPA relay URL + token in Settings → Telegram Worker (VPS), or share from Files.
+            Set IPA relay URL + token in Settings, and on the VPS configure Premium channel delivery
+            (TELEGRAM_SESSION + TELEGRAM_CHANNEL_ID + TELEGRAM_BOT_TOKEN). See Tools/telegram-ipa-relay.
             """
         )
     }
@@ -309,7 +336,9 @@ final class TelegramWorker: ObservableObject {
     private func statusText() -> String {
         let account = AppStore.this.selectedAccount?.email ?? "(no App Store account)"
         let busy = jobTask == nil ? "idle" : "busy"
-        let relay = TelegramIPARelay.isConfigured ? "configured" : "off (IPAs >~50 MB stay on-device)"
+        let relay = TelegramIPARelay.isConfigured
+            ? "configured (channel forward for >~50 MB)"
+            : "off (IPAs >~50 MB stay on-device)"
         return """
         Worker: \(isRunning ? "running" : "stopped") (\(busy))
         Account: \(account)
@@ -330,7 +359,7 @@ final class TelegramWorker: ObservableObject {
         /status — sharp status card
         /help — this text
 
-        Keep the app open. IPAs over ~50 MB upload to your VPS relay (if configured) and a download link is posted here.
+        Keep the app open. IPAs over ~50 MB go phone → VPS → Premium account posts to your channel → bot forwards to you (up to ~4 GB).
         """
     }
 
