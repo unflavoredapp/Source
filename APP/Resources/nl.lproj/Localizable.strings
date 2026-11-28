@@ -58,6 +58,9 @@
 "icon_default" = "Standaard";
 "icon_author" = "Pictogram";
 "icon_dark" = "Donker";
+"icon_gta" = "GTA VI";
+"icon_diddy" = "Baby Oil";
+"icon_tcap" = "Dateline";
 "icon_love" = "Liefde";
 "icon_peek" = "Piepen";
 "icon_set_success" = "Pictogram succesvol ingesteld";

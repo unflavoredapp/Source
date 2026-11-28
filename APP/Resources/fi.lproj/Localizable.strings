@@ -58,6 +58,9 @@
 "icon_default" = "Oletus";
 "icon_author" = "Kuvake";
 "icon_dark" = "Tumma";
+"icon_gta" = "GTA VI";
+"icon_diddy" = "Baby Oil";
+"icon_tcap" = "Dateline";
 "icon_love" = "Rakkaus";
 "icon_peek" = "Katsotaan";
 "icon_set_success" = "Kuvake asetettu onnistuneesti";

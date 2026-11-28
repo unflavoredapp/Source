@@ -58,6 +58,9 @@
 "icon_default" = "По умолчанию";
 "icon_author" = "Значок";
 "icon_dark" = "Тёмная";
+"icon_gta" = "GTA VI";
+"icon_diddy" = "Baby Oil";
+"icon_tcap" = "Dateline";
 "icon_love" = "Любовь";
 "icon_peek" = "Взгляд";
 "icon_set_success" = "Значок успешно установлен";
