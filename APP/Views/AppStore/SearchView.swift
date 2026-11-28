@@ -245,6 +245,7 @@ struct SearchView: SwiftUI.View {
     @FocusState var searchKeyFocused
     @State var searchType = DeviceFamily.phone
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.dismiss) private var dismiss
 
     private var searchBarBackgroundColor: Color {
         FlatChrome.row
@@ -325,6 +326,12 @@ struct SearchView: SwiftUI.View {
             .navigationTitle("tab_search".localized)
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("done".localized) { dismiss() }
+                        .font(.system(size: 16, weight: .semibold))
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("BrowseOpenAppStoreSearch"))) { note in
                 if let term = note.userInfo?["term"] as? String, !term.isEmpty {
                     searchKey = term

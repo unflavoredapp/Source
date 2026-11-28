@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// DELvEK-style Browse feed — app cards with screenshots. App Store search lives on the separate Search control.
+/// DELvEK-style Browse feed — app cards with screenshots. App Store search opens from the nav (not a tab).
 struct BrowseView: View {
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var appStore: AppStore
@@ -9,6 +9,7 @@ struct BrowseView: View {
     @State private var errorText: String?
     @State private var selectedApp: iTunesSearchResult?
     @State private var downloadingIds: Set<Int> = []
+    @State private var showAppStoreSearch = false
 
     private let catalogCount = 1776
 
@@ -61,6 +62,21 @@ struct BrowseView: View {
                             .font(.system(size: 17, weight: .bold))
                     }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showAppStoreSearch = true
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(.white)
+                    }
+                    .accessibilityLabel("tab_search".localized)
+                }
+            }
+            .fullScreenCover(isPresented: $showAppStoreSearch) {
+                SearchView()
+                    .environmentObject(themeManager)
+                    .environmentObject(appStore)
             }
             .task { await loadFeatured(force: false) }
         }
@@ -121,9 +137,8 @@ struct BrowseView: View {
 
     private func startGet(_ app: iTunesSearchResult) {
         downloadingIds.insert(app.trackId)
-        // Handoff: jump to Search so the existing download/purchase flow can continue.
-        TabRouter.shared.select(.search)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        showAppStoreSearch = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             NotificationCenter.default.post(
                 name: Notification.Name("BrowseOpenAppStoreSearch"),
                 object: nil,

@@ -558,7 +558,7 @@
 "tab_order_title" = "Tab Bar Order";
 "tab_order_hint" = "Drag the handles to reorder.";
 "tab_order_reset" = "Reset to Default";
-"tab_order_search_hint" = "Search is the separate floating control (App Store)";
+"tab_order_search_hint" = "App Store search opens from Browse (not a tab)";
 "delisted_apps_short" = "Delisted";
 "legacy_apps_delisted" = "Delisted Apps";
 "install_failed_title" = "Installation failed";
