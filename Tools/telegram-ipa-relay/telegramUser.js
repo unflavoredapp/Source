@@ -41,15 +41,6 @@ function inviteHash(raw) {
 function channelIdFromChat(chat) {
   if (!chat || chat.id == null) return null;
   // Channels/supergroups use -100 prefix for Bot API.
-  const className = chat.className || chat.className;
-  const isChannel =
-    className === "Channel" ||
-    chat.broadcast === true ||
-    chat.megagroup === true ||
-    typeof chat.username !== "undefined";
-  if (isChannel || String(chat.id).length >= 10) {
-    return Number(`-100${chat.id}`);
-  }
   return Number(`-100${chat.id}`);
 }
 
@@ -152,6 +143,7 @@ async function resolveChannelId() {
 
 /**
  * Post IPA to the private drop channel as the Premium user.
+ * @returns {{ ok: true, channel_id: number, message_id: number, premium: boolean } | { ok: false, error: string }}
  */
 async function postToChannel({ filePath, caption }) {
   try {
@@ -167,6 +159,7 @@ async function postToChannel({ filePath, caption }) {
 
     const messageId = Number(result?.id);
     let resolvedChannel = channelId;
+    // Normalize to Bot API style -100… when we have a channel peer.
     const peer = result?.peerId;
     const channelPeerId =
       peer?.channelId ?? (peer instanceof Api.PeerChannel ? peer.channelId : null);

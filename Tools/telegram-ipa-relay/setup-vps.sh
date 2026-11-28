@@ -20,7 +20,7 @@ if [[ ! -f .env ]]; then
   cp .env.example .env
   echo "Created .env from .env.example — edit it, then:"
   echo "  1) npm run login          # api_id / api_hash / phone (AirShare-style)"
-  echo "  2) set TELEGRAM_CHANNEL_ID + TELEGRAM_BOT_TOKEN + RELAY_TOKEN + PUBLIC_BASE_URL"
+  echo "  2) set TELEGRAM_CHANNEL_ID or TELEGRAM_CHANNEL_INVITE + TELEGRAM_BOT_TOKEN + RELAY_TOKEN + PUBLIC_BASE_URL"
   echo "  3) ./setup-vps.sh         # again to start PM2"
   exit 0
 fi
