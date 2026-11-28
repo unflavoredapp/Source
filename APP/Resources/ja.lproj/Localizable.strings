@@ -57,12 +57,12 @@
 "confirm_switch" = "切り替えを確定";
 "icon_default" = "デフォルト";
 "icon_author" = "アイコン";
-"icon_dark" = "ダーク";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Love";
-"icon_peek" = "Peek";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "アイコン設定完了";
 "system_language" = "システム言語";
 "tab_style_default" = "デフォルト";

@@ -57,12 +57,12 @@
 "confirm_switch" = "Wechsel bestätigen";
 "icon_default" = "Standard";
 "icon_author" = "Symbol";
-"icon_dark" = "Dunkel";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Liebe";
-"icon_peek" = "Blick";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Symbol erfolgreich festgelegt";
 "system_language" = "Systemsprache";
 "lang_chinese_simplified" = "Vereinfachtes Chinesisch";

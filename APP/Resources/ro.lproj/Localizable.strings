@@ -57,12 +57,12 @@
 "confirm_switch" = "Confirmare schimbare";
 "icon_default" = "Implicit";
 "icon_author" = "Pictogramă";
-"icon_dark" = "Întunecat";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Dragoste";
-"icon_peek" = "Privire";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Pictogramă setată cu succes";
 "system_language" = "Limba sistemului";
 "lang_chinese_simplified" = "Chineză simplificată";

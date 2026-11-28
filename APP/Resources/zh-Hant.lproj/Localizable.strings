@@ -58,12 +58,12 @@
 "confirm_switch" = "確定切換";
 "icon_default" = "預設";
 "icon_author" = "圖示";
-"icon_dark" = "深色";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "解鎖";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "愛心";
-"icon_peek" = "偷看";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "圖示設定成功";
 "system_language" = "跟隨系統";
 "tab_style_default" = "預設";

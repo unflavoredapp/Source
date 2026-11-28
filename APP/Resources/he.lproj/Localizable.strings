@@ -57,12 +57,12 @@
 "confirm_switch" = "אשר שינוי";
 "icon_default" = "ברירת מחדל";
 "icon_author" = "סמל";
-"icon_dark" = "כהה";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "אהבה";
-"icon_peek" = "הצצה";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "הסמל הוגדר בהצלחה";
 "system_language" = "שפת המערכת";
 "lang_chinese_simplified" = "סינית פשוטה";

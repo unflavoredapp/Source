@@ -57,12 +57,12 @@
 "confirm_switch" = "Vahvista vaihto";
 "icon_default" = "Oletus";
 "icon_author" = "Kuvake";
-"icon_dark" = "Tumma";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Rakkaus";
-"icon_peek" = "Katsotaan";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Kuvake asetettu onnistuneesti";
 "system_language" = "Järjestelmäkieli";
 "lang_chinese_simplified" = "Kiina (yksinkertaistettu)";

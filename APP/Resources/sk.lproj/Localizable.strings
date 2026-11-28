@@ -57,12 +57,12 @@
 "confirm_switch" = "Potvrdiť zmenu";
 "icon_default" = "Predvolená";
 "icon_author" = "Ikona";
-"icon_dark" = "Tmavá";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Láska";
-"icon_peek" = "Pozrieť";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Ikona úspešne nastavená";
 "system_language" = "Jazyk systému";
 "lang_chinese_simplified" = "Čínština (zjednodušená)";

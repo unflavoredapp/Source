@@ -57,12 +57,12 @@
 "confirm_switch" = "Wijziging bevestigen";
 "icon_default" = "Standaard";
 "icon_author" = "Pictogram";
-"icon_dark" = "Donker";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "Liefde";
-"icon_peek" = "Piepen";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "Pictogram succesvol ingesteld";
 "system_language" = "Systeemtaal";
 "lang_chinese_simplified" = "Chinees (Vereenvoudigd)";

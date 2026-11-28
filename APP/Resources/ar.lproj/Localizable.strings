@@ -57,12 +57,12 @@
 "confirm_switch" = "تأكيد التبديل";
 "icon_default" = "افتراضي";
 "icon_author" = "أيقونة";
-"icon_dark" = "داكن";
-"icon_gta" = "GTA VI";
-"icon_diddy" = "Baby Oil";
+"icon_dark" = "Unlock";
+"icon_gta" = "Pulse";
+"icon_diddy" = "Mach-O";
 "icon_tcap" = "Dateline";
-"icon_love" = "حب";
-"icon_peek" = "نظرة";
+"icon_love" = "Extractor";
+"icon_peek" = "Repo";
 "icon_set_success" = "تم تعيين الأيقونة بنجاح";
 "system_language" = "لغة النظام";
 "lang_chinese_simplified" = "الصينية المبسطة";
