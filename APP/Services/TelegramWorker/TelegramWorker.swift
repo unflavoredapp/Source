@@ -37,7 +37,7 @@ final class TelegramWorker: ObservableObject {
 
     func start() {
         guard TelegramWorkerConfig.isConfigured else {
-            lastError = "Bot token missing"
+            lastError = "Bot token missing or invalid"
             lastStatus = "Not configured"
             return
         }
@@ -113,11 +113,7 @@ final class TelegramWorker: ObservableObject {
         case "/start", "/help":
             await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: Self.helpText)
         case "/status":
-            await TelegramBotClient.sendMessage(
-                token: token,
-                chatID: chatID,
-                text: statusText()
-            )
+            await sendStatusCard(token: token, chatID: chatID)
         case "/fetch":
             guard !arg.isEmpty else {
                 await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: "Usage: /fetch <bundleId|adamId|url|name>")
@@ -125,15 +121,13 @@ final class TelegramWorker: ObservableObject {
             }
             enqueue(chatID: chatID, token: token, label: "fetch \(arg)") {
                 let app = try await TelegramWorkerJobs.resolveApp(arg)
+                let cards = CardSession(token: token, chatID: chatID, app: app)
+                await cards.line("Tetherless fetch")
                 let url = try await TelegramWorkerJobs.fetch(app: app) { line in
-                    await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: line)
+                    await cards.progressLine(line)
                 }
-                try await TelegramBotClient.sendDocument(
-                    token: token,
-                    chatID: chatID,
-                    fileURL: url,
-                    caption: "Fetched \(app.trackName) (encrypted)"
-                )
+                await cards.finish(percent: 100, line: "upload encrypted IPA")
+                try await Self.sendIPA(token: token, chatID: chatID, fileURL: url, caption: "Fetched \(app.trackName) (encrypted)", cards: cards)
             }
         case "/decrypt":
             guard !arg.isEmpty else {
@@ -142,15 +136,13 @@ final class TelegramWorker: ObservableObject {
             }
             enqueue(chatID: chatID, token: token, label: "decrypt \(arg)") {
                 let ipa = try await Self.resolveExistingIPA(arg)
+                let cards = CardSession(token: token, chatID: chatID, appName: ipa.deletingPathExtension().lastPathComponent, version: "")
+                await cards.line("Tetherless decrypt")
                 let out = try await TelegramWorkerJobs.decrypt(ipaURL: ipa) { line in
-                    await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: line)
+                    await cards.progressLine(line)
                 }
-                try await TelegramBotClient.sendDocument(
-                    token: token,
-                    chatID: chatID,
-                    fileURL: out,
-                    caption: "Decrypted \(out.lastPathComponent)"
-                )
+                await cards.finish(percent: 100, line: "decrypt OK")
+                try await Self.sendIPA(token: token, chatID: chatID, fileURL: out, caption: "Decrypted \(out.lastPathComponent)", cards: cards)
             }
         case "/fd", "/fetchdecrypt":
             guard !arg.isEmpty else {
@@ -158,18 +150,74 @@ final class TelegramWorker: ObservableObject {
                 return
             }
             enqueue(chatID: chatID, token: token, label: "fetch+decrypt \(arg)") {
-                let out = try await TelegramWorkerJobs.fetchAndDecrypt(arg) { line in
-                    await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: line)
+                let app = try await TelegramWorkerJobs.resolveApp(arg)
+                let cards = CardSession(token: token, chatID: chatID, app: app)
+                await cards.line("Resolved \(app.trackName)")
+                await cards.line("Tetherless fetch")
+                let ipa = try await TelegramWorkerJobs.fetch(app: app) { line in
+                    await cards.progressLine(line)
                 }
-                try await TelegramBotClient.sendDocument(
-                    token: token,
-                    chatID: chatID,
-                    fileURL: out,
-                    caption: "Ready \(out.lastPathComponent)"
-                )
+                await cards.line("Tetherless decrypt")
+                let out = try await TelegramWorkerJobs.decrypt(ipaURL: ipa) { line in
+                    await cards.progressLine(line)
+                }
+                await cards.finish(percent: 100, line: "uploading to Telegram")
+                try await Self.sendIPA(token: token, chatID: chatID, fileURL: out, caption: "Ready \(out.lastPathComponent)", cards: cards)
             }
         default:
             await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: "Unknown command. /help")
+        }
+    }
+
+    private func sendStatusCard(token: String, chatID: Int64) async {
+        let account = AppStore.this.selectedAccount?.email ?? "(no App Store account)"
+        let busy = jobTask != nil
+        if let jpeg = TelegramSharpCard.renderStatus(
+            running: isRunning,
+            busy: busy,
+            account: account,
+            lastStatus: lastStatus,
+            lastError: lastError
+        ) {
+            await TelegramBotClient.sendPhoto(token: token, chatID: chatID, jpeg: jpeg, caption: statusText())
+        } else {
+            await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: statusText())
+        }
+    }
+
+    private static func sendIPA(
+        token: String,
+        chatID: Int64,
+        fileURL: URL,
+        caption: String,
+        cards: CardSession
+    ) async throws {
+        do {
+            try await TelegramBotClient.sendDocument(
+                token: token,
+                chatID: chatID,
+                fileURL: fileURL,
+                caption: caption
+            )
+            await cards.finish(percent: 100, line: "sent to Telegram")
+        } catch let error as TelegramBotError {
+            if case .fileTooLarge = error {
+                await cards.fail(line: "error — IPA over Bot API ~50 MB cap")
+                await TelegramBotClient.sendMessage(
+                    token: token,
+                    chatID: chatID,
+                    text: """
+                    ❌ \(error.localizedDescription)
+
+                    Kept on this iPhone:
+                    `\(fileURL.path)`
+
+                    Open UNlicense → Decrypt / Files to share it.
+                    """
+                )
+                return
+            }
+            throw error
         }
     }
 
@@ -219,7 +267,7 @@ final class TelegramWorker: ObservableObject {
         return """
         Worker: \(isRunning ? "running" : "stopped") (\(busy))
         Account: \(account)
-        Decrypt entitlement probe: \(FairPlayDecryptor.isAvailable ? "work dir ok" : "no work dir")
+        Decrypt: \(FairPlayDecryptor.isAvailable ? "ready" : "unavailable")
         Last: \(lastStatus)
         \(lastError.map { "Error: \($0)" } ?? "")
         """.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -227,15 +275,15 @@ final class TelegramWorker: ObservableObject {
 
     private static var helpText: String {
         """
-        Phone worker ready.
+        UNlicense phone worker ready.
 
         /fd <bundleId|adamId|url|name> — fetch + decrypt, send IPA
         /fetch <target> — download only (encrypted)
         /decrypt <bundleId|filename> — decrypt an on-device IPA
-        /status — worker + account state
+        /status — sharp status card
         /help — this text
 
-        Keep the app open (or recently used). Sign in to App Store in APP first.
+        Keep the app open. Bot API uploads max ~50 MB; larger IPAs stay on-device.
         """
     }
 
@@ -271,5 +319,105 @@ final class TelegramWorker: ObservableObject {
         guard bgTask != .invalid else { return }
         UIApplication.shared.endBackgroundTask(bgTask)
         bgTask = .invalid
+    }
+}
+
+// MARK: - Sharp card session
+
+@MainActor
+final class CardSession {
+    private let token: String
+    private let chatID: Int64
+    private var appName: String
+    private var version: String
+    private var icon: UIImage?
+    private var lines: [String] = []
+    private var percent: Int = 0
+    private var lastSentAt: Date = .distantPast
+    private var lastSentPercent: Int = -1
+
+    init(token: String, chatID: Int64, app: iTunesSearchResult) {
+        self.token = token
+        self.chatID = chatID
+        self.appName = app.trackName
+        self.version = app.version
+        Task { await self.loadIcon(app.artworkUrl512 ?? app.artworkUrl100) }
+    }
+
+    init(token: String, chatID: Int64, appName: String, version: String, icon: UIImage? = nil) {
+        self.token = token
+        self.chatID = chatID
+        self.appName = appName
+        self.version = version
+        self.icon = icon
+    }
+
+    func line(_ text: String) async {
+        lines.append(text)
+        await push(force: true)
+    }
+
+    func progressLine(_ text: String) async {
+        if let match = text.range(of: #"Download (\d+)%"#, options: .regularExpression) {
+            let digits = text[match].filter(\.isNumber)
+            if let value = Int(digits) {
+                percent = min(90, value)
+            }
+        } else if text.localizedCaseInsensitiveContains("decrypt") {
+            percent = max(percent, 92)
+        } else if text.localizedCaseInsensitiveContains("download") {
+            percent = max(percent, 15)
+        }
+        lines.append(text)
+        await push(force: false)
+    }
+
+    func finish(percent: Int, line: String) async {
+        self.percent = percent
+        lines.append(line)
+        await push(force: true)
+    }
+
+    func fail(line: String) async {
+        lines.append(line)
+        percent = min(percent, 99)
+        await push(force: true, failed: true)
+    }
+
+    private func push(force: Bool, failed: Bool = false) async {
+        let now = Date()
+        let shouldSend = force
+            || percent != lastSentPercent
+            || now.timeIntervalSince(lastSentAt) > 4
+        guard shouldSend else { return }
+        lastSentAt = now
+        lastSentPercent = percent
+
+        let model = TelegramSharpCard.ProgressModel(
+            appName: appName,
+            version: version,
+            icon: icon,
+            percent: percent,
+            lines: lines,
+            failed: failed
+        )
+        guard let jpeg = TelegramSharpCard.renderProgress(model) else {
+            await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: lines.last ?? appName)
+            return
+        }
+        await TelegramBotClient.sendPhoto(
+            token: token,
+            chatID: chatID,
+            jpeg: jpeg,
+            caption: lines.last
+        )
+    }
+
+    private func loadIcon(_ urlString: String?) async {
+        guard let urlString, let url = URL(string: urlString) else { return }
+        if let (data, _) = try? await URLSession.shared.data(from: url),
+           let image = UIImage(data: data) {
+            icon = image
+        }
     }
 }

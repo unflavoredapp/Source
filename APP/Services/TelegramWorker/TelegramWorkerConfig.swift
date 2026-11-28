@@ -42,17 +42,18 @@ enum TelegramWorkerConfig {
     static var botToken: String {
         get { Keychain.read(service: tokenService) ?? "" }
         set {
-            if newValue.isEmpty {
+            let normalized = TelegramBotClient.normalizedToken(newValue)
+            if normalized.isEmpty {
                 Keychain.delete(service: tokenService)
             } else {
-                Keychain.write(service: tokenService, value: newValue)
+                Keychain.write(service: tokenService, value: normalized)
             }
             NotificationCenter.default.post(name: .telegramWorkerConfigChanged, object: nil)
         }
     }
 
     static var isConfigured: Bool {
-        !botToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        TelegramBotClient.validateToken(botToken)
     }
 
     private enum Keychain {

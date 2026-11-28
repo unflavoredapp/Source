@@ -33,5 +33,7 @@ You (Telegram) ──commands──► Bot API ◄──poll── APP on iPhone
 ## Notes
 
 - Requires iOS **17.4+** (APP deployment target) and a signature that allows FairPlay decrypt (`dynamic-codesigning`).
-- Telegram bot file uploads are capped (~50 MB). Larger IPAs stay on-device; use Files / the Decrypt tab.
+- Telegram bot file uploads are capped (~50 MB). Larger IPAs stay on-device; use Files / the Decrypt tab. The worker replies with a clear size-cap message instead of a raw `NSURLError -1011`.
+- Job progress and `/status` send UNlicense **sharp cards** (console + progress photo) generated on-device.
+- Paste BotFather tokens with **no spaces** (e.g. `123456:ABC…`); the app strips whitespace on save.
 - Complementary: CI can also push built `APP.ipa` to Telegram when `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` repo secrets are set (see Build IPA workflow).
