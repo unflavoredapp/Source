@@ -204,7 +204,10 @@ final class TelegramWorker: ObservableObject {
                     fileURL: fileURL,
                     caption: caption
                 )
-                await cards.finish(percent: 100, line: "sent to Telegram")
+                await cards.deliverReady(
+                    sizeBytes: size,
+                    downloadURL: cards.storeURL.flatMap(URL.init(string:))
+                )
                 return
             } catch let error as TelegramBotError {
                 if case .fileTooLarge = error {
@@ -231,44 +234,18 @@ final class TelegramWorker: ObservableObject {
                 gate.last = pct
                 Task { await cards.progress("Relay upload \(pct)%", percent: 99) }
             }
-            let mb = Double(uploaded.size) / 1_048_576
 
             if uploaded.delivered {
-                await cards.finish(percent: 100, line: "forwarded from channel")
-                // The IPA itself arrives as a bot forward from the drop channel.
-                await TelegramBotClient.sendMessage(
-                    token: token,
-                    chatID: chatID,
-                    text: """
-                    ✅ \(caption)
-                    \(String(format: "%.1f MB", mb)) — posted via Premium → channel, then forwarded here.
-                    """.trimmingCharacters(in: .whitespacesAndNewlines)
+                // IPA arrives as a bot forward from the drop channel; card becomes the final app message.
+                await cards.deliverReady(
+                    sizeBytes: uploaded.size,
+                    downloadURL: cards.storeURL.flatMap(URL.init(string:))
                 )
                 return
             }
 
             if let link = uploaded.url {
-                let expires: String
-                if let seconds = uploaded.expiresIn {
-                    let hours = max(1, seconds / 3600)
-                    expires = "Expires in ~\(hours)h."
-                } else {
-                    expires = ""
-                }
-                let note = uploaded.deliverError.map { "Channel delivery failed: \($0)\n" } ?? ""
-                await cards.finish(percent: 100, line: "relay link sent")
-                await TelegramBotClient.sendMessage(
-                    token: token,
-                    chatID: chatID,
-                    text: """
-                    ✅ \(caption)
-                    \(String(format: "%.1f MB", mb)) — over Bot API ~50 MB.
-                    \(note)
-                    \(link.absoluteString)
-
-                    \(expires)
-                    """.trimmingCharacters(in: .whitespacesAndNewlines)
-                )
+                await cards.deliverReady(sizeBytes: uploaded.size, downloadURL: link)
                 return
             }
 
@@ -406,6 +383,9 @@ final class CardSession {
     private let chatID: Int64
     private var appName: String
     private var version: String
+    private var bundleId: String
+    private var minimumOS: String?
+    let storeURL: String?
     private var icon: UIImage?
     private var lines: [String] = []
     private var percent: Int = 0
@@ -419,6 +399,9 @@ final class CardSession {
         self.chatID = chatID
         self.appName = app.trackName
         self.version = app.version
+        self.bundleId = app.bundleId
+        self.minimumOS = app.minimumOsVersion
+        self.storeURL = app.trackViewUrl
         Task { await self.loadIcon(app.artworkUrl512 ?? app.artworkUrl100) }
     }
 
@@ -427,6 +410,9 @@ final class CardSession {
         self.chatID = chatID
         self.appName = appName
         self.version = version
+        self.bundleId = ""
+        self.minimumOS = nil
+        self.storeURL = nil
         self.icon = icon
     }
 
@@ -463,6 +449,57 @@ final class CardSession {
         lines.append(line)
         percent = min(percent, 99)
         await push(force: true, failed: true)
+    }
+
+    /// Turn the live progress message into the final app card (metadata + Download / Patch / VIP).
+    func deliverReady(sizeBytes: Int64?, downloadURL: URL?) async {
+        percent = 100
+        lines.append("IPA ready")
+        lastSentAt = Date()
+        lastSentPercent = 100
+
+        let caption = TelegramSharpCard.readyCaptionHTML(
+            bundleId: bundleId,
+            version: version,
+            minimumOS: minimumOS,
+            storeURL: storeURL,
+            sizeBytes: sizeBytes
+        )
+        let markup = TelegramSharpCard.readyReplyMarkup(downloadURL: downloadURL)
+        let model = TelegramSharpCard.ReadyModel(
+            appName: appName,
+            version: version,
+            icon: icon
+        )
+        guard let jpeg = TelegramSharpCard.renderReady(model) else {
+            await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: caption)
+            return
+        }
+
+        if let messageID {
+            let edited = await TelegramBotClient.editMessageMedia(
+                token: token,
+                chatID: chatID,
+                messageID: messageID,
+                jpeg: jpeg,
+                caption: caption,
+                parseMode: "HTML",
+                replyMarkup: markup
+            )
+            if edited { return }
+            self.messageID = nil
+        }
+
+        if let id = await TelegramBotClient.sendPhoto(
+            token: token,
+            chatID: chatID,
+            jpeg: jpeg,
+            caption: caption,
+            parseMode: "HTML",
+            replyMarkup: markup
+        ) {
+            messageID = id
+        }
     }
 
     private func push(force: Bool, failed: Bool = false) async {
