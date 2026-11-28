@@ -1785,18 +1785,16 @@ struct SearchView: SwiftUI.View {
                     }
                 }
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 13, weight: .semibold))
+                VStack(spacing: 4) {
+                    Image(systemName: "arrow.down.circle")
+                        .font(.system(size: 22, weight: .regular))
                     Text("download".localized)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 10, weight: .medium))
                         .lineLimit(1)
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(themeManager.accentColor)
-                .clipShape(Capsule())
+                .foregroundStyle(themeManager.accentColor)
+                .frame(minWidth: 52)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .fixedSize()
