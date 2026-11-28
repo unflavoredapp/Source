@@ -1,18 +1,30 @@
 import UIKit
 
-/// Renders FastDecrypt-style “sharp cards” for Telegram photo replies, branded UNlicense.
+/// Renders FastDecrypt-style “sharp cards” for Telegram photo replies, branded UNlicense / DELvEK.NET.
 enum TelegramSharpCard {
+    static let brandHandle = "@UNlicense"
+    static let madeBy = "Made by UNlicense"
+    static let patchURL = URL(string: "https://delvek.net")!
+    static let vipURL = URL(string: "https://delvek.net")!
+
     struct ProgressModel {
         var appName: String
         var version: String
         var icon: UIImage?
         var percent: Int
         var lines: [String]
-        var accent: UIColor = UIColor(red: 0.18, green: 0.78, blue: 0.42, alpha: 1)
+        var accent: UIColor = UIColor(red: 0.18, green: 0.92, blue: 0.55, alpha: 1)
         var failed: Bool = false
     }
 
-    /// Split card: left console log + right app icon with circular progress.
+    struct ReadyModel {
+        var appName: String
+        var version: String
+        var icon: UIImage?
+        var tagline: String = "IPA ready. Sideloading skill: zero."
+    }
+
+    /// Progress app card — left console + right ring (3rd-screenshot layout, UNlicense branding).
     static func renderProgress(_ model: ProgressModel) -> Data? {
         let size = CGSize(width: 1024, height: 512)
         let format = UIGraphicsImageRendererFormat()
@@ -21,7 +33,7 @@ enum TelegramSharpCard {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let image = renderer.image { ctx in
             let cg = ctx.cgContext
-            UIColor(red: 0.04, green: 0.05, blue: 0.07, alpha: 1).setFill()
+            UIColor.black.setFill()
             cg.fill(CGRect(origin: .zero, size: size))
 
             let midX = size.width * 0.5
@@ -38,6 +50,165 @@ enum TelegramSharpCard {
             )
         }
         return image.jpegData(compressionQuality: 0.88)
+    }
+
+    /// Final delivery card — left brand/app copy + right download visual (screenshot-2 layout).
+    static func renderReady(_ model: ReadyModel) -> Data? {
+        let size = CGSize(width: 1024, height: 512)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        let image = renderer.image { ctx in
+            let cg = ctx.cgContext
+            let midX = size.width * 0.5
+
+            // Left — black brand panel
+            UIColor.black.setFill()
+            cg.fill(CGRect(x: 0, y: 0, width: midX, height: size.height))
+
+            drawBrandHeader(
+                in: CGRect(x: 28, y: 28, width: midX - 56, height: 28),
+                title: "UNlicense",
+                trailing: nil
+            )
+
+            let nameAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 42, weight: .bold),
+                .foregroundColor: UIColor.white,
+            ]
+            let name = model.appName as NSString
+            let nameSize = name.size(withAttributes: nameAttrs)
+            name.draw(at: CGPoint(x: 32, y: 88), withAttributes: nameAttrs)
+
+            let tagColor = UIColor(red: 0.98, green: 0.42, blue: 0.48, alpha: 1)
+            (model.tagline as NSString).draw(
+                at: CGPoint(x: 32, y: 88 + nameSize.height + 10),
+                withAttributes: [
+                    .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
+                    .foregroundColor: tagColor,
+                ]
+            )
+
+            let logoSide: CGFloat = 88
+            let logoRect = CGRect(
+                x: midX / 2 - logoSide / 2,
+                y: size.height - 150,
+                width: logoSide,
+                height: logoSide
+            )
+            drawRoundedImage(model.icon ?? UIImage(named: "AppLogo"), in: logoRect, cornerRadius: 20, context: cg)
+
+            let credit = madeBy as NSString
+            let creditAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 13, weight: .medium),
+                .foregroundColor: UIColor(white: 0.75, alpha: 1),
+            ]
+            let creditSize = credit.size(withAttributes: creditAttrs)
+            credit.draw(
+                at: CGPoint(x: midX / 2 - creditSize.width / 2, y: logoRect.maxY + 10),
+                withAttributes: creditAttrs
+            )
+
+            // Right — soft wash + large download glyph over app icon
+            let right = CGRect(x: midX, y: 0, width: midX, height: size.height)
+            let colors = [
+                UIColor(red: 0.55, green: 0.72, blue: 0.82, alpha: 1).cgColor,
+                UIColor(red: 0.72, green: 0.78, blue: 0.84, alpha: 1).cgColor,
+                UIColor(red: 0.45, green: 0.55, blue: 0.62, alpha: 1).cgColor,
+            ] as CFArray
+            if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: [0, 0.55, 1]) {
+                cg.drawLinearGradient(
+                    gradient,
+                    start: CGPoint(x: right.minX, y: right.minY),
+                    end: CGPoint(x: right.maxX, y: right.maxY),
+                    options: []
+                )
+            } else {
+                UIColor(white: 0.7, alpha: 1).setFill()
+                cg.fill(right)
+            }
+
+            let badgeSide: CGFloat = 220
+            let badge = CGRect(
+                x: right.midX - badgeSide / 2,
+                y: right.midY - badgeSide / 2 - 8,
+                width: badgeSide,
+                height: badgeSide
+            )
+            UIColor(white: 1, alpha: 0.55).setFill()
+            UIBezierPath(roundedRect: badge, cornerRadius: 48).fill()
+
+            if let icon = model.icon {
+                cg.saveGState()
+                UIBezierPath(roundedRect: badge.insetBy(dx: 28, dy: 28), cornerRadius: 36).addClip()
+                icon.draw(in: badge.insetBy(dx: 28, dy: 28))
+                cg.restoreGState()
+            }
+
+            // Download chevron overlay
+            let arrow = UIImage(systemName: "arrow.down")?
+                .withConfiguration(UIImage.SymbolConfiguration(pointSize: 72, weight: .bold))
+                .withTintColor(.white, renderingMode: .alwaysOriginal)
+            if let arrow {
+                let aSize = arrow.size
+                arrow.draw(at: CGPoint(x: right.midX - aSize.width / 2, y: right.midY - aSize.height / 2 - 4))
+            }
+
+            let handle = brandHandle as NSString
+            let handleAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 13, weight: .medium),
+                .foregroundColor: UIColor(white: 0.35, alpha: 1),
+            ]
+            let handleSize = handle.size(withAttributes: handleAttrs)
+            handle.draw(
+                at: CGPoint(x: right.maxX - handleSize.width - 24, y: right.maxY - 36),
+                withAttributes: handleAttrs
+            )
+        }
+        return image.jpegData(compressionQuality: 0.9)
+    }
+
+    /// HTML caption under the final ready card (📁 / ⚙️ / 🔗).
+    static func readyCaptionHTML(
+        bundleId: String,
+        version: String,
+        minimumOS: String?,
+        storeURL: String?,
+        sizeBytes: Int64?
+    ) -> String {
+        var lines: [String] = []
+        if !bundleId.isEmpty {
+            lines.append("📁 <code>\(escapeHTML(bundleId))</code>")
+        }
+        var versionLine = "⚙️ Version: \(escapeHTML(version.isEmpty ? "—" : version))"
+        if let minimumOS, !minimumOS.isEmpty {
+            versionLine += " · \(escapeHTML(minimumOS))+"
+        }
+        lines.append(versionLine)
+        if let storeURL, let url = URL(string: storeURL), url.scheme?.hasPrefix("http") == true {
+            lines.append("🔗 <a href=\"\(escapeHTML(storeURL))\">App Store Link</a>")
+        }
+        if let sizeBytes, sizeBytes > 0 {
+            let mb = Double(sizeBytes) / 1_048_576
+            lines.append(String(format: "📦 %.1f MB", mb))
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    /// Inline keyboard: Download (full width) + Patch | Get VIP.
+    static func readyReplyMarkup(downloadURL: URL?) -> [String: Any] {
+        var rows: [[ [String: String] ]] = []
+        let download = downloadURL ?? patchURL
+        rows.append([[
+            "text": "⬇️ Download",
+            "url": download.absoluteString,
+        ]])
+        rows.append([
+            ["text": "🧩 Patch", "url": patchURL.absoluteString],
+            ["text": "⭐ Get VIP", "url": vipURL.absoluteString],
+        ])
+        return ["inline_keyboard": rows]
     }
 
     /// Status card for /status.
@@ -58,10 +229,9 @@ enum TelegramSharpCard {
             UIColor(red: 0.06, green: 0.07, blue: 0.09, alpha: 1).setFill()
             ctx.cgContext.fill(rect)
 
-            drawBrandHeader(in: CGRect(x: 28, y: 24, width: size.width - 56, height: 36), trailing: "phone worker")
+            drawBrandHeader(in: CGRect(x: 28, y: 24, width: size.width - 56, height: 36), title: "UNlicense", trailing: "phone worker")
 
-            let title = "UNlicense status"
-            (title as NSString).draw(
+            ("UNlicense status" as NSString).draw(
                 at: CGPoint(x: 32, y: 78),
                 withAttributes: [
                     .font: UIFont.systemFont(ofSize: 28, weight: .bold),
@@ -89,7 +259,7 @@ enum TelegramSharpCard {
                 y += 34
             }
 
-            ("Made by UNlicense" as NSString).draw(
+            (madeBy as NSString).draw(
                 at: CGPoint(x: 32, y: size.height - 42),
                 withAttributes: [
                     .font: UIFont.systemFont(ofSize: 12, weight: .medium),
@@ -108,101 +278,119 @@ enum TelegramSharpCard {
         accent: UIColor,
         context: CGContext
     ) {
-        drawBrandHeader(in: CGRect(x: rect.minX + 24, y: rect.minY + 22, width: rect.width - 48, height: 28), trailing: nil)
+        drawBrandHeader(
+            in: CGRect(x: rect.minX + 24, y: rect.minY + 22, width: rect.width - 48, height: 28),
+            title: "UNlicense",
+            trailing: "DELvEK.NET"
+        )
 
-        let box = CGRect(x: rect.minX + 28, y: rect.minY + 70, width: rect.width - 56, height: rect.height - 150)
-        let path = UIBezierPath(roundedRect: box, cornerRadius: 18)
-        UIColor(white: 0.08, alpha: 1).setFill()
+        let box = CGRect(x: rect.minX + 28, y: rect.minY + 70, width: rect.width - 56, height: rect.height - 200)
+        let path = UIBezierPath(roundedRect: box, cornerRadius: 16)
+        UIColor(white: 0.07, alpha: 1).setFill()
         path.fill()
-        UIColor(white: 1, alpha: 0.08).setStroke()
+        UIColor(white: 1, alpha: 0.10).setStroke()
         path.lineWidth = 1
         path.stroke()
 
+        var consoleLines: [String] = ["$ job start"]
+        consoleLines.append(contentsOf: lines.suffix(6).map { "> \($0)" })
+
         var y = box.minY + 18
-        let visible = Array(lines.suffix(8))
-        for (idx, line) in visible.enumerated() {
-            let isLast = idx == visible.count - 1
-            let color: UIColor = isLast ? accent : UIColor(white: 0.78, alpha: 1)
-            let text = "> \(line)" as NSString
-            text.draw(
-                at: CGPoint(x: box.minX + 18, y: y),
-                withAttributes: [
+        for (idx, line) in consoleLines.enumerated() {
+            let isLast = idx == consoleLines.count - 1
+            let color: UIColor = isLast ? accent : UIColor(white: 0.88, alpha: 1)
+            let text = line as NSString
+            // Highlight the last token of the active line in accent (FastDecrypt style).
+            if isLast, let space = line.lastIndex(of: " "), line.hasPrefix(">") {
+                let prefix = String(line[..<space]) as NSString
+                let suffix = String(line[space...]) as NSString
+                let baseAttrs: [NSAttributedString.Key: Any] = [
+                    .font: UIFont.monospacedSystemFont(ofSize: 15, weight: .medium),
+                    .foregroundColor: UIColor(white: 0.88, alpha: 1),
+                ]
+                let accentAttrs: [NSAttributedString.Key: Any] = [
                     .font: UIFont.monospacedSystemFont(ofSize: 15, weight: .medium),
                     .foregroundColor: color,
                 ]
-            )
+                prefix.draw(at: CGPoint(x: box.minX + 18, y: y), withAttributes: baseAttrs)
+                let prefixW = prefix.size(withAttributes: baseAttrs).width
+                suffix.draw(at: CGPoint(x: box.minX + 18 + prefixW, y: y), withAttributes: accentAttrs)
+            } else {
+                text.draw(
+                    at: CGPoint(x: box.minX + 18, y: y),
+                    withAttributes: [
+                        .font: UIFont.monospacedSystemFont(ofSize: 15, weight: .medium),
+                        .foregroundColor: color,
+                    ]
+                )
+            }
             y += 28
             if y > box.maxY - 24 { break }
         }
 
-        if let logo = UIImage(named: "AppLogo") {
-            let logoSize: CGFloat = 44
-            let logoRect = CGRect(
-                x: rect.midX - logoSize / 2,
-                y: rect.maxY - 72,
-                width: logoSize,
-                height: logoSize
-            )
-            let clip = UIBezierPath(roundedRect: logoRect, cornerRadius: 10)
-            context.saveGState()
-            clip.addClip()
-            logo.draw(in: logoRect)
-            context.restoreGState()
-        }
+        let logoSide: CGFloat = 72
+        let logoRect = CGRect(
+            x: rect.midX - logoSide / 2,
+            y: rect.maxY - 118,
+            width: logoSide,
+            height: logoSide
+        )
+        drawRoundedImage(UIImage(named: "AppLogo"), in: logoRect, cornerRadius: 16, context: context)
 
-        ("Made by UNlicense" as NSString).draw(
-            at: CGPoint(x: rect.minX + 28, y: rect.maxY - 28),
-            withAttributes: [
-                .font: UIFont.systemFont(ofSize: 11, weight: .medium),
-                .foregroundColor: UIColor(white: 0.4, alpha: 1),
-            ]
+        let credit = madeBy as NSString
+        let creditAttrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 12, weight: .medium),
+            .foregroundColor: UIColor(white: 0.7, alpha: 1),
+        ]
+        let creditSize = credit.size(withAttributes: creditAttrs)
+        credit.draw(
+            at: CGPoint(x: rect.midX - creditSize.width / 2, y: logoRect.maxY + 8),
+            withAttributes: creditAttrs
         )
     }
 
     private static func drawProgressPanel(in rect: CGRect, model: ProgressModel, context: CGContext) {
-        // Soft gradient-ish fill
-        UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 1).setFill()
+        UIColor(red: 0.04, green: 0.05, blue: 0.07, alpha: 1).setFill()
         context.fill(rect)
 
-        (model.appName as NSString).draw(
-            at: CGPoint(x: rect.minX + 28, y: rect.minY + 28),
-            withAttributes: [
-                .font: UIFont.systemFont(ofSize: 26, weight: .bold),
-                .foregroundColor: UIColor.white,
-            ]
-        )
-
-        let iconSide: CGFloat = 220
-        let iconRect = CGRect(
-            x: rect.midX - iconSide / 2,
-            y: rect.midY - iconSide / 2 - 10,
-            width: iconSide,
-            height: iconSide
-        )
-        let iconPath = UIBezierPath(roundedRect: iconRect, cornerRadius: 48)
-        context.saveGState()
-        iconPath.addClip()
+        // Soft icon wash behind the ring (3rd-screenshot glow).
         if let icon = model.icon {
-            icon.draw(in: iconRect)
-        } else {
-            UIColor(white: 0.2, alpha: 1).setFill()
-            context.fill(iconRect)
-            UIImage(systemName: "app.fill")?.withTintColor(.white, renderingMode: .alwaysOriginal)
-                .draw(in: iconRect.insetBy(dx: 60, dy: 60))
+            let wash = CGRect(
+                x: rect.midX - 160,
+                y: rect.midY - 140,
+                width: 320,
+                height: 320
+            )
+            icon.draw(in: wash, blendMode: .normal, alpha: 0.28)
         }
-        context.restoreGState()
 
-        // Dynamic progress ring — track + filled arc from live percent.
-        let ringRect = iconRect.insetBy(dx: -12, dy: -12)
+        let name = model.appName as NSString
+        let nameAttrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 28, weight: .bold),
+            .foregroundColor: UIColor.white,
+        ]
+        let nameSize = name.size(withAttributes: nameAttrs)
+        name.draw(
+            at: CGPoint(x: rect.midX - nameSize.width / 2, y: rect.minY + 36),
+            withAttributes: nameAttrs
+        )
+
+        let ringSide: CGFloat = 260
+        let ringRect = CGRect(
+            x: rect.midX - ringSide / 2,
+            y: rect.midY - ringSide / 2 + 8,
+            width: ringSide,
+            height: ringSide
+        )
         let center = CGPoint(x: ringRect.midX, y: ringRect.midY)
-        let radius = min(ringRect.width, ringRect.height) / 2
+        let radius = ringSide / 2 - 10
         let pct = max(0, min(100, model.percent))
         let start = -CGFloat.pi / 2
         let end = start + CGFloat(pct) / 100 * .pi * 2
 
-        context.setLineWidth(14)
+        context.setLineWidth(16)
         context.setLineCap(.round)
-        UIColor(white: 1, alpha: 0.16).setStroke()
+        UIColor(white: 1, alpha: 0.18).setStroke()
         context.addArc(center: center, radius: radius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
         context.strokePath()
 
@@ -211,13 +399,8 @@ enum TelegramSharpCard {
         context.addArc(center: center, radius: radius, startAngle: start, endAngle: end, clockwise: false)
         context.strokePath()
 
-        // Soft fill behind the percentage so it stays readable over app icons.
-        let badge = CGRect(x: center.x - 70, y: center.y - 36, width: 140, height: 72)
-        UIColor(white: 0, alpha: 0.45).setFill()
-        UIBezierPath(roundedRect: badge, cornerRadius: 18).fill()
-
         let percentText = "\(pct)%" as NSString
-        let font = UIFont.systemFont(ofSize: 48, weight: .bold)
+        let font = UIFont.systemFont(ofSize: 56, weight: .bold)
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: UIColor.white,
@@ -237,26 +420,29 @@ enum TelegramSharpCard {
             ]
         )
 
-        ("@UNlicense" as NSString).draw(
-            at: CGPoint(x: rect.maxX - 120, y: rect.maxY - 40),
-            withAttributes: [
-                .font: UIFont.systemFont(ofSize: 13, weight: .medium),
-                .foregroundColor: UIColor(white: 0.55, alpha: 1),
-            ]
+        let handle = brandHandle as NSString
+        let handleAttrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 13, weight: .medium),
+            .foregroundColor: UIColor(white: 0.55, alpha: 1),
+        ]
+        let handleSize = handle.size(withAttributes: handleAttrs)
+        handle.draw(
+            at: CGPoint(x: rect.maxX - handleSize.width - 28, y: rect.maxY - 40),
+            withAttributes: handleAttrs
         )
     }
 
-    private static func drawBrandHeader(in rect: CGRect, trailing: String?) {
+    private static func drawBrandHeader(in rect: CGRect, title: String, trailing: String?) {
         if let logo = UIImage(named: "AppLogo") {
             let side: CGFloat = 22
             let logoRect = CGRect(x: rect.minX, y: rect.midY - side / 2, width: side, height: side)
-            let path = UIBezierPath(roundedRect: logoRect, cornerRadius: 5)
+            let path = UIBezierPath(roundedRect: logoRect, cornerRadius: side / 2)
             UIGraphicsGetCurrentContext()?.saveGState()
             path.addClip()
             logo.draw(in: logoRect)
             UIGraphicsGetCurrentContext()?.restoreGState()
         }
-        ("UNlicense" as NSString).draw(
+        (title as NSString).draw(
             at: CGPoint(x: rect.minX + 30, y: rect.midY - 9),
             withAttributes: [
                 .font: UIFont.systemFont(ofSize: 15, weight: .semibold),
@@ -265,7 +451,7 @@ enum TelegramSharpCard {
         )
         if let trailing {
             let attrs: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 13, weight: .medium),
+                .font: UIFont.systemFont(ofSize: 11, weight: .medium),
                 .foregroundColor: UIColor(white: 0.55, alpha: 1),
             ]
             let size = (trailing as NSString).size(withAttributes: attrs)
@@ -274,5 +460,26 @@ enum TelegramSharpCard {
                 withAttributes: attrs
             )
         }
+    }
+
+    private static func drawRoundedImage(_ image: UIImage?, in rect: CGRect, cornerRadius: CGFloat, context: CGContext) {
+        let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+        context.saveGState()
+        path.addClip()
+        if let image {
+            image.draw(in: rect)
+        } else {
+            UIColor(white: 0.2, alpha: 1).setFill()
+            context.fill(rect)
+        }
+        context.restoreGState()
+    }
+
+    private static func escapeHTML(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
     }
 }

@@ -124,7 +124,14 @@ enum TelegramBotClient {
 
     /// Returns Telegram `message_id` when the photo was accepted (for later `editMessageMedia`).
     @discardableResult
-    static func sendPhoto(token: String, chatID: Int64, jpeg: Data, caption: String? = nil) async -> Int? {
+    static func sendPhoto(
+        token: String,
+        chatID: Int64,
+        jpeg: Data,
+        caption: String? = nil,
+        parseMode: String? = nil,
+        replyMarkup: [String: Any]? = nil
+    ) async -> Int? {
         do {
             let boundary = "Boundary-\(UUID().uuidString)"
             var request = URLRequest(url: try apiURL(token: token, method: "sendPhoto"))
@@ -140,6 +147,14 @@ enum TelegramBotClient {
             appendField("chat_id", String(chatID))
             if let caption, !caption.isEmpty {
                 appendField("caption", caption)
+            }
+            if let parseMode, !parseMode.isEmpty {
+                appendField("parse_mode", parseMode)
+            }
+            if let replyMarkup,
+               let markupData = try? JSONSerialization.data(withJSONObject: replyMarkup),
+               let markupString = String(data: markupData, encoding: .utf8) {
+                appendField("reply_markup", markupString)
             }
             data.append("--\(boundary)\r\n".data(using: .utf8)!)
             data.append("Content-Disposition: form-data; name=\"photo\"; filename=\"card.jpg\"\r\n".data(using: .utf8)!)
@@ -168,7 +183,9 @@ enum TelegramBotClient {
         chatID: Int64,
         messageID: Int,
         jpeg: Data,
-        caption: String? = nil
+        caption: String? = nil,
+        parseMode: String? = nil,
+        replyMarkup: [String: Any]? = nil
     ) async -> Bool {
         do {
             let boundary = "Boundary-\(UUID().uuidString)"
@@ -183,6 +200,9 @@ enum TelegramBotClient {
             if let caption, !caption.isEmpty {
                 media["caption"] = caption
             }
+            if let parseMode, !parseMode.isEmpty {
+                media["parse_mode"] = parseMode
+            }
             let mediaJSON = try JSONSerialization.data(withJSONObject: media)
             let mediaString = String(data: mediaJSON, encoding: .utf8) ?? "{}"
 
@@ -195,6 +215,11 @@ enum TelegramBotClient {
             appendField("chat_id", String(chatID))
             appendField("message_id", String(messageID))
             appendField("media", mediaString)
+            if let replyMarkup,
+               let markupData = try? JSONSerialization.data(withJSONObject: replyMarkup),
+               let markupString = String(data: markupData, encoding: .utf8) {
+                appendField("reply_markup", markupString)
+            }
             data.append("--\(boundary)\r\n".data(using: .utf8)!)
             data.append("Content-Disposition: form-data; name=\"card\"; filename=\"card.jpg\"\r\n".data(using: .utf8)!)
             data.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
