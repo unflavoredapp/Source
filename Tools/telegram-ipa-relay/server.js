@@ -28,11 +28,8 @@ const PORT = Number(process.env.PORT || 8787);
 const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(__dirname, "data"));
 const TTL_MS = Number(process.env.TTL_HOURS || 24) * 60 * 60 * 1000;
 const MAX_BYTES = Number(process.env.MAX_BYTES || 4 * 1024 * 1024 * 1024);
-const CHANNEL_ID = Number(process.env.TELEGRAM_CHANNEL_ID || "");
 const BOT_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
-const CHANNEL_DELIVERY = Boolean(
-  telegramUser.isConfigured() && BOT_TOKEN && Number.isFinite(CHANNEL_ID) && CHANNEL_ID !== 0
-);
+const CHANNEL_DELIVERY = Boolean(telegramUser.isConfigured() && BOT_TOKEN);
 
 if (!TOKEN) {
   console.error("RELAY_TOKEN is required");
@@ -292,12 +289,15 @@ server.requestTimeout = 0;
 server.headersTimeout = 120_000;
 
 async function boot() {
+  let channelLabel = "off";
   if (CHANNEL_DELIVERY) {
     try {
       await telegramUser.connect();
+      const channelId = await telegramUser.resolveChannelId();
+      channelLabel = `on (channel ${channelId} → bot forward)`;
     } catch (err) {
-      console.error("Telegram user connect failed:", err.message || err);
-      console.error("Fix .env / run: npm run login");
+      console.error("Telegram user / channel resolve failed:", err.message || err);
+      console.error("Fix .env / run: npm run login  (and TELEGRAM_CHANNEL_INVITE or TELEGRAM_CHANNEL_ID)");
       process.exit(1);
     }
   }
@@ -308,8 +308,8 @@ async function boot() {
     console.log(`TTL: ${TTL_MS / 3600000}h  max: ${MAX_BYTES} bytes`);
     console.log(
       CHANNEL_DELIVERY
-        ? `Channel delivery: on (channel ${CHANNEL_ID} → bot forward)`
-        : "Channel delivery: off — set TELEGRAM_API_ID/HASH/SESSION + TELEGRAM_CHANNEL_ID + TELEGRAM_BOT_TOKEN"
+        ? `Channel delivery: ${channelLabel}`
+        : "Channel delivery: off — set TELEGRAM_API_ID/HASH/SESSION + CHANNEL_ID or CHANNEL_INVITE + BOT_TOKEN"
     );
   });
 }

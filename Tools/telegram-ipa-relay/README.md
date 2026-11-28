@@ -26,7 +26,7 @@ npm run login           # phone + code, or: npm run login -- --session '…'
 | --- | --- |
 | `TELEGRAM_API_ID` / `TELEGRAM_API_HASH` | [my.telegram.org](https://my.telegram.org) → API development tools |
 | `TELEGRAM_SESSION` | `npm run login` (or paste an existing session string) |
-| `TELEGRAM_CHANNEL_ID` | Private channel id (`-100…`) |
+| `TELEGRAM_CHANNEL_ID` **or** `TELEGRAM_CHANNEL_INVITE` | `-100…` **or** private invite `https://t.me/+…` |
 | `TELEGRAM_BOT_TOKEN` | Same bot as the phone worker; **admin** in that channel |
 | `RELAY_TOKEN` / `PUBLIC_BASE_URL` | Phone ↔ VPS auth + public HTTPS origin |
 
@@ -46,7 +46,15 @@ pm2 save && pm2 startup    # survive reboot
 1. Private channel (e.g. UNlicense Drops).  
 2. Add your **Premium account** (the one you log in with).  
 3. Add the **bot** as admin.  
-4. Put channel id in `TELEGRAM_CHANNEL_ID`.
+4. Either set `TELEGRAM_CHANNEL_ID=-100…` **or** paste the invite link:
+
+```bash
+# in .env
+TELEGRAM_CHANNEL_INVITE=https://t.me/+yourInviteHash
+
+# optional: print the numeric id after login
+npm run resolve-channel -- 'https://t.me/+yourInviteHash'
+```
 
 ## App settings
 

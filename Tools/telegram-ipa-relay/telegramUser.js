@@ -1,8 +1,10 @@
 "use strict";
 
 /**
- * Premium user client (GramJS) — same style as AirShare:
+ * Premium user client (GramJS / teleproto) — AirShare-style:
  * api_id + api_hash + session string from my.telegram.org / login.js
+ *
+ * Drop channel: TELEGRAM_CHANNEL_ID (-100…) or TELEGRAM_CHANNEL_INVITE (t.me/+…).
  */
 
 const { TelegramClient, Api } = require("teleproto");
@@ -10,18 +12,41 @@ const { StringSession } = require("teleproto/sessions");
 
 let client = null;
 let meCache = null;
+/** @type {number|null} Bot API style channel id (-100…) */
+let resolvedChannelId = null;
 
 function config() {
   const apiId = Number(process.env.TELEGRAM_API_ID || "");
   const apiHash = (process.env.TELEGRAM_API_HASH || "").trim();
   const session = (process.env.TELEGRAM_SESSION || "").trim();
   const channelId = Number(process.env.TELEGRAM_CHANNEL_ID || "");
-  return { apiId, apiHash, session, channelId };
+  const invite = (process.env.TELEGRAM_CHANNEL_INVITE || "").trim();
+  return { apiId, apiHash, session, channelId, invite };
+}
+
+function inviteHash(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  let m = s.match(/t\.me\/\+([A-Za-z0-9_-]+)/i);
+  if (m) return m[1];
+  m = s.match(/^\+([A-Za-z0-9_-]+)$/);
+  if (m) return m[1];
+  m = s.match(/joinchat\/([A-Za-z0-9_-]+)/i);
+  if (m) return m[1];
+  // bare hash
+  if (/^[A-Za-z0-9_-]{8,}$/.test(s) && !s.startsWith("-")) return s;
+  return null;
+}
+
+function channelIdFromChat(chat) {
+  if (!chat || chat.id == null) return null;
+  // Channels/supergroups use -100 prefix for Bot API.
+  return Number(`-100${chat.id}`);
 }
 
 function isConfigured() {
-  const { apiId, apiHash, session, channelId } = config();
-  return Boolean(apiId && apiHash && session && channelId);
+  const { apiId, apiHash, session, channelId, invite } = config();
+  return Boolean(apiId && apiHash && session && (channelId || inviteHash(invite)));
 }
 
 async function connect() {
@@ -59,14 +84,70 @@ async function getMe() {
 }
 
 /**
+ * Resolve TELEGRAM_CHANNEL_ID or join/check TELEGRAM_CHANNEL_INVITE.
+ * @returns {Promise<number>} Bot API channel id (-100…)
+ */
+async function resolveChannelId() {
+  if (resolvedChannelId) return resolvedChannelId;
+
+  const { channelId, invite } = config();
+  if (Number.isFinite(channelId) && channelId !== 0) {
+    resolvedChannelId = channelId;
+    console.log(`Drop channel id: ${resolvedChannelId}`);
+    return resolvedChannelId;
+  }
+
+  const hash = inviteHash(invite);
+  if (!hash) {
+    throw new Error("Set TELEGRAM_CHANNEL_ID (-100…) or TELEGRAM_CHANNEL_INVITE (https://t.me/+…)");
+  }
+
+  const c = await connect();
+  let chat = null;
+
+  try {
+    const checked = await c.invoke(new Api.messages.CheckChatInvite({ hash }));
+    if (checked?.chat) {
+      chat = checked.chat;
+    } else if (checked?.className === "ChatInviteAlready" && checked.chat) {
+      chat = checked.chat;
+    } else {
+      // Not a member yet — join via invite.
+      const updates = await c.invoke(new Api.messages.ImportChatInvite({ hash }));
+      chat =
+        updates?.chats?.find((x) => x.className === "Channel") ||
+        updates?.chats?.[0] ||
+        null;
+    }
+  } catch (err) {
+    const msg = err?.errorMessage || err?.message || String(err);
+    if (/USER_ALREADY_PARTICIPANT|already/i.test(msg)) {
+      const checked = await c.invoke(new Api.messages.CheckChatInvite({ hash }));
+      chat = checked?.chat || null;
+    } else {
+      throw new Error(`Invite resolve failed (${hash}): ${msg}`);
+    }
+  }
+
+  const id = channelIdFromChat(chat);
+  if (!id) {
+    throw new Error(
+      "Could not resolve channel from invite — open the link while logged in as this Premium account, or set TELEGRAM_CHANNEL_ID"
+    );
+  }
+
+  resolvedChannelId = id;
+  console.log(`Drop channel from invite: ${resolvedChannelId}`);
+  return resolvedChannelId;
+}
+
+/**
  * Post IPA to the private drop channel as the Premium user.
  * @returns {{ ok: true, channel_id: number, message_id: number, premium: boolean } | { ok: false, error: string }}
  */
 async function postToChannel({ filePath, caption }) {
   try {
-    const { channelId } = config();
-    if (!channelId) return { ok: false, error: "TELEGRAM_CHANNEL_ID required" };
-
+    const channelId = await resolveChannelId();
     const c = await connect();
     const entity = await c.getEntity(channelId);
     const result = await c.sendFile(entity, {
@@ -80,9 +161,11 @@ async function postToChannel({ filePath, caption }) {
     let resolvedChannel = channelId;
     // Normalize to Bot API style -100… when we have a channel peer.
     const peer = result?.peerId;
-    const channelPeerId = peer?.channelId ?? (peer instanceof Api.PeerChannel ? peer.channelId : null);
+    const channelPeerId =
+      peer?.channelId ?? (peer instanceof Api.PeerChannel ? peer.channelId : null);
     if (channelPeerId != null) {
       resolvedChannel = Number(`-100${channelPeerId}`);
+      resolvedChannelId = resolvedChannel;
     }
 
     return {
@@ -105,12 +188,15 @@ async function disconnect() {
   }
   client = null;
   meCache = null;
+  resolvedChannelId = null;
 }
 
 module.exports = {
   isConfigured,
   connect,
   getMe,
+  resolveChannelId,
+  inviteHash,
   postToChannel,
   disconnect,
 };
