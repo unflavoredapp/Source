@@ -84,15 +84,15 @@ class SessionManager: ObservableObject, @unchecked Sendable {
     }
 
     private func attemptReconnection() async {
-        guard let account = AppStore.this.selectedAccount else {
+        guard AppStore.this.selectedAccount != nil else {
             return
         }
         reconnectAttempts += 1
         isReconnecting = true
         sessionError = "session_reconnecting".localized(String(reconnectAttempts), String(maxReconnectAttempts))
-        let refreshedAccount = AuthenticationManager.shared.refreshCookies(for: account)
-        let isValid = await validateSessionWithAPI(account: refreshedAccount)
-        if isValid {
+        // Prefer silent password reauth over cookie-only refresh (cookies were often never persisted).
+        if let fresh = try? await AppStore.this.ensureFreshStoreSession(force: true),
+           await validateSessionWithAPI(account: fresh) {
             isSessionValid = true
             isReconnecting = false
             sessionError = nil

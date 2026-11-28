@@ -141,7 +141,8 @@ class AuthenticationManager: @unchecked Sendable {
             passwordToken: response.passwordToken,
             directoryServicesIdentifier: dsid,
             dsPersonId: dsid,
-            cookies: [],
+            // Persist live jar so launch/validate don't treat the account as logged out.
+            cookies: getCurrentCookies(),
             countryCode: countryCode,
             pod: AccountPodCache.shared.get(dsid: dsid),
             storeResponse: Account.AccountStoreResponse(
@@ -195,14 +196,29 @@ class AuthenticationManager: @unchecked Sendable {
         try saveAllAccountsToKeychain(accounts)
     }
 
-    func validateAccount(_ account: Account) async -> Bool {
-        setCookies(account.cookies)
-        guard let cookies = HTTPCookieStorage.shared.cookies else { return false }
-        for cookie in cookies where cookie.domain.contains("apple.com") {
-            if let expires = cookie.expiresDate, expires.timeIntervalSinceNow <= 0 { continue }
-            return true
+    func hydrateCookies(for account: Account) {
+        if !account.cookies.isEmpty {
+            setCookies(account.cookies)
+            return
         }
-        return false
+        // Fall back to AuthCookieCache (header form: "a=b; c=d") when Account.cookies was empty.
+        if let cached = AuthCookieCache.shared.get(dsid: account.dsPersonId).first
+            ?? AuthCookieCache.persistedCookie(for: account.dsPersonId),
+           !cached.isEmpty {
+            setCookies([cached])
+        }
+    }
+
+    func validateAccount(_ account: Account) async -> Bool {
+        hydrateCookies(for: account)
+        if let cookies = HTTPCookieStorage.shared.cookies {
+            for cookie in cookies where cookie.domain.contains("apple.com") {
+                if let expires = cookie.expiresDate, expires.timeIntervalSinceNow <= 0 { continue }
+                return true
+            }
+        }
+        // Password token still present — session is usable; fetch will silent-reauth if Apple rejects.
+        return !account.passwordToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     func refreshCookies(for account: Account) -> Account {

@@ -443,21 +443,26 @@ class UnifiedDownloadManager: ObservableObject, @unchecked Sendable {
                 }
                 return
             }
-            // Silent password re-login before every fetch so token/cookies stay fresh (no second 2FA).
+            // Keep the Store session: reuse cookies/token, silent-reauth only when needed (cooldown).
             let account: Account
             do {
-                account = try await AppStore.this.ensureFreshStoreSession(force: true)
+                account = try await AppStore.this.ensureFreshStoreSession(force: false)
             } catch {
-                await MainActor.run {
-                    request.runtime.isAuthFailure = true
-                    request.runtime.error = (error as? LocalizedError)?.errorDescription
-                        ?? "session_err_expired".localized
-                    request.runtime.status = DownloadStatus.failed
-                    self.activeDownloads.remove(request.id)
-                    self.syncBackgroundKeepAlive()
+                // One forced retry before failing the download as auth.
+                do {
+                    account = try await AppStore.this.ensureFreshStoreSession(force: true)
+                } catch {
+                    await MainActor.run {
+                        request.runtime.isAuthFailure = true
+                        request.runtime.error = (error as? LocalizedError)?.errorDescription
+                            ?? "session_err_expired".localized
+                        request.runtime.status = DownloadStatus.failed
+                        self.activeDownloads.remove(request.id)
+                        self.syncBackgroundKeepAlive()
+                    }
+                    self.processNextInQueue()
+                    return
                 }
-                self.processNextInQueue()
-                return
             }
 
             AuthenticationManager.shared.setCookies(account.cookies)
