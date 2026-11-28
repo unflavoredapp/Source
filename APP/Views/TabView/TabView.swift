@@ -218,23 +218,51 @@ struct TabbarView: View {
         let config = tabBarStyleManager.floatingConfig
         let tabHeight = config.height
 
-        // Full-width flat bar — MSIGN icons only, no separate Search control.
-        return HStack(spacing: 0) {
-            ForEach(tabOrder.order, id: \.self) { tab in
-                tabButton(for: tab, height: tabHeight)
-                    .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
+        // MSIGN flat tabs + separate Search FAB (opens the classic Search empty state).
+        return HStack(spacing: 12) {
+            HStack(spacing: 0) {
+                ForEach(tabOrder.order, id: \.self) { tab in
+                    tabButton(for: tab, height: tabHeight)
+                        .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
+                }
             }
-        }
-        .padding(.horizontal, 4)
-        .padding(.top, 6)
-        .padding(.bottom, 2)
-        .frame(height: tabHeight)
-        .frame(maxWidth: .infinity)
-        .background(FlatChrome.tabBar)
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(FlatChrome.hairline)
-                .frame(height: 0.5)
+            .padding(.horizontal, 4)
+            .padding(.top, 6)
+            .padding(.bottom, 2)
+            .frame(height: tabHeight)
+            .frame(maxWidth: .infinity)
+            .background(FlatChrome.tabBar)
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(FlatChrome.hairline)
+                    .frame(height: 0.5)
+            }
+
+            Button(action: {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
+                    selectedTab = .search
+                }
+                let impactMed = UIImpactFeedbackGenerator(style: .light)
+                impactMed.impactOccurred()
+            }) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: tabHeight * 0.38, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: tabHeight, height: tabHeight)
+                    .background(
+                        Circle().fill(
+                            selectedTab == .search
+                                ? themeManager.accentColor
+                                : FlatChrome.elevated
+                        )
+                    )
+                    .overlay(
+                        Circle().strokeBorder(FlatChrome.hairline, lineWidth: 0.5)
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityLabel("tab_search".localized)
+            .padding(.trailing, 8)
         }
     }
 

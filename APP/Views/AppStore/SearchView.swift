@@ -239,6 +239,8 @@ final class ScrollVelocityTracker: ObservableObject {
 }
 
 struct SearchView: SwiftUI.View {
+    /// When presented as a sheet/cover (e.g. from Browse), show a Done control.
+    var showsDismissButton: Bool = false
 
     @AppStorage("searchKey") var searchKey = ""
     @AppStorage("searchHistory") var searchHistoryData = Data()
@@ -323,13 +325,15 @@ struct SearchView: SwiftUI.View {
                     }
                 }
             }
-            .navigationTitle("tab_search".localized)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(showsDismissButton ? .visible : .hidden, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("done".localized) { dismiss() }
-                        .font(.system(size: 16, weight: .semibold))
+                if showsDismissButton {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("done".localized) { dismiss() }
+                            .font(.system(size: 16, weight: .semibold))
+                    }
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("BrowseOpenAppStoreSearch"))) { note in

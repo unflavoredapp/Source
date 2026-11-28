@@ -146,7 +146,7 @@
 "country" = "Country/Region";
 
 
-"search_placeholder" = "App Store";
+"search_placeholder" = "Search apps, games, developers.";
 "library_status_downloaded" = "Downloaded";
 "settings_section_general" = "General";
 "settings_section_install" = "Install";
@@ -558,7 +558,7 @@
 "tab_order_title" = "Tab Bar Order";
 "tab_order_hint" = "Drag the handles to reorder.";
 "tab_order_reset" = "Reset to Default";
-"tab_order_search_hint" = "App Store search opens from Browse (not a tab)";
+"tab_order_search_hint" = "Search stays on the separate magnifying-glass control";
 "delisted_apps_short" = "Delisted";
 "legacy_apps_delisted" = "Delisted Apps";
 "install_failed_title" = "Installation failed";

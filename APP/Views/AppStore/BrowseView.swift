@@ -74,7 +74,7 @@ struct BrowseView: View {
                 }
             }
             .fullScreenCover(isPresented: $showAppStoreSearch) {
-                SearchView()
+                SearchView(showsDismissButton: true)
                     .environmentObject(themeManager)
                     .environmentObject(appStore)
             }
