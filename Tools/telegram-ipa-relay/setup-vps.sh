@@ -26,14 +26,18 @@ if [[ ! -f .env ]]; then
 fi
 
 missing=0
-for key in RELAY_TOKEN PUBLIC_BASE_URL TELEGRAM_API_ID TELEGRAM_API_HASH TELEGRAM_SESSION TELEGRAM_CHANNEL_ID TELEGRAM_BOT_TOKEN; do
+for key in RELAY_TOKEN PUBLIC_BASE_URL TELEGRAM_API_ID TELEGRAM_API_HASH TELEGRAM_SESSION TELEGRAM_BOT_TOKEN; do
   if ! grep -qE "^${key}=.+" .env; then
     echo "Missing $key in .env"
     missing=1
   fi
 done
+if ! grep -qE "^TELEGRAM_CHANNEL_ID=.+" .env && ! grep -qE "^TELEGRAM_CHANNEL_INVITE=.+" .env; then
+  echo "Missing TELEGRAM_CHANNEL_ID or TELEGRAM_CHANNEL_INVITE in .env"
+  missing=1
+fi
 if [[ "$missing" -ne 0 ]]; then
-  echo "Fill .env (npm run login for SESSION), then re-run."
+  echo "Fill .env (npm run login for SESSION; invite link OK for channel), then re-run."
   exit 1
 fi
 
