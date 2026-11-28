@@ -1,13 +1,22 @@
 {
   "name": "unlicense-telegram-ipa-relay",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "VPS relay for large Telegram IPA downloads (past Bot API ~50 MB)",
+  "description": "VPS relay: Premium teleproto/GramJS channel upload + bot forward (PM2)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "login": "node login.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop unlicense-ipa-relay",
+    "pm2:logs": "pm2 logs unlicense-ipa-relay"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "input": "^1.0.1",
+    "teleproto": "^1.234.0"
   }
 }

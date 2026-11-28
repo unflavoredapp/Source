@@ -28,8 +28,8 @@ Bot API cannot upload 4 GB even if you have Premium. Channel post (as Premium 
 Full steps: [`Tools/telegram-ipa-relay/README.md`](Tools/telegram-ipa-relay/README.md).
 
 1. Private channel; add **your Premium account** + **the bot** as admins.
-2. `login.py` → `TELEGRAM_SESSION` (api_id / api_hash from my.telegram.org).
-3. Docker with `RELAY_TOKEN`, `PUBLIC_BASE_URL`, `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_SESSION`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_BOT_TOKEN`.
+2. On the VPS: `./setup-vps.sh` then `npm run login` (AirShare-style `api_id` / `api_hash` / phone or session string).
+3. Fill `.env` (`RELAY_TOKEN`, `PUBLIC_BASE_URL`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_BOT_TOKEN`, session keys) and start with **PM2**.
 4. In the app: **IPA relay URL** + **relay token**.
 
 ## Commands

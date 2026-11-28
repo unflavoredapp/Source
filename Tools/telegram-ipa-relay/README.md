@@ -1,93 +1,71 @@
-# Telegram IPA relay (VPS)
+# Telegram IPA relay (VPS) — GramJS + PM2
 
-Bypasses Telegram **Bot API’s ~50 MB upload cap**. Premium on your personal account does **not** raise bot uploads — so large IPAs use your Premium user session to post into a private channel, then the bot **forwards** that message to the recipient (server-side, no re-upload → up to ~4 GB).
+Large IPAs (past Bot API ~50 MB) use your **Premium Telegram account** the same way AirShare does: `api_id` + `api_hash` + session string in **Node.js** (`teleproto` / GramJS fork), kept alive with **PM2**.
 
 ```
-Phone (decrypt) ──PUT /upload──► VPS
-                                  │
-                                  ├─ Premium user (MTProto) ──post──► private Channel
-                                  └─ Bot API forwardMessage ─────────► recipient chat
+Phone (decrypt) ──PUT──► VPS (PM2)
+                           │
+                           ├─ GramJS Premium user ──post──► private Channel
+                           └─ Bot API forwardMessage ─────► recipient chat
 ```
 
-Sharp cards / commands still run on the phone. The VPS only hosts + delivers oversized IPAs.
-
-## One-time Telegram setup
-
-1. Create a **private channel** (e.g. `UNlicense Drops`).
-2. Add your **Premium account** as owner/admin.
-3. Add your **bot** as admin (must be able to see posts / forward).
-4. Get the channel id (`-100…`) — forward a channel post to [@userinfobot](https://t.me/userinfobot) or use Telethon after login.
-5. At [my.telegram.org](https://my.telegram.org) create an API app → `api_id` / `api_hash`.
-6. On any machine with Python:
+## VPS quick start
 
 ```bash
-pip install -r requirements.txt
-TELEGRAM_API_ID=… TELEGRAM_API_HASH=… python3 login.py
+cd Tools/telegram-ipa-relay
+chmod +x setup-vps.sh
+./setup-vps.sh          # npm install + creates .env first time
+# edit .env — then:
+npm run login           # phone + code, or: npm run login -- --session '…'
+./setup-vps.sh          # pm2 start
 ```
 
-Copy the printed `TELEGRAM_SESSION=…`.
+### `.env` (AirShare-style keys)
 
-## Docker
+| Key | Source |
+| --- | --- |
+| `TELEGRAM_API_ID` / `TELEGRAM_API_HASH` | [my.telegram.org](https://my.telegram.org) → API development tools |
+| `TELEGRAM_SESSION` | `npm run login` (or paste an existing session string) |
+| `TELEGRAM_CHANNEL_ID` | Private channel id (`-100…`) |
+| `TELEGRAM_BOT_TOKEN` | Same bot as the phone worker; **admin** in that channel |
+| `RELAY_TOKEN` / `PUBLIC_BASE_URL` | Phone ↔ VPS auth + public HTTPS origin |
+
+`npm run login` mirrors AirShare: enter api keys, phone (+country code), login code — or expand “paste a session string” via `--session`.
+
+### PM2
 
 ```bash
-docker build -t unlicense-ipa-relay .
-docker run -d --name ipa-relay -p 8787:8787 \
-  -e RELAY_TOKEN='long-random-secret' \
-  -e PUBLIC_BASE_URL='https://ipa.yourdomain.com' \
-  -e TELEGRAM_API_ID='12345' \
-  -e TELEGRAM_API_HASH='…' \
-  -e TELEGRAM_SESSION='…' \
-  -e TELEGRAM_CHANNEL_ID='-100xxxxxxxxxx' \
-  -e TELEGRAM_BOT_TOKEN='123456:ABC…' \
-  -e TTL_HOURS=24 \
-  -v ipa-data:/data \
-  unlicense-ipa-relay
+pm2 start ecosystem.config.cjs
+pm2 logs unlicense-ipa-relay
+pm2 restart unlicense-ipa-relay
+pm2 save && pm2 startup    # survive reboot
 ```
 
-Put TLS in front (Caddy / nginx / Cloudflare) so `PUBLIC_BASE_URL` is HTTPS.
+### Channel setup
 
-### Caddy example
-
-```
-ipa.yourdomain.com {
-  reverse_proxy 127.0.0.1:8787
-}
-```
-
-## Env
-
-| Variable | Required | Meaning |
-| --- | --- | --- |
-| `RELAY_TOKEN` | yes | Phone → VPS shared secret |
-| `PUBLIC_BASE_URL` | yes | Public origin (fallback download links) |
-| `TELEGRAM_API_ID` / `HASH` / `SESSION` | for 4 GB path | Premium user that posts to the channel |
-| `TELEGRAM_CHANNEL_ID` | for 4 GB path | Private channel id (`-100…`) |
-| `TELEGRAM_BOT_TOKEN` | for 4 GB path | Same bot as the phone worker; admin in channel |
-| `PORT` | no | default `8787` |
-| `TTL_HOURS` | no | default `24` (local file cleanup) |
-| `MAX_BYTES` | no | default 4 GiB |
+1. Private channel (e.g. UNlicense Drops).  
+2. Add your **Premium account** (the one you log in with).  
+3. Add the **bot** as admin.  
+4. Put channel id in `TELEGRAM_CHANNEL_ID`.
 
 ## App settings
 
-UNlicense → **Settings → Telegram Worker**:
+UNlicense → **Settings → Telegram Worker**: bot token, **IPA relay URL**, **relay token**.
 
-1. Bot token + enable worker  
-2. **IPA relay URL** = `https://ipa.yourdomain.com`  
-3. **Relay token** = `RELAY_TOKEN`  
-
-When an IPA is over ~50 MB, the phone uploads to the VPS; if channel delivery is configured, you get the file forwarded in chat from the channel. Otherwise you get a download link.
+IPAs ≤~50 MB still go through Bot API `sendDocument`. Larger ones hit this relay → channel → forward.
 
 ## API
 
 `PUT /upload?name=App.ipa&chat_id=<recipient>&caption=…`  
-Headers: `Authorization: Bearer <RELAY_TOKEN>`, `Content-Length`, raw IPA body.
+`Authorization: Bearer <RELAY_TOKEN>`
 
-```json
-{
-  "ok": true,
-  "delivered": true,
-  "destination": "channel_forward",
-  "url": "https://…/d/<id>/App.ipa",
-  "channelDelivery": true
-}
+`GET /health` → `{ ok, channelDelivery, telegramUser: { username, premium } }`
+
+## Docker (optional)
+
+```bash
+docker build -t unlicense-ipa-relay .
+docker run -d --env-file .env -p 8787:8787 -v ipa-data:/data unlicense-ipa-relay
 ```
+
+Prefer PM2 on a plain VPS if you want the AirShare-like always-on user session.

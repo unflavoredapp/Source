@@ -1,36 +1,26 @@
 #!/usr/bin/env node
 /**
- * UNlicense Telegram IPA relay
+ * UNlicense Telegram IPA relay (Node + GramJS + PM2)
  *
- * Bot API cannot upload >~50 MB (Premium on your account does not lift that).
- * Large IPAs use this path instead:
+ * Bot API cannot upload >~50 MB. Large IPAs:
  *
- *   phone ──PUT──► VPS ──MTProto (Premium user)──► private Channel
- *                     └──Bot API forwardMessage──► user chat
+ *   phone ──PUT──► VPS ──GramJS Premium user──► private Channel
+ *                     └──Bot API forwardMessage──► recipient
  *
- * forwardMessage is server-side (no re-upload), so 4 GB Premium uploads work.
- * HTTPS download links remain as a fallback if channel delivery is off/fails.
- *
- * Env:
- *   RELAY_TOKEN           required — Authorization: Bearer …
- *   PUBLIC_BASE_URL       required — public https origin
- *   PORT / DATA_DIR / TTL_HOURS / MAX_BYTES
- *   TELEGRAM_API_ID       Premium user (my.telegram.org)
- *   TELEGRAM_API_HASH
- *   TELEGRAM_SESSION      from login.py
- *   TELEGRAM_CHANNEL_ID   private channel id (-100…)
- *   TELEGRAM_BOT_TOKEN    bot that is admin in that channel (forwards to user)
+ * Login is AirShare-style: api_id + api_hash + session string (`npm run login`).
  */
 
 "use strict";
+
+require("dotenv").config();
 
 const http = require("http");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { spawn } = require("child_process");
 const { pipeline } = require("stream/promises");
+const telegramUser = require("./telegramUser");
 
 const TOKEN = process.env.RELAY_TOKEN || "";
 const PUBLIC_BASE = (process.env.PUBLIC_BASE_URL || "").replace(/\/+$/, "");
@@ -41,12 +31,7 @@ const MAX_BYTES = Number(process.env.MAX_BYTES || 4 * 1024 * 1024 * 1024);
 const CHANNEL_ID = Number(process.env.TELEGRAM_CHANNEL_ID || "");
 const BOT_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
 const CHANNEL_DELIVERY = Boolean(
-  process.env.TELEGRAM_API_ID &&
-    process.env.TELEGRAM_API_HASH &&
-    process.env.TELEGRAM_SESSION &&
-    Number.isFinite(CHANNEL_ID) &&
-    CHANNEL_ID !== 0 &&
-    BOT_TOKEN
+  telegramUser.isConfigured() && BOT_TOKEN && Number.isFinite(CHANNEL_ID) && CHANNEL_ID !== 0
 );
 
 if (!TOKEN) {
@@ -108,7 +93,6 @@ async function cleanup() {
         await fsp.rm(dir, { recursive: true, force: true });
       }
     } catch {
-      // orphan / corrupt — drop if old enough by mtime
       try {
         const st = await fsp.stat(dir);
         if (now - st.mtimeMs > TTL_MS) {
@@ -137,7 +121,7 @@ async function handleUpload(req, res, url) {
   const dir = path.join(DATA_DIR, fileId);
   await fsp.mkdir(dir, { recursive: true });
   const dest = path.join(dir, filename);
-  const tmp = dest + ".part";
+  const tmp = `${dest}.part`;
 
   try {
     await pipeline(req, fs.createWriteStream(tmp));
@@ -170,7 +154,7 @@ async function handleUpload(req, res, url) {
     const caption = String(url.searchParams.get("caption") || req.headers["x-caption"] || "").slice(0, 1024);
 
     if (CHANNEL_DELIVERY && Number.isFinite(recipientChatId) && recipientChatId !== 0) {
-      const posted = await postIpaToChannel({
+      const posted = await telegramUser.postToChannel({
         filePath: dest,
         caption,
       });
@@ -203,39 +187,6 @@ async function handleUpload(req, res, url) {
     console.error("upload failed", err);
     return json(res, 500, { ok: false, error: "upload failed" });
   }
-}
-
-/** Premium user account posts the IPA into the private drop channel. */
-function postIpaToChannel({ filePath, caption }) {
-  return new Promise((resolve) => {
-    const script = path.join(__dirname, "send_user.py");
-    const args = ["--channel-id", String(CHANNEL_ID), "--file", filePath];
-    if (caption) args.push("--caption", caption);
-    const child = spawn("python3", [script, ...args], {
-      env: process.env,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    let stdout = "";
-    let stderr = "";
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk.toString("utf8");
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk.toString("utf8");
-    });
-    child.on("error", (err) => resolve({ ok: false, error: err.message }));
-    child.on("close", () => {
-      const line = stdout.trim().split("\n").filter(Boolean).pop() || "";
-      try {
-        resolve(JSON.parse(line));
-      } catch {
-        resolve({
-          ok: false,
-          error: stderr.trim() || stdout.trim() || "send_user.py returned no JSON",
-        });
-      }
-    });
-  });
 }
 
 /** Bot API forwardMessage — server-side, no re-upload, works past ~50 MB. */
@@ -303,10 +254,24 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
     if (req.method === "GET" && url.pathname === "/health") {
+      let user = null;
+      if (CHANNEL_DELIVERY) {
+        try {
+          const me = await telegramUser.getMe();
+          user = {
+            id: Number(me.id),
+            username: me.username || null,
+            premium: Boolean(me.premium),
+          };
+        } catch {
+          user = null;
+        }
+      }
       return json(res, 200, {
         ok: true,
         channelDelivery: CHANNEL_DELIVERY,
         maxBytes: MAX_BYTES,
+        telegramUser: user,
       });
     }
     if (req.method === "PUT" && url.pathname === "/upload") {
@@ -325,18 +290,45 @@ const server = http.createServer(async (req, res) => {
 
 server.requestTimeout = 0;
 server.headersTimeout = 120_000;
-server.listen(PORT, () => {
-  console.log(`UNlicense IPA relay on :${PORT}`);
-  console.log(`Public base: ${PUBLIC_BASE}`);
-  console.log(`TTL: ${TTL_MS / 3600000}h  max: ${MAX_BYTES} bytes`);
-  console.log(
-    CHANNEL_DELIVERY
-      ? `Channel delivery: on (channel ${CHANNEL_ID} → bot forward)`
-      : "Channel delivery: off — set TELEGRAM_API_ID/HASH/SESSION + TELEGRAM_CHANNEL_ID + TELEGRAM_BOT_TOKEN"
-  );
-});
+
+async function boot() {
+  if (CHANNEL_DELIVERY) {
+    try {
+      await telegramUser.connect();
+    } catch (err) {
+      console.error("Telegram user connect failed:", err.message || err);
+      console.error("Fix .env / run: npm run login");
+      process.exit(1);
+    }
+  }
+
+  server.listen(PORT, () => {
+    console.log(`UNlicense IPA relay on :${PORT}`);
+    console.log(`Public base: ${PUBLIC_BASE}`);
+    console.log(`TTL: ${TTL_MS / 3600000}h  max: ${MAX_BYTES} bytes`);
+    console.log(
+      CHANNEL_DELIVERY
+        ? `Channel delivery: on (channel ${CHANNEL_ID} → bot forward)`
+        : "Channel delivery: off — set TELEGRAM_API_ID/HASH/SESSION + TELEGRAM_CHANNEL_ID + TELEGRAM_BOT_TOKEN"
+    );
+  });
+}
 
 setInterval(() => {
   cleanup().catch((err) => console.error("cleanup", err));
 }, 15 * 60 * 1000);
 cleanup().catch(() => {});
+
+process.on("SIGINT", async () => {
+  await telegramUser.disconnect();
+  process.exit(0);
+});
+process.on("SIGTERM", async () => {
+  await telegramUser.disconnect();
+  process.exit(0);
+});
+
+boot().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
