@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// DELvEK-style Browse feed — app cards with screenshots. App Store search opens from the nav (not a tab).
+/// DELvEK-style Browse feed — app cards with screenshots.
+/// Search opens from the floating top bar (magnify → dropdown field).
 struct BrowseView: View {
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var appStore: AppStore
@@ -9,77 +10,46 @@ struct BrowseView: View {
     @State private var errorText: String?
     @State private var selectedApp: iTunesSearchResult?
     @State private var downloadingIds: Set<Int> = []
-    @State private var showAppStoreSearch = false
 
     private let catalogCount = 1776
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                FlatChrome.canvas.ignoresSafeArea()
+        ZStack {
+            FlatChrome.canvas.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 16) {
-                        header
+            ScrollView {
+                VStack(spacing: 16) {
+                    header
 
-                        if loading && apps.isEmpty {
-                            ProgressView()
-                                .padding(.top, 40)
-                        } else if let errorText, apps.isEmpty {
-                            Text(errorText)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 24)
-                        } else {
-                            LazyVStack(spacing: 18) {
-                                ForEach(apps, id: \.trackId) { app in
-                                    AppSearchResultCardView(
-                                        app: app,
-                                        onTap: { selectedApp = app },
-                                        onGetAction: { startGet(app) },
-                                        isDownloading: downloadingIds.contains(app.trackId)
-                                    )
-                                    .environmentObject(themeManager)
-                                }
+                    if loading && apps.isEmpty {
+                        ProgressView()
+                            .padding(.top, 40)
+                    } else if let errorText, apps.isEmpty {
+                        Text(errorText)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 24)
+                    } else {
+                        LazyVStack(spacing: 18) {
+                            ForEach(apps, id: \.trackId) { app in
+                                AppSearchResultCardView(
+                                    app: app,
+                                    onTap: { selectedApp = app },
+                                    onGetAction: { startGet(app) },
+                                    isDownloading: downloadingIds.contains(app.trackId)
+                                )
+                                .environmentObject(themeManager)
                             }
-                            .padding(.bottom, 120)
                         }
-                    }
-                    .padding(.top, 8)
-                }
-                .refreshable { await loadFeatured(force: true) }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        Image("AppLogo")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 28, height: 28)
-                            .clipShape(Circle())
-                        Text("DELvEK.NET")
-                            .font(.system(size: 17, weight: .bold))
+                        .padding(.bottom, 120)
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAppStoreSearch = true
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(.white)
-                    }
-                    .accessibilityLabel("tab_search".localized)
-                }
+                .padding(.top, 8)
             }
-            .fullScreenCover(isPresented: $showAppStoreSearch) {
-                SearchView(showsDismissButton: true)
-                    .environmentObject(themeManager)
-                    .environmentObject(appStore)
-            }
-            .task { await loadFeatured(force: false) }
+            .refreshable { await loadFeatured(force: true) }
         }
+        .toolbar(.hidden, for: .navigationBar)
+        .task { await loadFeatured(force: false) }
     }
 
     private var header: some View {
@@ -137,8 +107,8 @@ struct BrowseView: View {
 
     private func startGet(_ app: iTunesSearchResult) {
         downloadingIds.insert(app.trackId)
-        showAppStoreSearch = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        TabRouter.shared.select(.search)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             NotificationCenter.default.post(
                 name: Notification.Name("BrowseOpenAppStoreSearch"),
                 object: nil,

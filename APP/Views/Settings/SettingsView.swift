@@ -92,9 +92,9 @@ struct SettingsView: View {
                 .background(Color.clear)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .navigationTitle("tab_settings".localized)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 currentIcon = AppIconManager.shared.currentAlternateIconName
             }

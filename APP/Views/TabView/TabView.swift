@@ -49,12 +49,14 @@ enum TabEnum: String, CaseIterable, Hashable {
             SettingsView()
                 .environmentObject(themeManager)
                 .environmentObject(tabBarStyleManager)
+                .toolbar(.hidden, for: .navigationBar)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .downloads:
             NavigationStack {
                 DownloadView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
+                    .toolbar(.hidden, for: .navigationBar)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .decrypt:
@@ -62,6 +64,7 @@ enum TabEnum: String, CaseIterable, Hashable {
                 DecryptView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
+                    .toolbar(.hidden, for: .navigationBar)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .sign:
@@ -69,6 +72,7 @@ enum TabEnum: String, CaseIterable, Hashable {
                 SignView()
                     .environmentObject(themeManager)
                     .environmentObject(tabBarStyleManager)
+                    .toolbar(.hidden, for: .navigationBar)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .search:
@@ -89,12 +93,25 @@ struct TabbarView: View {
         }
         return .browse
     }()
+    @State private var topSearchExpanded = false
+    @State private var topSearchText = ""
     @ObservedObject private var tabOrder = TabOrderStore.shared
     @ObservedObject private var router = TabRouter.shared
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var tabBarStyleManager: TabBarStyleManager
 
     private static let floatingTabMinWidth: CGFloat = 44
+
+    private var floatingTopTitle: String {
+        switch selectedTab {
+        case .browse: return "DELvEK.NET"
+        case .downloads: return "tab_library".localized
+        case .sign: return "tab_signed".localized
+        case .settings: return "tab_settings".localized
+        case .search: return "UNlicense"
+        case .decrypt: return "tab_decrypt".localized
+        }
+    }
 
     var body: some View {
         Group {
@@ -147,14 +164,43 @@ struct TabbarView: View {
                 .id(selectedTab)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Only the top bar floats.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            FloatingAppTopBar(
+                title: floatingTopTitle,
+                searchText: $topSearchText,
+                isSearchExpanded: $topSearchExpanded,
+                onSubmitSearch: submitTopSearch
+            )
+            .environmentObject(themeManager)
+            .padding(.top, 4)
+            .padding(.bottom, 6)
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            let config = tabBarStyleManager.floatingConfig
             floatingTabBarContent
-                .padding(.horizontal, config.horizontalPadding)
-                .padding(.bottom, max(0, config.bottomOffset))
-                .padding(.top, 2)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onChange(of: selectedTab) { _, newValue in
+            if newValue != .search {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    topSearchExpanded = false
+                }
+            }
+        }
+    }
+
+    private func submitTopSearch() {
+        let term = topSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !term.isEmpty else { return }
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+            topSearchExpanded = false
+        }
+        selectedTab = .search
+        NotificationCenter.default.post(
+            name: Notification.Name("BrowseOpenAppStoreSearch"),
+            object: nil,
+            userInfo: ["term": term]
+        )
     }
 
     @ViewBuilder
@@ -218,51 +264,23 @@ struct TabbarView: View {
         let config = tabBarStyleManager.floatingConfig
         let tabHeight = config.height
 
-        // MSIGN flat tabs + separate Search FAB (opens the classic Search empty state).
-        return HStack(spacing: 12) {
-            HStack(spacing: 0) {
-                ForEach(tabOrder.order, id: \.self) { tab in
-                    tabButton(for: tab, height: tabHeight)
-                        .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
-                }
+        // Flat docked tab bar (not floating) — Search lives in the floating top bar.
+        return HStack(spacing: 0) {
+            ForEach(tabOrder.order, id: \.self) { tab in
+                tabButton(for: tab, height: tabHeight)
+                    .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
             }
-            .padding(.horizontal, 4)
-            .padding(.top, 6)
-            .padding(.bottom, 2)
-            .frame(height: tabHeight)
-            .frame(maxWidth: .infinity)
-            .background(FlatChrome.tabBar)
-            .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(FlatChrome.hairline)
-                    .frame(height: 0.5)
-            }
-
-            Button(action: {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
-                    selectedTab = .search
-                }
-                let impactMed = UIImpactFeedbackGenerator(style: .light)
-                impactMed.impactOccurred()
-            }) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: tabHeight * 0.38, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: tabHeight, height: tabHeight)
-                    .background(
-                        Circle().fill(
-                            selectedTab == .search
-                                ? themeManager.accentColor
-                                : FlatChrome.elevated
-                        )
-                    )
-                    .overlay(
-                        Circle().strokeBorder(FlatChrome.hairline, lineWidth: 0.5)
-                    )
-            }
-            .buttonStyle(PlainButtonStyle())
-            .accessibilityLabel("tab_search".localized)
-            .padding(.trailing, 8)
+        }
+        .padding(.horizontal, 4)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
+        .frame(height: tabHeight)
+        .frame(maxWidth: .infinity)
+        .background(FlatChrome.tabBar)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(FlatChrome.hairline)
+                .frame(height: 0.5)
         }
     }
 
