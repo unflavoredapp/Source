@@ -96,45 +96,32 @@ struct TabbarView: View {
 
     private static let floatingTabMinWidth: CGFloat = 44
 
+    // Split body so the type checker can finish (CI: "unable to type-check in reasonable time").
     var body: some View {
-        Group {
-            if tabBarStyleManager.currentStyle == .floatingCard {
-                assassinStyleRoot
-            } else if #available(iOS 18.0, *) {
-                systemTabView
-            } else {
-                standardTabView
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .tint(themeManager.accentColor)
-        .background(FlatChrome.canvas.ignoresSafeArea())
-        .preferredColorScheme(themeManager.liquidGlassEnabled ? nil : .dark)
-        .onAppear {
-            AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
-            updateTabBarAppearance()
-        }
-        .onReceive(router.$pendingTab) { requested in
-            if let requested {
-                selectedTab = requested
-                router.pendingTab = nil
-            }
-        }
-        .onChange(of: selectedTab) { _, newValue in
-            AnalyticsManager.shared.trackScreen(newValue.rawValue)
-            UserDefaults.standard.set(newValue.rawValue, forKey: "initialTab")
-        }
-        .onChange(of: router.pendingTab) { _, newValue in
-            if let newValue {
-                selectedTab = newValue
-                router.pendingTab = nil
-            }
-        }
-        .onChange(of: themeManager.accentColor) { _, _ in
-            updateTabBarAppearance()
-        }
-        .onChange(of: tabBarStyleManager.currentStyle) { _, _ in
-            updateTabBarAppearance()
+        rootChrome
+    }
+
+    private var rootChrome: some View {
+        rootContent
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .tint(themeManager.accentColor)
+            .background(FlatChrome.canvas.ignoresSafeArea())
+            .preferredColorScheme(themeManager.liquidGlassEnabled ? nil : .dark)
+            .modifier(TabbarLifecycleModifier(
+                selectedTab: $selectedTab,
+                router: router,
+                themeManager: themeManager,
+                tabBarStyleManager: tabBarStyleManager,
+                updateAppearance: updateTabBarAppearance
+            ))
+    }
+
+    @ViewBuilder
+    private var rootContent: some View {
+        if tabBarStyleManager.currentStyle == .floatingCard {
+            assassinStyleRoot
+        } else {
+            standardTabView
         }
     }
 
@@ -158,10 +145,6 @@ struct TabbarView: View {
     private func tabPage(for tab: TabEnum) -> some View {
         TabEnum.view(for: tab, themeManager: themeManager, tabBarStyleManager: tabBarStyleManager)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var systemTabView: some View {
-        standardTabView
     }
 
     @ViewBuilder
@@ -323,5 +306,44 @@ struct TabbarView: View {
             if let found = findTabBar(in: child) { return found }
         }
         return findTabBar(in: controller.presentedViewController)
+    }
+}
+
+/// Lifecycle / routing modifiers extracted so `TabbarView.body` type-checks on CI.
+private struct TabbarLifecycleModifier: ViewModifier {
+    @Binding var selectedTab: TabEnum
+    @ObservedObject var router: TabRouter
+    let themeManager: ThemeManager
+    let tabBarStyleManager: TabBarStyleManager
+    let updateAppearance: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
+                updateAppearance()
+            }
+            .onReceive(router.$pendingTab) { requested in
+                if let requested {
+                    selectedTab = requested
+                    router.pendingTab = nil
+                }
+            }
+            .onChange(of: selectedTab) { _, newValue in
+                AnalyticsManager.shared.trackScreen(newValue.rawValue)
+                UserDefaults.standard.set(newValue.rawValue, forKey: "initialTab")
+            }
+            .onChange(of: router.pendingTab) { _, newValue in
+                if let newValue {
+                    selectedTab = newValue
+                    router.pendingTab = nil
+                }
+            }
+            .onChange(of: themeManager.accentColor) { _, _ in
+                updateAppearance()
+            }
+            .onChange(of: tabBarStyleManager.currentStyle) { _, _ in
+                updateAppearance()
+            }
     }
 }
