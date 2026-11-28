@@ -268,9 +268,7 @@ struct SignView: SwiftUI.View {
 
     var body: some SwiftUI.View {
         ZStack {
-            LiquidGlassBackdrop()
-                .environmentObject(themeManager)
-                .ignoresSafeArea()
+            FlatChrome.canvas.ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 14) {

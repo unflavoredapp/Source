@@ -247,7 +247,7 @@ struct SearchView: SwiftUI.View {
     @EnvironmentObject var themeManager: ThemeManager
 
     private var searchBarBackgroundColor: Color {
-        themeManager.liquidGlassEnabled ? Color.primary.opacity(0.06) : Color(.systemGray6)
+        FlatChrome.row
     }
     @EnvironmentObject var appStore: AppStore
     @StateObject private var sessionManager = SessionManager.shared
@@ -290,15 +290,13 @@ struct SearchView: SwiftUI.View {
     var body: some SwiftUI.View {
         NavigationStack {
             ZStack {
-                LiquidGlassBackdrop()
-                    .environmentObject(themeManager)
-                    .ignoresSafeArea()
+                FlatChrome.canvas.ignoresSafeArea()
 
                 VStack(spacing: 0) {
 
                     modernSearchBar
                         .padding(.horizontal, 16)
-                        .background(themeManager.backgroundColor)
+                        .background(FlatChrome.canvas)
 
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
@@ -1690,8 +1688,7 @@ struct SearchView: SwiftUI.View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+                        .fill(FlatChrome.row)
                 )
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
@@ -2117,7 +2114,7 @@ struct SearchView: SwiftUI.View {
                     .disabled(directInput.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 12).fill(.ultraThinMaterial))
+                .background(RoundedRectangle(cornerRadius: 12).fill(FlatChrome.row))
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
 

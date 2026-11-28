@@ -28,11 +28,12 @@ struct FloatingTabBarConfig: Equatable {
     var height: CGFloat
     var cornerRadius: CGFloat
 
+    /// Flat full-width MSIGN-style bar (not a floating glass pill).
     static let `default` = FloatingTabBarConfig(
-        horizontalPadding: 16,
-        bottomOffset: 8,
-        height: 60,
-        cornerRadius: 24
+        horizontalPadding: 0,
+        bottomOffset: 0,
+        height: 54,
+        cornerRadius: 0
     )
 
     static let minHorizontalPadding: CGFloat = 0
@@ -78,6 +79,14 @@ final class TabBarStyleManager: ObservableObject {
         self.currentStyle = style
         self.floatingConfig = .default
         UserDefaults.standard.set(style.rawValue, forKey: "TabBarStyle")
+        // Reset legacy floating-pill insets once so the bar matches flat MSIGN chrome.
+        if UserDefaults.standard.object(forKey: "APP.flatTabBar.v1") == nil {
+            UserDefaults.standard.set(true, forKey: "APP.flatTabBar.v1")
+            UserDefaults.standard.removeObject(forKey: "FloatingTabBar_horizontalPadding")
+            UserDefaults.standard.removeObject(forKey: "FloatingTabBar_bottomOffset")
+            UserDefaults.standard.removeObject(forKey: "FloatingTabBar_height")
+            UserDefaults.standard.removeObject(forKey: "FloatingTabBar_cornerRadius")
+        }
         self.loadFloatingConfig()
     }
 

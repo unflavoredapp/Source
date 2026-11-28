@@ -227,13 +227,7 @@ struct ModernCard<Content: SwiftUI.View>: SwiftUI.View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
-                    .shadow(
-                        color: shadowColor,
-                        radius: shadowRadius,
-                        x: 0,
-                        y: 4
-                    )
+                    .fill(FlatChrome.row)
             )
     }
 }
@@ -916,9 +910,7 @@ struct DownloadView: SwiftUI.View {
 
     var body: some SwiftUI.View {
         ZStack {
-            LiquidGlassBackdrop()
-                .environmentObject(themeManager)
-                .ignoresSafeArea()
+            FlatChrome.canvas.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 downloadManagementSegmentView
