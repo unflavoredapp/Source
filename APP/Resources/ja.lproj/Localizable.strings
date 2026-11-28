@@ -206,7 +206,7 @@
 "clear_all" = "すべてクリア";
 "x_results_found" = "%@ 件の結果";
 "finding_best_results" = "最適な結果を探しています";
-"app_downgrade" = "APPダウングレード";
+"app_downgrade" = "UNlicense";
 "search_error" = "検索エラー";
 "purchasing" = "購入中";
 "purchase" = "購入";
@@ -1008,3 +1008,12 @@
 "sign_remove_uncovered_extensions" = "未カバーの拡張機能を削除";
 "sign_remove_uncovered_extensions_hint" = "一致するプロファイルのない Network Extension、ウィジェット、コントロールセンターなどの拡張機能は、メインアプリをインストールできるように自動的に削除されます。残したい場合は、それぞれのプロファイルをインポートしてください。";
 "sign_self_injection_warning" = "署名ツール自体を署名しています。内蔵の InAppPurchase.dylib は注入されません。注入するとファイルピッカーなどのシステム連携が壊れる可能性があります。";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

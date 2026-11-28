@@ -195,7 +195,7 @@
 "clear_all" = "ล้างทั้งหมด";
 "x_results_found" = "พบ %@ ผลลัพธ์";
 "finding_best_results" = "กำลังค้นหาผลลัพธ์ที่ดีที่สุดสำหรับคุณ";
-"app_downgrade" = "ดาวน์เกรดแอป";
+"app_downgrade" = "UNlicense";
 "search_error" = "ข้อผิดพลาดในการค้นหา";
 "purchasing" = "กำลังซื้อ";
 "purchase" = "ซื้อ";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "ลบ Extension ที่ไม่ครอบคลุม";
 "sign_remove_uncovered_extensions_hint" = "NE, วิดเจ็ต, ศูนย์ควบคุม และ Extension อื่น ๆ ที่ไม่มีโปรไฟล์ตรงกันจะถูกลบอัตโนมัติเพื่อให้แอปหลักติดตั้งได้ หากต้องการเก็บไว้โปรดนำเข้าโปรไฟล์ของแต่ละตัว";
 "sign_self_injection_warning" = "คุณกำลังลงนามเครื่องมือลงนามตัวนี้เอง dylib ในตัว InAppPurchase.dylib จะไม่ถูกฉีด หากฉีดอาจทำให้ตัวเลือกไฟล์และการเชื่อมต่อระบบอื่น ๆ พัง";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

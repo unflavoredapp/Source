@@ -195,7 +195,7 @@
 "clear_all" = "Vymazať všetko";
 "x_results_found" = "Nájdených %@ výsledkov";
 "finding_best_results" = "Vyhľadávame najlepšie výsledky pre vás";
-"app_downgrade" = "Degradácia aplikácie";
+"app_downgrade" = "UNlicense";
 "search_error" = "Chyba vyhľadávania";
 "purchasing" = "Nákup";
 "purchase" = "Kúpiť";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Odstrániť nepokryté rozšírenia";
 "sign_remove_uncovered_extensions_hint" = "NE, widgety, centrum ovládania a ďalšie rozšírenia bez zodpovedajúceho profilu sa odstránia automaticky, aby sa hlavná aplikácia mohla nainštalovať. Na ich zachovanie importujte ich profily.";
 "sign_self_injection_warning" = "Podpisujete samotný nástroj na podpisovanie. Vstavaný InAppPurchase.dylib nebude vložený; jeho vloženie môže rozbít výbery súborov a ďalšie systémové integrácie.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

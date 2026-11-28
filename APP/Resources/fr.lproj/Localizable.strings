@@ -195,7 +195,7 @@
 "clear_all" = "Tout effacer";
 "x_results_found" = "%@ résultats trouvés";
 "finding_best_results" = "Recherche des meilleurs résultats pour vous";
-"app_downgrade" = "Rétrogradation d'app";
+"app_downgrade" = "UNlicense";
 "search_error" = "Erreur de recherche";
 "purchasing" = "Achat en cours";
 "purchase" = "Acheter";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Supprimer les extensions non couvertes";
 "sign_remove_uncovered_extensions_hint" = "Les extensions NE, widgets, centre de contrôle et autres sans profil correspondant sont supprimées automatiquement pour que l'app principale puisse s'installer. Importez leurs profils pour les conserver.";
 "sign_self_injection_warning" = "Vous signez cet outil de signature lui-même. La dylib intégrée InAppPurchase.dylib ne sera pas injectée ; l'injecter peut casser les sélecteurs de fichiers et autres intégrations système.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

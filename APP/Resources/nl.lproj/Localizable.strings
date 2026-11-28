@@ -195,7 +195,7 @@
 "clear_all" = "Alles wissen";
 "x_results_found" = "%@ resultaten gevonden";
 "finding_best_results" = "De beste resultaten voor je aan het vinden";
-"app_downgrade" = "App downgrad";
+"app_downgrade" = "UNlicense";
 "search_error" = "Zoekfout";
 "purchasing" = "Kopen";
 "purchase" = "Kopen";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Niet-gedekte extensies verwijderen";
 "sign_remove_uncovered_extensions_hint" = "NE, widgets, controlecentrum en andere extensies zonder overeenkomend profiel worden automatisch verwijderd, zodat de hoofd-app kan worden geïnstalleerd. Importeer hun profielen om ze te behouden.";
 "sign_self_injection_warning" = "Je ondertekent deze ondertekeningstool zelf. De ingebouwde InAppPurchase.dylib wordt niet geïnjecteerd; injectie kan bestandskiezers en andere systeemintegraties breken.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

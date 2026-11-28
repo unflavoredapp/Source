@@ -206,7 +206,7 @@
 "clear_all" = "모두 지우기";
 "x_results_found" = "결과 %@개";
 "finding_best_results" = "최적의 결과를 찾고 있습니다";
-"app_downgrade" = "앱 다운그레이드";
+"app_downgrade" = "UNlicense";
 "search_error" = "검색 오류";
 "purchasing" = "구매 중";
 "purchase" = "구매";
@@ -1008,3 +1008,12 @@
 "sign_remove_uncovered_extensions" = "미커버 확장 제거";
 "sign_remove_uncovered_extensions_hint" = "일치하는 프로파일이 없는 네트워크 확장, 위젯, 제어 센터 등 확장은 메인 앱이 설치될 수 있도록 자동으로 제거됩니다. 유지하려면 해당 프로파일을 가져오세요.";
 "sign_self_injection_warning" = "이 서명 도구 자체를 서명하고 있습니다. 내장된 InAppPurchase.dylib는 주입되지 않습니다. 주입하면 파일 선택기 등 시스템 연동이 손상될 수 있습니다.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

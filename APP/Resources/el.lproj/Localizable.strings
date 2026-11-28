@@ -195,7 +195,7 @@
 "clear_all" = "Εκκαθάριση όλων";
 "x_results_found" = "Βρέθηκαν %@ αποτελέσματα";
 "finding_best_results" = "Εύρεση των καλύτερων αποτελεσμάτων για εσάς";
-"app_downgrade" = "Υποβάθμιση εφαρμογής";
+"app_downgrade" = "UNlicense";
 "search_error" = "Σφάλμα αναζήτησης";
 "purchasing" = "Αγορά";
 "purchase" = "Αγορά";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Αφαίρεση Μη Καλυμμένων Επεκτάσεων";
 "sign_remove_uncovered_extensions_hint" = "NE, widgets, κέντρο ελέγχου και άλλες επεκτάσεις χωρίς ταιριαστό προφίλ αφαιρούνται αυτόματα ώστε η κύρια εφαρμογή να μπορεί να εγκατασταθεί. Εισάγετε τα προφίλ τους για να τα κρατήσετε.";
 "sign_self_injection_warning" = "Υπογράφετε το ίδιο αυτό εργαλείο υπογραφής. Το ενσωματωμένο InAppPurchase.dylib δεν θα γίνει έγχυση· η έγχυσή του μπορεί να χαλάσει τους επιλογείς αρχείων και άλλες ενσωματώσεις συστήματος.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

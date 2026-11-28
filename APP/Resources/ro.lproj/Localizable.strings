@@ -195,7 +195,7 @@
 "clear_all" = "Șterge toate";
 "x_results_found" = "%@ rezultate găsite";
 "finding_best_results" = "Găsim cele mai bune rezultate pentru dvs.";
-"app_downgrade" = "Downgrade aplicație";
+"app_downgrade" = "UNlicense";
 "search_error" = "Eroare căutare";
 "purchasing" = "Cumpărare";
 "purchase" = "Cumpărare";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Elimină extensiile neacoperite";
 "sign_remove_uncovered_extensions_hint" = "NE, widgeturile, centrul de control și alte extensii fără un profil corespunzător sunt eliminate automat, astfel încât aplicația principală să se poată instala. Importați profilurile lor pentru a le păstra.";
 "sign_self_injection_warning" = "Semnați chiar acest instrument de semnare. InAppPurchase.dylib integrat nu va fi injectat; injectarea sa poate strica selectoarele de fișiere și alte integrări de sistem.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

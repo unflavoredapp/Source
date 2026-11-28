@@ -195,7 +195,7 @@
 "clear_all" = "Tümünü Temizle";
 "x_results_found" = "%@ Sonuç Bulundu";
 "finding_best_results" = "Size en iyi sonuçlar aranıyor";
-"app_downgrade" = "Uygulama Sürüm Düşürme";
+"app_downgrade" = "UNlicense";
 "search_error" = "Arama Hatası";
 "purchasing" = "Satın Alınıyor";
 "purchase" = "Satın Al";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Kapsanmayan Uzantıları Kaldır";
 "sign_remove_uncovered_extensions_hint" = "Eşleşen profili olmayan NE, widget'lar, denetim merkezi ve diğer uzantılar, ana uygulamanın yüklenebilmesi için otomatik olarak kaldırılır. Korumak için profillerini içe aktarın.";
 "sign_self_injection_warning" = "Bu imzalama aracının kendisini imzalıyorsunuz. Yerleşik InAppPurchase.dylib enjekte edilmeyecek; enjekte edilmesi dosya seçicileri ve diğer sistem entegrasyonlarını bozabilir.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

@@ -195,7 +195,7 @@
 "clear_all" = "Očisti sve";
 "x_results_found" = "Pronađeno %@ rezultata";
 "finding_best_results" = "Pronalazimo najbolje rezultate za vas";
-"app_downgrade" = "Poništavanje nadogradnje aplikacije";
+"app_downgrade" = "UNlicense";
 "search_error" = "Greška pretraživanja";
 "purchasing" = "Kupovina";
 "purchase" = "Kupi";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Ukloni nepokrivena proširenja";
 "sign_remove_uncovered_extensions_hint" = "NE, widgeti, centar upravljanja i druga proširenja bez odgovarajućeg profila uklanjaju se automatski da glavna aplikacija može instalirati. Uvezite njihove profile da ih zadržite.";
 "sign_self_injection_warning" = "Potpisujete sam ovaj alat za potpisivanje. Ugrađeni InAppPurchase.dylib neće se ubaciti; njegovo ubacivanje može pokvariti birače datoteka i druge sistemske integracije.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

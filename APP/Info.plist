@@ -133,7 +133,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.7.9</string>
+	<string>0.0.2</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
