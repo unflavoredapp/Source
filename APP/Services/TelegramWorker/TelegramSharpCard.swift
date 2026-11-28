@@ -2,8 +2,9 @@ import UIKit
 
 /// Renders FastDecrypt-style “sharp cards” for Telegram photo replies, branded UNlicense / DELvEK.NET.
 enum TelegramSharpCard {
-    static let brandHandle = "@UNlicense"
-    static let madeBy = "Made by UNlicense"
+    static let brandHandle = "unlicense.cc"
+    static let madeBy = "Made by UNlicense.cc"
+    static let delvekName = "DELvEK"
     static let patchURL = URL(string: "https://delvek.net")!
     static let vipURL = URL(string: "https://delvek.net")!
 
@@ -13,6 +14,8 @@ enum TelegramSharpCard {
         var icon: UIImage?
         var percent: Int
         var lines: [String]
+        /// Lifetime / catalog count shown as “4,303 apps” on the DELvEK header.
+        var appsCount: Int = 0
         var accent: UIColor = UIColor(red: 0.18, green: 0.92, blue: 0.55, alpha: 1)
         var failed: Bool = false
     }
@@ -40,6 +43,7 @@ enum TelegramSharpCard {
             drawConsolePanel(
                 in: CGRect(x: 0, y: 0, width: midX, height: size.height),
                 lines: model.lines,
+                appsCount: model.appsCount,
                 accent: model.failed ? UIColor.systemRed : model.accent,
                 context: cg
             )
@@ -67,10 +71,9 @@ enum TelegramSharpCard {
             UIColor.black.setFill()
             cg.fill(CGRect(x: 0, y: 0, width: midX, height: size.height))
 
-            drawBrandHeader(
+            drawDelvekHeader(
                 in: CGRect(x: 28, y: 28, width: midX - 56, height: 28),
-                title: "UNlicense",
-                trailing: nil
+                appsCount: TelegramWorkerConfig.displayedAppsCount
             )
 
             let nameAttrs: [NSAttributedString.Key: Any] = [
@@ -229,7 +232,10 @@ enum TelegramSharpCard {
             UIColor(red: 0.06, green: 0.07, blue: 0.09, alpha: 1).setFill()
             ctx.cgContext.fill(rect)
 
-            drawBrandHeader(in: CGRect(x: 28, y: 24, width: size.width - 56, height: 36), title: "UNlicense", trailing: "phone worker")
+            drawDelvekHeader(
+                in: CGRect(x: 28, y: 24, width: size.width - 56, height: 36),
+                appsCount: TelegramWorkerConfig.displayedAppsCount
+            )
 
             ("UNlicense status" as NSString).draw(
                 at: CGPoint(x: 32, y: 78),
@@ -275,13 +281,13 @@ enum TelegramSharpCard {
     private static func drawConsolePanel(
         in rect: CGRect,
         lines: [String],
+        appsCount: Int,
         accent: UIColor,
         context: CGContext
     ) {
-        drawBrandHeader(
+        drawDelvekHeader(
             in: CGRect(x: rect.minX + 24, y: rect.minY + 22, width: rect.width - 48, height: 28),
-            title: "UNlicense",
-            trailing: "DELvEK.NET"
+            appsCount: appsCount
         )
 
         let box = CGRect(x: rect.minX + 28, y: rect.minY + 70, width: rect.width - 56, height: rect.height - 200)
@@ -432,27 +438,32 @@ enum TelegramSharpCard {
         )
     }
 
-    private static func drawBrandHeader(in rect: CGRect, title: String, trailing: String?) {
-        if let logo = UIImage(named: "AppLogo") {
-            let side: CGFloat = 22
-            let logoRect = CGRect(x: rect.minX, y: rect.midY - side / 2, width: side, height: side)
-            let path = UIBezierPath(roundedRect: logoRect, cornerRadius: side / 2)
+    /// Left header: DELvEK circular icon + name + “N apps” (FastDecrypt-style).
+    private static func drawDelvekHeader(in rect: CGRect, appsCount: Int?) {
+        let side: CGFloat = 24
+        let logoRect = CGRect(x: rect.minX, y: rect.midY - side / 2, width: side, height: side)
+        let logo = UIImage(named: "DelvekIcon") ?? UIImage(named: "AppLogo")
+        if let logo {
+            let path = UIBezierPath(ovalIn: logoRect)
             UIGraphicsGetCurrentContext()?.saveGState()
             path.addClip()
             logo.draw(in: logoRect)
             UIGraphicsGetCurrentContext()?.restoreGState()
         }
-        (title as NSString).draw(
-            at: CGPoint(x: rect.minX + 30, y: rect.midY - 9),
+
+        (delvekName as NSString).draw(
+            at: CGPoint(x: rect.minX + side + 8, y: rect.midY - 9),
             withAttributes: [
                 .font: UIFont.systemFont(ofSize: 15, weight: .semibold),
                 .foregroundColor: UIColor.white,
             ]
         )
-        if let trailing {
+
+        if let appsCount {
+            let trailing = formattedAppsCount(appsCount)
             let attrs: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 11, weight: .medium),
-                .foregroundColor: UIColor(white: 0.55, alpha: 1),
+                .font: UIFont.systemFont(ofSize: 13, weight: .medium),
+                .foregroundColor: UIColor(white: 0.62, alpha: 1),
             ]
             let size = (trailing as NSString).size(withAttributes: attrs)
             (trailing as NSString).draw(
@@ -460,6 +471,13 @@ enum TelegramSharpCard {
                 withAttributes: attrs
             )
         }
+    }
+
+    static func formattedAppsCount(_ count: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let n = formatter.string(from: NSNumber(value: max(0, count))) ?? "\(count)"
+        return "\(n) apps"
     }
 
     private static func drawRoundedImage(_ image: UIImage?, in rect: CGRect, cornerRadius: CGFloat, context: CGContext) {
