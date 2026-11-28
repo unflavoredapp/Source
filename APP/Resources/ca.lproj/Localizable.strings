@@ -195,7 +195,7 @@
 "clear_all" = "Neteja-ho tot";
 "x_results_found" = "S'han trobat %@ resultats";
 "finding_best_results" = "Estem cercant els millors resultats per a tu";
-"app_downgrade" = "Tornar a versió anterior de l'app";
+"app_downgrade" = "UNlicense";
 "search_error" = "Error de cerca";
 "purchasing" = "Compra";
 "purchase" = "Compra";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Elimina les extensions no cobertes";
 "sign_remove_uncovered_extensions_hint" = "Les extensions NE, widgets, centre de control i altres sense perfil coincident s'eliminen automàticament perquè l'app principal es pugui instal·lar. Importeu-ne els perfils per conservar-les.";
 "sign_self_injection_warning" = "Esteu signant aquesta mateixa eina de firma. La dylib integrada InAppPurchase.dylib no s'injectarà; injectar-la pot trencar el selector de fitxers i altres integracions del sistema.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

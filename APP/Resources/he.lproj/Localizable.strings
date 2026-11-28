@@ -195,7 +195,7 @@
 "clear_all" = "נקה הכל";
 "x_results_found" = "נמצאו %@ תוצאות";
 "finding_best_results" = "מוצא לך את התוצאות הטובות ביותר";
-"app_downgrade" = "שדרוג לאחור של אפליקציה";
+"app_downgrade" = "UNlicense";
 "search_error" = "שגיאת חיפוש";
 "purchasing" = "רכישה";
 "purchase" = "רכוש";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "הסרת הרחבות שאינן מכוסות";
 "sign_remove_uncovered_extensions_hint" = "הרחבות NE, ווידג׳טים, מרכז הבקרה ואחרות ללא פרופיל תואם מוסרות באופן אוטומטי כדי שהאפליקציה הראשית תוכל להיות מותקנת. ייבאו את הפרופילים שלהן כדי להשאיר אותן.";
 "sign_self_injection_warning" = "אתם חותמים את כלי החתימה עצמו. ה-InAppPurchase.dylib המובנה לא יוזרק; הזרקתו עלולה לשבור את בורר הקבצים ושילובי מערכת אחרים.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

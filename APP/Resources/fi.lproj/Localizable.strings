@@ -195,7 +195,7 @@
 "clear_all" = "Tyhjennä kaikki";
 "x_results_found" = "%@ tulosta löytyi";
 "finding_best_results" = "Etsitään sinulle parhaita tuloksia";
-"app_downgrade" = "Sovelluksen version alennus";
+"app_downgrade" = "UNlicense";
 "search_error" = "Hakuvirhe";
 "purchasing" = "Ostetaan";
 "purchase" = "Osta";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Poista kattamattomat laajennukset";
 "sign_remove_uncovered_extensions_hint" = "NE:t, widgetit, ohjauskeskus ja muut laajennukset ilman vastaavaa profiilia poistetaan automaattisesti, jotta pääsovellus voidaan asentaa. Tuo niiden profiilit säilyttääksesi ne.";
 "sign_self_injection_warning" = "Olet allekirjoittamassa tätä allekirjoitustyökalua itseään. Sisäänrakennettua InAppPurchase.dylib:ta ei injektoida; sen injektointi voi rikkoa tiedostonvalitsimia ja muita järjestelmäintegraatioita.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

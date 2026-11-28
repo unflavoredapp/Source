@@ -195,7 +195,7 @@
 "clear_all" = "Очистити все";
 "x_results_found" = "Знайдено %@ результатів";
 "finding_best_results" = "Пошук найкращих результатів для вас";
-"app_downgrade" = "Пониження версії програми";
+"app_downgrade" = "UNlicense";
 "search_error" = "Помилка пошуку";
 "purchasing" = "Покупка";
 "purchase" = "Купити";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Видалити непокриті розширення";
 "sign_remove_uncovered_extensions_hint" = "NE, віджети, пункт керування та інші розширення без відповідного профілю видаляються автоматично, щоб основний застосунок міг встановитися. Імпортуйте їхні профілі, щоб зберегти їх.";
 "sign_self_injection_warning" = "Ви підписуєте сам цей інструмент підписання. Вбудований InAppPurchase.dylib не буде ін’єктовано; його ін’єкція може зламати вибір файлів та інші системні інтеграції.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

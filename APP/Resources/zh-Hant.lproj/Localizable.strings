@@ -207,7 +207,7 @@
 "clear_all" = "清除全部";
 "x_results_found" = "找到 %@ 個結果";
 "finding_best_results" = "為您尋找最佳結果";
-"app_downgrade" = "APP降級";
+"app_downgrade" = "UNlicense";
 "search_error" = "搜尋出現問題";
 "purchasing" = "購買中";
 "purchase" = "購買";
@@ -1089,3 +1089,12 @@
 "sign_certificate_id_hint" = "與 Bundle ID 同步；可直接填憑證/描述檔的 App ID，或從描述檔填入。";
 "sign_fill_from_profile" = "從描述檔填入";
 "sign_certificate_id_wildcard" = "該描述檔是通配符，請手動填入具體的 App ID。";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

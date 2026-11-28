@@ -265,7 +265,12 @@ private struct HeartbeatTracePanel: View {
                          stats: Stats, hasData: Bool) {
         let title: Text
         if hasData {
-            title = Text("现 \(speedText(stats.current))  均 \(speedText(stats.average))  峰 \(speedText(stats.peak))")
+            title = Text(String(
+                format: "chart_hud_speed".localized,
+                speedText(stats.current),
+                speedText(stats.average),
+                speedText(stats.peak)
+            ))
                 .font(.system(size: 7.5, weight: .medium, design: .monospaced))
                 .foregroundColor(.secondary)
         } else {
@@ -352,7 +357,7 @@ private struct HeartbeatTracePanel: View {
         context.stroke(line, with: .color(color.opacity(0.30)),
                        style: StrokeStyle(lineWidth: 0.7, dash: [4, 3]))
 
-        let label = Text("均 \(axisSpeedText(stats.average))")
+        let label = Text(String(format: "chart_hud_avg".localized, axisSpeedText(stats.average)))
             .font(.system(size: 6.5, weight: .medium, design: .monospaced))
             .foregroundColor(color.opacity(0.75))
         context.draw(label, at: CGPoint(x: plot.maxX - 1, y: y - 1), anchor: .bottomTrailing)

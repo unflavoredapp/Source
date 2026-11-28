@@ -195,7 +195,7 @@
 "clear_all" = "Xóa tất cả";
 "x_results_found" = "Tìm thấy %@ kết quả";
 "finding_best_results" = "Đang tìm kiếm kết quả tốt nhất cho bạn";
-"app_downgrade" = "Hạ cấp ứng dụng";
+"app_downgrade" = "UNlicense";
 "search_error" = "Lỗi tìm kiếm";
 "purchasing" = "Đang mua";
 "purchase" = "Mua";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Xóa tiện ích mở rộng không được bao phủ";
 "sign_remove_uncovered_extensions_hint" = "NE, widget, trung tâm điều khiển và các tiện ích mở rộng khác không có hồ sơ khớp sẽ bị xóa tự động để ứng dụng chính cài được. Nhập hồ sơ của chúng nếu muốn giữ lại.";
 "sign_self_injection_warning" = "Bạn đang ký chính công cụ ký này. Dylib có sẵn InAppPurchase.dylib sẽ không được tiêm; tiêm nó có thể làm hỏng bộ chọn tệp và các tích hợp hệ thống khác.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

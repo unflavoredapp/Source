@@ -195,7 +195,7 @@
 "clear_all" = "مسح الكل";
 "x_results_found" = "تم العثور على %@ نتيجة";
 "finding_best_results" = "البحث عن أفضل النتائج لك";
-"app_downgrade" = "خفض إصدار التطبيق";
+"app_downgrade" = "UNlicense";
 "search_error" = "خطأ في البحث";
 "purchasing" = "جارٍ الشراء";
 "purchase" = "شراء";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "إزالة الامتدادات غير المغطاة";
 "sign_remove_uncovered_extensions_hint" = "تُزال امتدادات NE والودجات ومركز التحكم وغيرها دون ملف مطابق تلقائيًا ليتمكن التطبيق الرئيسي من التثبيت. استورد ملفاتها للاحتفاظ بها.";
 "sign_self_injection_warning" = "أنت توقّع أداة التوقيع نفسها. لن يُحقن InAppPurchase.dylib المدمج؛ حقنه قد يكسر منتقي الملفات وتكاملات النظام الأخرى.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

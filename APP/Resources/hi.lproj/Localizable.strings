@@ -195,7 +195,7 @@
 "clear_all" = "सभी साफ़ करें";
 "x_results_found" = "%@ परिणाम मिले";
 "finding_best_results" = "आपके लिए सर्वोत्तम परिणाम ढूंढ रहे हैं";
-"app_downgrade" = "ऐप डाउनग्रेड";
+"app_downgrade" = "UNlicense";
 "search_error" = "खोज त्रुटि";
 "purchasing" = "खरीद रहे हैं";
 "purchase" = "खरीदें";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "बिना कवर वाले एक्सटेंशन हटाएँ";
 "sign_remove_uncovered_extensions_hint" = "बिना मैचिंग प्रोफ़ाइल वाले NE, विजेट, कंट्रोल सेंटर आदि एक्सटेंशन स्वतः हटा दिए जाते हैं ताकि मुख्य ऐप इंस्टॉल हो सके। इन्हें रखने के लिए उनकी प्रोफ़ाइल इंपोर्ट करें।";
 "sign_self_injection_warning" = "आप इस साइनिंग टूल को ही साइन कर रहे हैं। बिल्ट-इन InAppPurchase.dylib इंजेक्ट नहीं होगा; इसे इंजेक्ट करने से फ़ाइल पिकर और अन्य सिस्टम एकीकरण टूट सकते हैं।";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

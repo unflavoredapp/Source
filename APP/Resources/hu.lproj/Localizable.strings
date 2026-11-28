@@ -195,7 +195,7 @@
 "clear_all" = "Összes törlése";
 "x_results_found" = "%@ találat";
 "finding_best_results" = "A legjobb találatok keresése Önnek";
-"app_downgrade" = "Alkalmazás visszavonása";
+"app_downgrade" = "UNlicense";
 "search_error" = "Keresési hiba";
 "purchasing" = "Vásárlás";
 "purchase" = "Vásárlás";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Nem lefedett kiterjesztések eltávolítása";
 "sign_remove_uncovered_extensions_hint" = "A NE, widgetek, vezérlőközpont és más, megfelelő profil nélküli kiterjesztések automatikusan eltávolításra kerülnek, hogy a főalkalmazás telepíthető legyen. Megtartásukhoz importálja a profiljaikat.";
 "sign_self_injection_warning" = "Éppen magát ezt az aláíró eszközt írja alá. A beépített InAppPurchase.dylib nem lesz injektálva; az injektálása tönkreteheti a fájlválasztókat és más rendszerintegrációkat.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

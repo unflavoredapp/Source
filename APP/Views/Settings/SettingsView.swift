@@ -8,75 +8,11 @@ struct SettingsView: View {
     @EnvironmentObject private var appStore: AppStore
     @EnvironmentObject private var tabBarStyleManager: TabBarStyleManager
 
-    @AppStorage("APP.userTintColor") private var selectedColorHex: String = "#007AFF"
     @ObservedObject private var updateChecker = UpdateChecker.shared
-    @State private var selectedColor = Color(hex: "#007AFF")
+    @State private var showAccountSheet = false
     @State private var showingIconSuccess = false
-    @State private var isIconLoading = false
     @State private var showingIconError = false
     @State private var iconErrorMessage = ""
-    @State private var showAccountSheet = false
-    @State private var showingColorPicker = false
-
-    var allIcons: [AltIcon] {
-        let allIcons = AppIconView.getAllIconsFromFolder()
-
-        if !allIcons.isEmpty {
-            return allIcons.sorted { icon1, icon2 in
-                if icon1.key == "app" { return true }
-                if icon2.key == "app" { return false }
-                return icon1.key ?? "" < icon2.key ?? ""
-            }
-        }
-
-        return [
-            AltIcon(
-                displayName: "icon_default".localized,
-                author: "icon_author".localized,
-                key: "app"
-            ),
-            AltIcon(
-                displayName: "icon_dark".localized,
-                author: "icon_author".localized,
-                key: "unlicense_dark"
-            ),
-            AltIcon(
-                displayName: "icon_gta".localized,
-                author: "icon_author".localized,
-                key: "unlicense_gta"
-            ),
-            AltIcon(
-                displayName: "icon_diddy".localized,
-                author: "icon_author".localized,
-                key: "unlicense_diddy"
-            ),
-            AltIcon(
-                displayName: "icon_tcap".localized,
-                author: "icon_author".localized,
-                key: "unlicense_tcap"
-            ),
-            AltIcon(
-                displayName: "icon_love".localized,
-                author: "icon_author".localized,
-                key: "kana_love"
-            ),
-            AltIcon(
-                displayName: "icon_peek".localized,
-                author: "icon_author".localized,
-                key: "kana_peek"
-            )
-        ]
-    }
-
-    private let presetColorHexes: [String] = [
-        "#B496DC", "#848ef9", "#ff7a83", "#4161F1", "#FF00FF",
-        "#4CD964", "#FF2D55", "#FF9500", "#4860e8", "#5394F7",
-        "#e18aab", "#00CED1", "#228B22", "#FF6347", "#191970",
-        "#FFB6C1", "#98FB98", "#E6E6FA", "#FF7F50", "#50C878"
-    ]
-
-    @AppStorage(SoundEffects.enabledKey) private var soundEffects = true
-    @ObservedObject private var islandSettings = IslandSettings.shared
 
     var body: some View {
         NavigationStack {
@@ -86,92 +22,74 @@ struct SettingsView: View {
                     .ignoresSafeArea()
 
                 ScrollView {
-                VStack(spacing: 20) {
-                    accountHeaderSection
+                    VStack(spacing: 20) {
+                        accountHeaderSection
 
-                    VStack(spacing: 0) {
-                        appearanceRow
-                    }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-
-                    VStack(spacing: 0) {
-                        colorRow
-                    }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-
-                    VStack(spacing: 0) {
-                        languageRow
-
-                        Divider()
-                            .padding(.leading, 56)
-
-                        tabOrderRow
-                    }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-
-                    VStack(spacing: 0) {
-                        tabBarRowContent
-                    }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-
-                    if tabBarStyleManager.currentStyle == .floatingCard {
                         VStack(spacing: 0) {
-                            floatingTabBarSettingsContent
+                            settingsLink(
+                                title: "settings_appearance_color".localized,
+                                systemImage: "paintpalette.fill",
+                                destination: AppearanceView()
+                                    .environmentObject(themeManager)
+                            )
+                            divider
+                            settingsLink(
+                                title: "language".localized,
+                                systemImage: "globe",
+                                destination: LanguageSettingsView()
+                                    .environmentObject(themeManager),
+                                trailing: LanguageManager.shared.currentLanguage.nativeName
+                            )
+                            divider
+                            settingsLink(
+                                title: "settings_tab_bar".localized,
+                                systemImage: "rectangle.bottomthird.inset.filled",
+                                destination: SettingsTabBarView()
+                                    .environmentObject(themeManager)
+                                    .environmentObject(tabBarStyleManager)
+                            )
+                            divider
+                            settingsLink(
+                                title: "settings_sound".localized,
+                                systemImage: "speaker.wave.2.fill",
+                                destination: SettingsSoundView()
+                                    .environmentObject(themeManager)
+                            )
+                            divider
+                            settingsLink(
+                                title: "settings_island".localized,
+                                systemImage: "dot.radiowaves.left.and.right",
+                                destination: SettingsIslandView()
+                                    .environmentObject(themeManager)
+                            )
+                            divider
+                            settingsLink(
+                                title: "settings_app_icon".localized,
+                                systemImage: "app.fill",
+                                destination: AppIconView(currentIcon: $currentIcon)
+                                    .environmentObject(themeManager)
+                            )
                         }
                         .liquidGlassSurface(cornerRadius: 16)
                         .cornerRadius(16)
                         .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-                    }
 
-                    VStack(spacing: 0) {
-                        installMethodRow
-                        telegramWorkerRow
-                    }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+                        VStack(spacing: 0) {
+                            installMethodRow
+                            divider
+                            telegramWorkerRow
+                            divider
+                            updateRow
+                        }
+                        .liquidGlassSurface(cornerRadius: 16)
+                        .cornerRadius(16)
+                        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
 
-                    VStack(spacing: 0) {
-                        soundRow
+                        versionFooter
                     }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-
-                    VStack(spacing: 0) {
-                        islandSettingsContent
-                    }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-
-                    VStack(spacing: 0) {
-                        iconGridContent
-                    }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-
-                    VStack(spacing: 0) {
-                        updateRow
-                    }
-                    .liquidGlassSurface(cornerRadius: 16)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
-
-                    versionFooter
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 20)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 20)
                 }
                 .background(Color.clear)
             }
@@ -179,16 +97,7 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarHidden(true)
             .onAppear {
-                selectedColor = Color(hex: selectedColorHex)
                 currentIcon = AppIconManager.shared.currentAlternateIconName
-            }
-            .onChange(of: selectedColorHex) { _, newValue in
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                    for window in windowScene.windows {
-                        window.tintColor = UIColor(Color(hex: newValue))
-                    }
-                }
-                themeManager.objectWillChange.send()
             }
             .fullScreenCover(isPresented: $showAccountSheet) {
                 AccountSheetView()
@@ -203,8 +112,48 @@ struct SettingsView: View {
             } message: {
                 Text(iconErrorMessage)
             }
-
         }
+    }
+
+    private var divider: some View {
+        Divider().padding(.leading, 56)
+    }
+
+    private func settingsLink<Destination: View>(
+        title: String,
+        systemImage: String,
+        destination: Destination,
+        trailing: String? = nil
+    ) -> some View {
+        NavigationLink(destination: destination) {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(themeManager.accentColor))
+
+                Text(title)
+                    .font(.system(size: 16))
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                if let trailing {
+                    Text(trailing)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.6))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle(), sound: .tick)
     }
 
     private var accountHeaderSection: some View {
@@ -298,45 +247,94 @@ struct SettingsView: View {
     }
 
     private func countryName(_ code: String) -> String {
-        let locale = LanguageManager.shared.locale
-        return locale.localizedString(forRegionCode: code) ?? code.uppercased()
+        LanguageManager.shared.locale.localizedString(forRegionCode: code) ?? code.uppercased()
     }
-}
 
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
-            .environmentObject(ThemeManager.shared)
-            .environmentObject(AppStore.this)
-            .environmentObject(TabBarStyleManager.shared)
-    }
-}
+    private var versionFooter: some View {
+        VStack(spacing: 3) {
+            Text("UNlicense")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
 
-extension SettingsView {
-    private var availableTabStyles: [TabBarStyle] {
-        if #available(iOS 18.0, *) {
-            return TabBarStyle.allCases
+            Text("0.0.2")
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(.secondary)
         }
-        return TabBarStyle.allCases.filter { $0 != .floatingCard }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
     }
 
-    @ViewBuilder
-    private var tabBarRowContent: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(availableTabStyles.enumerated()), id: \.element.id) { index, style in
-                tabBarStyleItem(style: style)
-                if index < availableTabStyles.count - 1 {
-                    Divider()
-                        .padding(.leading, 16)
+    private var installMethodRow: some View {
+        NavigationLink(
+            destination: InstallMethodSettingsView()
+                .environmentObject(themeManager)
+        ) {
+            HStack(spacing: 12) {
+                Image(systemName: "iphone.and.arrow.forward")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(themeManager.accentColor))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("install_method_title".localized)
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary)
+                    Text(InstallMethod.current.subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
                 }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.6))
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
         }
-        .padding(.horizontal, 0)
-        .padding(.vertical, 0)
+        .buttonStyle(.plain)
     }
 
-    private var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "-"
+    private var telegramWorkerRow: some View {
+        NavigationLink(
+            destination: TelegramWorkerSettingsView()
+                .environmentObject(themeManager)
+        ) {
+            HStack(spacing: 12) {
+                Image(systemName: "paperplane.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(themeManager.accentColor))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("telegram_worker_title".localized)
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary)
+                    Text(
+                        TelegramWorkerConfig.isEnabled
+                            ? "telegram_worker_running".localized
+                            : "telegram_worker_stopped".localized
+                    )
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.6))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(.plain)
     }
 
     private var updateRow: some View {
@@ -402,658 +400,13 @@ extension SettingsView {
                 .frame(maxWidth: 150, alignment: .trailing)
         }
     }
-
-    private var versionFooter: some View {
-        VStack(spacing: 3) {
-            Text("APP")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
-
-            Text("v\(appVersion)")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 6)
-        .padding(.bottom, 4)
-    }
-
-    private var installMethodRow: some View {
-        NavigationLink(
-            destination: InstallMethodSettingsView()
-                .environmentObject(themeManager)
-        ) {
-            HStack(spacing: 12) {
-                Image(systemName: "iphone.and.arrow.forward")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(themeManager.accentColor))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("install_method_title".localized)
-                        .font(.system(size: 16))
-                        .foregroundColor(.primary)
-                    Text(InstallMethod.current.subtitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var telegramWorkerRow: some View {
-        NavigationLink(
-            destination: TelegramWorkerSettingsView()
-                .environmentObject(themeManager)
-        ) {
-            HStack(spacing: 12) {
-                Image(systemName: "paperplane.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(themeManager.accentColor))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("telegram_worker_title".localized)
-                        .font(.system(size: 16))
-                        .foregroundColor(.primary)
-                    Text(
-                        TelegramWorkerConfig.isEnabled
-                            ? "telegram_worker_running".localized
-                            : "telegram_worker_stopped".localized
-                    )
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var soundRow: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "speaker.wave.2.fill")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(width: 28, height: 28)
-                .background(Circle().fill(themeManager.accentColor))
-
-            Text("sound_effects".localized)
-                .font(.system(size: 16))
-                .foregroundColor(.primary)
-
-            Spacer()
-
-            Toggle("", isOn: $soundEffects)
-                .labelsHidden()
-                .toggleStyle(SoundingToggleStyle())
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-    }
-
-    private var islandSettingsContent: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(themeManager.accentColor))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("live_island".localized)
-                        .font(.system(size: 16))
-                        .foregroundColor(.primary)
-                    Text("live_island_desc".localized)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Toggle("", isOn: $islandSettings.isEnabled)
-                    .labelsHidden()
-                    .toggleStyle(SoundingToggleStyle())
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-
-            VStack(spacing: 0) {
-                Divider().padding(.leading, 56)
-                islandToggleRow(
-                    icon: "arrow.down.to.line",
-                    title: "live_island_download".localized,
-                    isOn: $islandSettings.showsDownload
-                )
-                Divider().padding(.leading, 56)
-                islandToggleRow(
-                    icon: "signature",
-                    title: "live_island_sign".localized,
-                    isOn: $islandSettings.showsSign
-                )
-                Divider().padding(.leading, 56)
-                islandToggleRow(
-                    icon: "lock.open",
-                    title: "live_island_decrypt".localized,
-                    isOn: $islandSettings.showsDecrypt
-                )
-                Divider().padding(.leading, 56)
-                islandToggleRow(
-                    icon: "shippingbox",
-                    title: "live_island_install".localized,
-                    isOn: $islandSettings.showsInstall
-                )
-            }
-            .disabled(!islandSettings.isEnabled)
-            .opacity(islandSettings.isEnabled ? 1 : 0.45)
-        }
-    }
-
-    private func islandToggleRow(icon: String, title: String, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(themeManager.accentColor)
-                .frame(width: 28, height: 28)
-
-            Text(title)
-                .font(.system(size: 15))
-                .foregroundColor(.primary)
-
-            Spacer()
-
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .toggleStyle(SoundingToggleStyle())
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 11)
-    }
-
-    private var appearanceRow: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                Image(systemName: "moon.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(
-                        Circle()
-                            .fill(themeManager.accentColor)
-                    )
-
-                Text("appearance".localized)
-                    .font(.system(size: 16))
-                    .foregroundColor(.primary)
-
-                Spacer()
-            }
-
-            HStack(spacing: 8) {
-                ForEach(AppTheme.allCases, id: \.self) { theme in
-                    Button(action: {
-                        let impactMed = UIImpactFeedbackGenerator(style: .light)
-                        impactMed.impactOccurred()
-                        themeManager.selectedTheme = theme
-                    }) {
-                        Text(theme.displayName)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(themeManager.selectedTheme == theme ? .white : .primary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(themeManager.selectedTheme == theme ? themeManager.accentColor : Color(.systemGray5))
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle(), sound: .tick)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-    }
-
-    private var colorRow: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Button(action: {
-                showingColorPicker = true
-            }) {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(selectedColor)
-                            .frame(width: 28, height: 28)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(Color.primary.opacity(0.2), lineWidth: 1)
-                            )
-
-                        Text("🎨")
-                            .font(.system(size: 14))
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("color".localized)
-                            .font(.system(size: 16))
-                            .foregroundColor(.primary)
-
-                        Text(selectedColorHex)
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.secondary.opacity(0.6))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(PlainButtonStyle(), sound: .tick)
-            .sheet(isPresented: $showingColorPicker) {
-                NavigationView {
-                    ColorPickerView(selectedColor: $selectedColor)
-                        .navigationTitle("color".localized)
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button(action: {
-                                    showingColorPicker = false
-                                }) {
-                                    Text("ok".localized)
-                                        .fontWeight(.semibold)
-                                }
-                            }
-                        }
-                }
-            }
-            .onChange(of: selectedColor) { _, newColor in
-                selectedColorHex = newColor.toHex()
-                themeManager.accentColor = newColor
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(Array(presetColorHexes.enumerated()), id: \.offset) { index, hex in
-                        let color = Color(hex: hex)
-                        let isSelected = selectedColorHex.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == hex.lowercased()
-                        Circle()
-                            .fill(color)
-                            .frame(width: 32, height: 32)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(
-                                        isSelected ? Color.primary : Color.clear,
-                                        lineWidth: 2.5
-                                    )
-                            )
-                            .overlay {
-                                if isSelected {
-                                    Circle()
-                                        .fill(.black.opacity(0.25))
-                                        .frame(width: 18, height: 18)
-                                        .overlay(
-                                            Image(systemName: "checkmark")
-                                                .font(.system(size: 9, weight: .bold))
-                                                .foregroundStyle(.white)
-                                        )
-                                        .transition(.scale(scale: 0.4).combined(with: .opacity))
-                                }
-                            }
-                            .onTapGesture {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    selectedColor = color
-                                    selectedColorHex = hex
-                                    themeManager.accentColor = color
-                                }
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                                impactFeedback.impactOccurred()
-                            }
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-    }
-
-    private func tabBarStyleItem(style: TabBarStyle) -> some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                tabBarStyleManager.currentStyle = style
-                UserDefaults.standard.set(style == .systemDefault, forKey: "TabBarStyle.userChoseSystem")
-            }
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-        }) {
-            HStack(alignment: .center, spacing: 16) {
-                tabBarStylePreview(style: style)
-                    .frame(width: 180, height: 80, alignment: .center)
-                    .clipped()
-                    .cornerRadius(10)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(style.name)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-
-                    Text(styleDescription(for: style))
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                Image(systemName: "checkmark")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(themeManager.accentColor)
-                    .opacity(tabBarStyleManager.currentStyle == style ? 1 : 0)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle(), sound: .tick)
-    }
-
-    private func styleDescription(for style: TabBarStyle) -> String {
-        switch style {
-        case .systemDefault:
-            return "tab_style_default_desc".localized
-        case .floatingCard:
-            return "tab_style_floating_desc".localized
-        }
-    }
-
-    @ViewBuilder
-    private func tabBarStylePreview(style: TabBarStyle) -> some View {
-        ZStack {
-            Color(.systemBackground)
-
-            switch style {
-            case .systemDefault:
-                VStack(spacing: 0) {
-                    Spacer()
-                    HStack(spacing: 0) {
-                        ForEach(TabEnum.allCases, id: \.self) { tab in
-                            VStack(spacing: 3) {
-                                Image(systemName: tab.icon)
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(tab == .settings ? themeManager.accentColor : .secondary.opacity(0.6))
-                                Text(tab.title)
-                                    .font(.system(size: 7.5, weight: .regular))
-                                    .foregroundStyle(tab == .settings ? themeManager.accentColor : .secondary.opacity(0.6))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.5)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                    }
-                    .padding(.top, 6)
-                    .padding(.bottom, 8)
-                    .background(Color(.systemBackground))
-                }
-            case .floatingCard:
-                VStack {
-                    Spacer()
-                    HStack(spacing: 6) {
-                        HStack(spacing: 0) {
-                            ForEach([TabEnum.settings, .downloads, .decrypt, .sign], id: \.self) { tab in
-                                VStack(spacing: 1) {
-                                    Image(systemName: tab.icon)
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(tab == .settings ? themeManager.accentColor : .secondary.opacity(0.6))
-                                    Text(tab.title)
-                                        .font(.system(size: 6, weight: .regular))
-                                        .foregroundStyle(tab == .settings ? themeManager.accentColor : .secondary.opacity(0.6))
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.5)
-                                }
-                                .frame(width: 23)
-                            }
-                        }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(.ultraThinMaterial)
-                                .shadow(color: Color.black.opacity(0.12), radius: 5, x: 0, y: 2)
-                        )
-
-                        Circle()
-                            .fill(themeManager.accentColor)
-                            .frame(width: 28, height: 28)
-                            .overlay(
-                                Image(systemName: "magnifyingglass")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(.white)
-                            )
-                            .shadow(color: Color.black.opacity(0.15), radius: 5, x: 0, y: 2)
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.bottom, 8)
-                }
-            }
-        }
-    }
-
-    private var iconGridContent: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-            ForEach(allIcons) { icon in
-                iconItem(icon: icon)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-    }
-
-    private var floatingTabBarSettingsContent: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("floating_tabbar_customize".localized)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        tabBarStyleManager.resetFloatingConfig()
-                    }
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
-                }) {
-                    Text("reset".localized)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(themeManager.accentColor)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-
-            VStack(spacing: 16) {
-                sliderRow(
-                    title: "floating_tabbar_horizontal_padding".localized,
-                    value: Binding(
-                        get: { tabBarStyleManager.floatingConfig.horizontalPadding },
-                        set: { tabBarStyleManager.floatingConfig.horizontalPadding = $0 }
-                    ),
-                    minValue: FloatingTabBarConfig.minHorizontalPadding,
-                    maxValue: FloatingTabBarConfig.maxHorizontalPadding,
-                    unit: "pt"
-                )
-
-                Divider()
-
-                sliderRow(
-                    title: "floating_tabbar_bottom_offset".localized,
-                    value: Binding(
-                        get: { tabBarStyleManager.floatingConfig.bottomOffset },
-                        set: { tabBarStyleManager.floatingConfig.bottomOffset = $0 }
-                    ),
-                    minValue: FloatingTabBarConfig.minBottomOffset,
-                    maxValue: FloatingTabBarConfig.maxBottomOffset,
-                    unit: "pt"
-                )
-
-                Divider()
-
-                sliderRow(
-                    title: "floating_tabbar_height".localized,
-                    value: Binding(
-                        get: { tabBarStyleManager.floatingConfig.height },
-                        set: { tabBarStyleManager.floatingConfig.height = $0 }
-                    ),
-                    minValue: FloatingTabBarConfig.minHeight,
-                    maxValue: FloatingTabBarConfig.maxHeight,
-                    unit: "pt"
-                )
-
-                Divider()
-
-                sliderRow(
-                    title: "floating_tabbar_corner_radius".localized,
-                    value: Binding(
-                        get: { tabBarStyleManager.floatingConfig.cornerRadius },
-                        set: { tabBarStyleManager.floatingConfig.cornerRadius = $0 }
-                    ),
-                    minValue: FloatingTabBarConfig.minCornerRadius,
-                    maxValue: FloatingTabBarConfig.maxCornerRadius,
-                    unit: "pt"
-                )
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
-        }
-    }
-
-    private func sliderRow(
-        title: String,
-        value: Binding<CGFloat>,
-        minValue: CGFloat,
-        maxValue: CGFloat,
-        unit: String
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(.system(size: 14))
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Text(String(format: "%.0f %@", value.wrappedValue, unit))
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundColor(themeManager.accentColor)
-            }
-
-            Slider(value: value, in: minValue...maxValue, step: 1)
-                .tint(themeManager.accentColor)
-        }
-    }
-
-    private var tabOrderRow: some View {
-        NavigationLink(destination: TabOrderSettingsView().environmentObject(themeManager)) {
-            HStack(spacing: 12) {
-                Image(systemName: "square.grid.2x2")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(themeManager.accentColor)
-                    .frame(width: 28, height: 28)
-
-                Text("tab_order_title".localized)
-                    .font(.system(size: 16))
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.6))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle(), sound: .tick)
-    }
-
-    private var languageRow: some View {
-        NavigationLink(destination: LanguageSettingsView().environmentObject(themeManager)) {
-            HStack(spacing: 12) {
-                Text(LanguageManager.shared.currentLanguage.flag)
-                    .font(.system(size: 18))
-                    .frame(width: 28, height: 28)
-
-                Text("language".localized)
-                    .font(.system(size: 16))
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Text(LanguageManager.shared.currentLanguage.nativeName)
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.6))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle(), sound: .tick)
-    }
-
-    @ViewBuilder
-    private func iconItem(icon: AltIcon) -> some View {
-        Button {
-            isIconLoading = true
-
-            let iconNameToSet = icon.key == "app" ? nil : icon.key
-
-            AppIconManager.shared.setAlternateIconName(iconNameToSet) { success, error in
-                DispatchQueue.main.async {
-                    isIconLoading = false
-                    currentIcon = AppIconManager.shared.currentAlternateIconName
-                    if success {
-                        showingIconSuccess = true
-                    } else {
-                        iconErrorMessage = error?.localizedDescription ?? "icon_set_failed_desc".localized
-                        showingIconError = true
-                    }
-                }
-            }
-        } label: {
-            VStack(alignment: .center, spacing: 6) {
-                ZStack {
-                    Image(uiImage: icon.image)
-                        .appIconStyle()
-                }
-            }
-            .padding(.vertical, 4)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(ScaleButtonStyle())
-        .disabled(isIconLoading)
-        .opacity(isIconLoading ? 0.5 : 1)
+}
+
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView()
+            .environmentObject(ThemeManager.shared)
+            .environmentObject(AppStore.this)
+            .environmentObject(TabBarStyleManager.shared)
     }
 }

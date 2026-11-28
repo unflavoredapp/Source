@@ -195,7 +195,7 @@
 "clear_all" = "Rensa alla";
 "x_results_found" = "%@ resultat hittades";
 "finding_best_results" = "Letar efter de bästa resultaten för dig";
-"app_downgrade" = "Appnedgradering";
+"app_downgrade" = "UNlicense";
 "search_error" = "Sökfel";
 "purchasing" = "Köper";
 "purchase" = "Köp";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Ta bort otäckta tillägg";
 "sign_remove_uncovered_extensions_hint" = "NE, widgets, kontrollcenter och andra tillägg utan matchande profil tas bort automatiskt så att huvudappen kan installeras. Importera deras profiler för att behålla dem.";
 "sign_self_injection_warning" = "Du signerar själva signeringsverktyget. Den inbyggda InAppPurchase.dylib injiceras inte; injicering kan bryta filväljare och andra systemintegrationer.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

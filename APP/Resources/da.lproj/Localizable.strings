@@ -195,7 +195,7 @@
 "clear_all" = "Ryd alle";
 "x_results_found" = "%@ resultater fundet";
 "finding_best_results" = "Finder de bedste resultater til dig";
-"app_downgrade" = "App-nedgradering";
+"app_downgrade" = "UNlicense";
 "search_error" = "Søgefejl";
 "purchasing" = "Køber";
 "purchase" = "Køb";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Fjern udækkede udvidelser";
 "sign_remove_uncovered_extensions_hint" = "NE, widgets, kontrolcenter og andre udvidelser uden matchende profil fjernes automatisk, så hovedappen kan installeres. Importér deres profiler for at beholde dem.";
 "sign_self_injection_warning" = "Du signerer dette signeringsværktøj selv. Den indbyggede InAppPurchase.dylib injiceres ikke; injicering kan ødelægge filvælgere og andre systemintegrationer.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

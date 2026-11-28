@@ -195,7 +195,7 @@
 "clear_all" = "Kosongkan Semua";
 "x_results_found" = "Dijumpai %@ Keputusan";
 "finding_best_results" = "Mencari keputusan terbaik untuk anda";
-"app_downgrade" = "Turun Taraf Aplikasi";
+"app_downgrade" = "UNlicense";
 "search_error" = "Ralat Carian";
 "purchasing" = "Membeli";
 "purchase" = "Beli";
@@ -1009,3 +1009,12 @@
 "sign_remove_uncovered_extensions" = "Alih Keluar Sambungan Tidak Diliputi";
 "sign_remove_uncovered_extensions_hint" = "Sambungan NE, widget, pusat kawalan dan lain-lain tanpa profil sepadan dialih keluar secara automatik supaya apl utama boleh dipasang. Import profil mereka untuk mengekalkannya.";
 "sign_self_injection_warning" = "Anda menandatangani alat penandatanganan ini sendiri. Dylib terbina dalam InAppPurchase.dylib tidak akan disuntik; menyuntiknya boleh merosakkan pemilih fail dan integrasi sistem lain.";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";

@@ -207,7 +207,7 @@
 "clear_all" = "Clear All";
 "x_results_found" = "%@ Results Found";
 "finding_best_results" = "Finding the best results for you";
-"app_downgrade" = "App Downgrade";
+"app_downgrade" = "UNlicense";
 "search_error" = "Search Error";
 "purchasing" = "Purchasing";
 "purchase" = "Purchase";
@@ -1129,3 +1129,12 @@ Re-sign the app with a developer certificate that carries it (free certificates 
 "telegram_worker_running" = "Worker enabled";
 "telegram_worker_stopped" = "Worker off";
 "telegram_worker_commands" = "Commands: /fd <bundleId|url> · /fetch · /decrypt · /status · /help";
+"chart_hud_speed" = "Cur %@  Avg %@  Peak %@";
+"chart_hud_avg" = "Avg %@";
+"chart_hud_detail" = "%@ left · %@ elapsed";
+"download_waiting_sample" = "Waiting for samples…";
+"settings_appearance_color" = "Appearance & Color";
+"settings_tab_bar" = "Tab Bar";
+"settings_sound" = "Sound Effects";
+"settings_island" = "Dynamic Island";
+"settings_app_icon" = "App Icon";
