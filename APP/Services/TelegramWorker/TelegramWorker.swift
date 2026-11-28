@@ -123,8 +123,8 @@ final class TelegramWorker: ObservableObject {
                 let app = try await TelegramWorkerJobs.resolveApp(arg)
                 let cards = CardSession(token: token, chatID: chatID, app: app)
                 await cards.line("Tetherless fetch")
-                let url = try await TelegramWorkerJobs.fetch(app: app) { line in
-                    await cards.progressLine(line)
+                let url = try await TelegramWorkerJobs.fetch(app: app) { line, percent in
+                    await cards.progress(line, percent: percent)
                 }
                 await cards.finish(percent: 100, line: "upload encrypted IPA")
                 try await Self.sendIPA(token: token, chatID: chatID, fileURL: url, caption: "Fetched \(app.trackName) (encrypted)", cards: cards)
@@ -138,8 +138,8 @@ final class TelegramWorker: ObservableObject {
                 let ipa = try await Self.resolveExistingIPA(arg)
                 let cards = CardSession(token: token, chatID: chatID, appName: ipa.deletingPathExtension().lastPathComponent, version: "")
                 await cards.line("Tetherless decrypt")
-                let out = try await TelegramWorkerJobs.decrypt(ipaURL: ipa) { line in
-                    await cards.progressLine(line)
+                let out = try await TelegramWorkerJobs.decrypt(ipaURL: ipa) { line, percent in
+                    await cards.progress(line, percent: percent)
                 }
                 await cards.finish(percent: 100, line: "decrypt OK")
                 try await Self.sendIPA(token: token, chatID: chatID, fileURL: out, caption: "Decrypted \(out.lastPathComponent)", cards: cards)
@@ -152,16 +152,16 @@ final class TelegramWorker: ObservableObject {
             enqueue(chatID: chatID, token: token, label: "fetch+decrypt \(arg)") {
                 let app = try await TelegramWorkerJobs.resolveApp(arg)
                 let cards = CardSession(token: token, chatID: chatID, app: app)
-                await cards.line("Resolved \(app.trackName)")
+                await cards.progress("Resolved \(app.trackName)", percent: 0)
                 await cards.line("Tetherless fetch")
-                let ipa = try await TelegramWorkerJobs.fetch(app: app) { line in
-                    await cards.progressLine(line)
+                let ipa = try await TelegramWorkerJobs.fetch(app: app) { line, percent in
+                    await cards.progress(line, percent: percent)
                 }
-                await cards.line("Tetherless decrypt")
-                let out = try await TelegramWorkerJobs.decrypt(ipaURL: ipa) { line in
-                    await cards.progressLine(line)
+                await cards.progress("Tetherless decrypt", percent: 70)
+                let out = try await TelegramWorkerJobs.decrypt(ipaURL: ipa) { line, percent in
+                    await cards.progress(line, percent: percent)
                 }
-                await cards.finish(percent: 100, line: "uploading to Telegram")
+                await cards.finish(percent: 99, line: "uploading to Telegram")
                 try await Self.sendIPA(token: token, chatID: chatID, fileURL: out, caption: "Ready \(out.lastPathComponent)", cards: cards)
             }
         default:
@@ -357,23 +357,26 @@ final class CardSession {
         await push(force: true)
     }
 
-    func progressLine(_ text: String) async {
-        if let match = text.range(of: #"Download (\d+)%"#, options: .regularExpression) {
+    func progress(_ text: String, percent explicit: Int? = nil) async {
+        if let explicit {
+            self.percent = max(0, min(100, explicit))
+        } else if let match = text.range(of: #"(\d+)\s*%"#, options: .regularExpression) {
             let digits = text[match].filter(\.isNumber)
             if let value = Int(digits) {
-                percent = min(90, value)
+                self.percent = max(self.percent, min(100, value))
             }
-        } else if text.localizedCaseInsensitiveContains("decrypt") {
-            percent = max(percent, 92)
-        } else if text.localizedCaseInsensitiveContains("download") {
-            percent = max(percent, 15)
         }
-        lines.append(text)
+        // Keep console readable: replace last % line of the same phase when possible.
+        if text.contains("%"), let last = lines.last, last.contains("%") {
+            lines[lines.count - 1] = text
+        } else {
+            lines.append(text)
+        }
         await push(force: false)
     }
 
     func finish(percent: Int, line: String) async {
-        self.percent = percent
+        self.percent = max(0, min(100, percent))
         lines.append(line)
         await push(force: true)
     }
@@ -386,9 +389,13 @@ final class CardSession {
 
     private func push(force: Bool, failed: Bool = false) async {
         let now = Date()
+        let delta = abs(percent - lastSentPercent)
+        // Dynamic ring: refresh when % moves, but don't flood Telegram (~every 2–3%).
         let shouldSend = force
-            || percent != lastSentPercent
-            || now.timeIntervalSince(lastSentAt) > 4
+            || failed
+            || delta >= 2
+            || (delta >= 1 && now.timeIntervalSince(lastSentAt) > 2.0)
+            || (percent != lastSentPercent && now.timeIntervalSince(lastSentAt) > 3.0)
         guard shouldSend else { return }
         lastSentAt = now
         lastSentPercent = percent
@@ -402,14 +409,18 @@ final class CardSession {
             failed: failed
         )
         guard let jpeg = TelegramSharpCard.renderProgress(model) else {
-            await TelegramBotClient.sendMessage(token: token, chatID: chatID, text: lines.last ?? appName)
+            await TelegramBotClient.sendMessage(
+                token: token,
+                chatID: chatID,
+                text: "\(percent)% — \(lines.last ?? appName)"
+            )
             return
         }
         await TelegramBotClient.sendPhoto(
             token: token,
             chatID: chatID,
             jpeg: jpeg,
-            caption: lines.last
+            caption: "\(percent)% · \(lines.last ?? appName)"
         )
     }
 

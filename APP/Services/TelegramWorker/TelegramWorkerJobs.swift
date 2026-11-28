@@ -50,7 +50,10 @@ enum TelegramWorkerJobs {
         throw JobError.notFound(trimmed)
     }
 
-    static func fetch(app: iTunesSearchResult, onProgress: @escaping (String) async -> Void) async throws -> URL {
+    /// `percent` is overall job progress 0…100 for sharp-card rings (nil = message only).
+    typealias ProgressHandler = (_ message: String, _ percent: Int?) async -> Void
+
+    static func fetch(app: iTunesSearchResult, onProgress: @escaping ProgressHandler) async throws -> URL {
         guard AppStore.this.selectedAccount != nil else { throw JobError.noAccount }
 
         let downloadId = UnifiedDownloadManager.shared.addDownload(
@@ -68,15 +71,17 @@ enum TelegramWorkerJobs {
             throw JobError.downloadFailed("could not create download request")
         }
 
-        await onProgress("Downloading \(app.trackName) \(app.version)…")
+        await onProgress("Downloading \(app.trackName) \(app.version)…", 1)
         UnifiedDownloadManager.shared.startDownload(for: request)
 
+        var lastReported = -1
         let deadline = Date().addingTimeInterval(60 * 45)
         while Date() < deadline {
             try Task.checkCancellation()
             if let live = UnifiedDownloadManager.shared.downloadRequests.first(where: { $0.id == downloadId }) {
                 switch live.runtime.status {
                 case .completed:
+                    await onProgress("Download 100%", 70)
                     if let path = live.localFilePath {
                         return URL(fileURLWithPath: path)
                     }
@@ -84,18 +89,21 @@ enum TelegramWorkerJobs {
                 case .failed, .cancelled:
                     throw JobError.downloadFailed(live.runtime.error ?? live.runtime.status.rawValue)
                 case .downloading, .waiting, .paused:
-                    let pct = Int((live.runtime.progressValue * 100).rounded())
-                    if pct > 0 && pct % 10 == 0 {
-                        await onProgress("Download \(pct)%")
+                    let raw = max(0, min(100, Int((live.runtime.progressValue * 100).rounded())))
+                    // Map download into 1…70 of the overall sharp-card ring.
+                    let mapped = max(1, Int((Double(raw) / 100.0 * 70.0).rounded()))
+                    if raw != lastReported {
+                        lastReported = raw
+                        await onProgress("Download \(raw)%", mapped)
                     }
                 }
             }
-            try await Task.sleep(nanoseconds: 1_500_000_000)
+            try await Task.sleep(nanoseconds: 750_000_000)
         }
         throw JobError.timeout("download")
     }
 
-    static func decrypt(ipaURL: URL, onProgress: @escaping (String) async -> Void) async throws -> URL {
+    static func decrypt(ipaURL: URL, onProgress: @escaping ProgressHandler) async throws -> URL {
         let meta = IPAMetadata.read(at: ipaURL)
         DecryptInboxStore.shared.reload()
 
@@ -112,14 +120,15 @@ enum TelegramWorkerJobs {
 
         if let existing = matchingJob() {
             if existing.state == .completed, let out = existing.outputURL {
+                await onProgress("Decrypt already done", 98)
                 return out
             }
-            await onProgress("Decrypting \(existing.displayName)…")
+            await onProgress("Decrypting \(existing.displayName)…", 72)
             DecryptInboxStore.shared.start(existing)
-            return try await waitForDecrypt(job: existing)
+            return try await waitForDecrypt(job: existing, onProgress: onProgress)
         }
 
-        await onProgress("Importing for decrypt…")
+        await onProgress("Importing for decrypt…", 71)
         let failures = await DecryptInboxStore.shared.importIPAs(from: [ipaURL])
         if let first = failures.first, !first.lowercased().contains("dup") {
             throw JobError.decryptFailed(first)
@@ -130,20 +139,32 @@ enum TelegramWorkerJobs {
         }
 
         if job.state == .completed, let out = job.outputURL {
+            await onProgress("Decrypt already done", 98)
             return out
         }
 
-        await onProgress("Decrypting \(job.displayName)…")
+        await onProgress("Decrypting \(job.displayName)…", 72)
         DecryptInboxStore.shared.start(job)
-        return try await waitForDecrypt(job: job)
+        return try await waitForDecrypt(job: job, onProgress: onProgress)
     }
 
-    private static func waitForDecrypt(job: DecryptJob) async throws -> URL {
+    private static func waitForDecrypt(job: DecryptJob, onProgress: @escaping ProgressHandler) async throws -> URL {
+        var lastReported = -1
         let deadline = Date().addingTimeInterval(60 * 45)
         while Date() < deadline {
             try Task.checkCancellation()
+            let fraction = job.log.fraction
+            let raw = max(0, min(100, Int((fraction * 100).rounded())))
+            // Map decrypt into 72…98 of the overall ring.
+            let mapped = 72 + Int((Double(raw) / 100.0 * 26.0).rounded())
+            if raw != lastReported {
+                lastReported = raw
+                let phase = job.log.phase.isEmpty ? "Decrypt" : job.log.phase
+                await onProgress("\(phase) \(raw)%", mapped)
+            }
             switch job.state {
             case .completed:
+                await onProgress("Decrypt 100%", 98)
                 if let out = job.outputURL { return out }
                 throw JobError.decryptFailed("completed without output")
             case .failed, .cancelled:
@@ -151,16 +172,16 @@ enum TelegramWorkerJobs {
             case .running, .ready, .importing:
                 break
             }
-            try await Task.sleep(nanoseconds: 1_500_000_000)
+            try await Task.sleep(nanoseconds: 500_000_000)
         }
         throw JobError.timeout("decrypt")
     }
 
-    static func fetchAndDecrypt(_ target: String, onProgress: @escaping (String) async -> Void) async throws -> URL {
+    static func fetchAndDecrypt(_ target: String, onProgress: @escaping ProgressHandler) async throws -> URL {
         let app = try await resolveApp(target)
-        await onProgress("Resolved \(app.trackName) (\(app.bundleId))")
+        await onProgress("Resolved \(app.trackName) (\(app.bundleId))", 0)
         let ipa = try await fetch(app: app, onProgress: onProgress)
-        await onProgress("Downloaded — starting decrypt")
+        await onProgress("Downloaded — starting decrypt", 70)
         return try await decrypt(ipaURL: ipa, onProgress: onProgress)
     }
 

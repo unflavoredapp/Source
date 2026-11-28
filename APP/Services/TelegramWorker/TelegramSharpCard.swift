@@ -192,25 +192,32 @@ enum TelegramSharpCard {
         }
         context.restoreGState()
 
-        // Progress ring
-        let ringRect = iconRect.insetBy(dx: -10, dy: -10)
+        // Dynamic progress ring — track + filled arc from live percent.
+        let ringRect = iconRect.insetBy(dx: -12, dy: -12)
         let center = CGPoint(x: ringRect.midX, y: ringRect.midY)
         let radius = min(ringRect.width, ringRect.height) / 2
-        context.setLineWidth(10)
-        context.setLineCap(.round)
-        UIColor(white: 1, alpha: 0.18).setStroke()
-        context.addArc(center: center, radius: radius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
-        context.strokePath()
-
         let pct = max(0, min(100, model.percent))
         let start = -CGFloat.pi / 2
         let end = start + CGFloat(pct) / 100 * .pi * 2
-        (model.failed ? UIColor.systemRed : UIColor.white).setStroke()
+
+        context.setLineWidth(14)
+        context.setLineCap(.round)
+        UIColor(white: 1, alpha: 0.16).setStroke()
+        context.addArc(center: center, radius: radius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
+        context.strokePath()
+
+        let ringColor = model.failed ? UIColor.systemRed : UIColor.white
+        ringColor.setStroke()
         context.addArc(center: center, radius: radius, startAngle: start, endAngle: end, clockwise: false)
         context.strokePath()
 
+        // Soft fill behind the percentage so it stays readable over app icons.
+        let badge = CGRect(x: center.x - 70, y: center.y - 36, width: 140, height: 72)
+        UIColor(white: 0, alpha: 0.45).setFill()
+        UIBezierPath(roundedRect: badge, cornerRadius: 18).fill()
+
         let percentText = "\(pct)%" as NSString
-        let font = UIFont.systemFont(ofSize: 44, weight: .bold)
+        let font = UIFont.systemFont(ofSize: 48, weight: .bold)
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: UIColor.white,
