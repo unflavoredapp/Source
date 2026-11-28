@@ -7,7 +7,9 @@ enum TelegramWorkerConfig {
     private static let enabledKey = "TelegramWorker.enabled"
     private static let chatIDsKey = "TelegramWorker.allowedChatIDs"
     private static let offsetKey = "TelegramWorker.updateOffset"
+    private static let relayURLKey = "TelegramWorker.relayBaseURL"
     private static let tokenService = "TelegramWorker.botToken"
+    private static let relayTokenService = "TelegramWorker.relayToken"
 
     static var isEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: enabledKey) }
@@ -54,6 +56,37 @@ enum TelegramWorkerConfig {
 
     static var isConfigured: Bool {
         TelegramBotClient.validateToken(botToken)
+    }
+
+    /// Public HTTPS origin of the VPS IPA relay (no trailing slash), e.g. `https://ipa.example.com`.
+    static var relayBaseURL: String {
+        get { UserDefaults.standard.string(forKey: relayURLKey) ?? "" }
+        set {
+            UserDefaults.standard.set(newValue.trimmingCharacters(in: .whitespacesAndNewlines), forKey: relayURLKey)
+            NotificationCenter.default.post(name: .telegramWorkerConfigChanged, object: nil)
+        }
+    }
+
+    /// Shared secret matching `RELAY_TOKEN` on the VPS.
+    static var relayToken: String {
+        get { Keychain.read(service: relayTokenService) ?? "" }
+        set {
+            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                Keychain.delete(service: relayTokenService)
+            } else {
+                Keychain.write(service: relayTokenService, value: trimmed)
+            }
+            NotificationCenter.default.post(name: .telegramWorkerConfigChanged, object: nil)
+        }
+    }
+
+    static var isRelayConfigured: Bool {
+        let base = relayBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !relayToken.isEmpty, let url = URL(string: base), let scheme = url.scheme?.lowercased() else {
+            return false
+        }
+        return (scheme == "https" || scheme == "http") && url.host != nil
     }
 
     private enum Keychain {

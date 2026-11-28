@@ -16,3 +16,4 @@ UNlicense.ipa
 # Local tooling
 .DS_Store
 /tmp/
+Tools/telegram-ipa-relay/data/

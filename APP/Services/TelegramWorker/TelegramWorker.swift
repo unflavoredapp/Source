@@ -192,33 +192,78 @@ final class TelegramWorker: ObservableObject {
         caption: String,
         cards: CardSession
     ) async throws {
-        do {
-            try await TelegramBotClient.sendDocument(
-                token: token,
-                chatID: chatID,
-                fileURL: fileURL,
-                caption: caption
-            )
-            await cards.finish(percent: 100, line: "sent to Telegram")
-        } catch let error as TelegramBotError {
-            if case .fileTooLarge = error {
-                await cards.fail(line: "error — IPA over Bot API ~50 MB cap")
-                await TelegramBotClient.sendMessage(
+        let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
+        let size = (attrs?[.size] as? NSNumber)?.int64Value ?? 0
+        let overTelegramCap = size > TelegramBotClient.maxDocumentBytes
+
+        if !overTelegramCap {
+            do {
+                try await TelegramBotClient.sendDocument(
                     token: token,
                     chatID: chatID,
-                    text: """
-                    ❌ \(error.localizedDescription)
-
-                    Kept on this iPhone:
-                    `\(fileURL.path)`
-
-                    Open UNlicense → Decrypt / Files to share it.
-                    """
+                    fileURL: fileURL,
+                    caption: caption
                 )
+                await cards.finish(percent: 100, line: "sent to Telegram")
                 return
+            } catch let error as TelegramBotError {
+                if case .fileTooLarge = error {
+                    // Fall through to VPS relay.
+                } else {
+                    throw error
+                }
             }
-            throw error
         }
+
+        if TelegramIPARelay.isConfigured {
+            await cards.progress("Uploading to VPS relay…", percent: 99)
+            final class ProgressGate: @unchecked Sendable {
+                var last = -1
+            }
+            let gate = ProgressGate()
+            let uploaded = try await TelegramIPARelay.upload(fileURL: fileURL) { fraction in
+                let pct = Int((fraction * 100).rounded())
+                guard pct != gate.last else { return }
+                gate.last = pct
+                Task { await cards.progress("Relay upload \(pct)%", percent: 99) }
+            }
+            let mb = Double(uploaded.size) / 1_048_576
+            let expires: String
+            if let seconds = uploaded.expiresIn {
+                let hours = max(1, seconds / 3600)
+                expires = "Expires in ~\(hours)h."
+            } else {
+                expires = ""
+            }
+            await cards.finish(percent: 100, line: "relay link sent")
+            await TelegramBotClient.sendMessage(
+                token: token,
+                chatID: chatID,
+                text: """
+                ✅ \(caption)
+                \(String(format: "%.1f MB", mb)) — over Bot API ~50 MB, hosted on your VPS.
+
+                \(uploaded.url.absoluteString)
+
+                \(expires)
+                """.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+            return
+        }
+
+        await cards.fail(line: "error — IPA over ~50 MB (no VPS relay)")
+        await TelegramBotClient.sendMessage(
+            token: token,
+            chatID: chatID,
+            text: """
+            ❌ IPA is \(String(format: "%.1f", Double(size) / 1_048_576)) MB — Bot API caps ~50 MB.
+
+            Kept on this iPhone:
+            `\(fileURL.path)`
+
+            Set an IPA relay URL + token in Settings → Telegram Worker (VPS), or share from Files.
+            """
+        )
     }
 
     private func enqueue(chatID: Int64, token: String, label: String, work: @escaping @MainActor () async throws -> Void) {
@@ -264,10 +309,12 @@ final class TelegramWorker: ObservableObject {
     private func statusText() -> String {
         let account = AppStore.this.selectedAccount?.email ?? "(no App Store account)"
         let busy = jobTask == nil ? "idle" : "busy"
+        let relay = TelegramIPARelay.isConfigured ? "configured" : "off (IPAs >~50 MB stay on-device)"
         return """
         Worker: \(isRunning ? "running" : "stopped") (\(busy))
         Account: \(account)
         Decrypt: \(FairPlayDecryptor.isAvailable ? "ready" : "unavailable")
+        IPA relay: \(relay)
         Last: \(lastStatus)
         \(lastError.map { "Error: \($0)" } ?? "")
         """.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -283,7 +330,7 @@ final class TelegramWorker: ObservableObject {
         /status — sharp status card
         /help — this text
 
-        Keep the app open. Bot API uploads max ~50 MB; larger IPAs stay on-device.
+        Keep the app open. IPAs over ~50 MB upload to your VPS relay (if configured) and a download link is posted here.
         """
     }
 

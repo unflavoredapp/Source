@@ -7,6 +7,8 @@ struct TelegramWorkerSettingsView: View {
     @State private var enabled = TelegramWorkerConfig.isEnabled
     @State private var token = TelegramWorkerConfig.botToken
     @State private var chatIDs = TelegramWorkerConfig.allowedChatIDsRaw
+    @State private var relayURL = TelegramWorkerConfig.relayBaseURL
+    @State private var relayToken = TelegramWorkerConfig.relayToken
 
     var body: some View {
         ScrollView {
@@ -54,10 +56,39 @@ struct TelegramWorkerSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("telegram_worker_relay_url".localized)
+                        .font(.subheadline.weight(.semibold))
+                    TextField("https://ipa.example.com", text: $relayURL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.URL)
+                        .padding(12)
+                        .liquidGlassSurface(cornerRadius: 12)
+                    Text("telegram_worker_relay_url_hint".localized)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("telegram_worker_relay_token".localized)
+                        .font(.subheadline.weight(.semibold))
+                    SecureField("RELAY_TOKEN", text: $relayToken)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .padding(12)
+                        .liquidGlassSurface(cornerRadius: 12)
+                    Text("telegram_worker_relay_token_hint".localized)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Button("telegram_worker_save".localized) {
                     TelegramWorkerConfig.botToken = TelegramBotClient.normalizedToken(token)
                     token = TelegramWorkerConfig.botToken
                     TelegramWorkerConfig.allowedChatIDsRaw = chatIDs
+                    TelegramWorkerConfig.relayBaseURL = relayURL
+                    TelegramWorkerConfig.relayToken = relayToken
                     TelegramWorkerConfig.isEnabled = enabled
                     worker.reconcile()
                 }
@@ -95,6 +126,8 @@ struct TelegramWorkerSettingsView: View {
             enabled = TelegramWorkerConfig.isEnabled
             token = TelegramWorkerConfig.botToken
             chatIDs = TelegramWorkerConfig.allowedChatIDsRaw
+            relayURL = TelegramWorkerConfig.relayBaseURL
+            relayToken = TelegramWorkerConfig.relayToken
         }
     }
 }
