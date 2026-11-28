@@ -49,8 +49,15 @@ class ThemeManager: ObservableObject, @unchecked Sendable {
         }
     }
 
+    /// Flat MSIGN chrome by default — no iOS 26 Liquid Glass.
     @Published var liquidGlassEnabled: Bool = {
-        if UserDefaults.standard.object(forKey: "APP.liquidGlass") == nil { return true }
+        // One-shot migration: previous builds defaulted glass ON.
+        if UserDefaults.standard.object(forKey: "APP.flatChrome.v1") == nil {
+            UserDefaults.standard.set(false, forKey: "APP.liquidGlass")
+            UserDefaults.standard.set(true, forKey: "APP.flatChrome.v1")
+            return false
+        }
+        if UserDefaults.standard.object(forKey: "APP.liquidGlass") == nil { return false }
         return UserDefaults.standard.bool(forKey: "APP.liquidGlass")
     }() {
         didSet {
@@ -161,11 +168,10 @@ class ThemeManager: ObservableObject, @unchecked Sendable {
         case .light:
             return .white
         case .dark:
-            return ModernDarkColors.backgroundPrimary
+            return FlatChrome.canvas
         case .system:
-
             if Self.currentInterfaceStyle() == .dark {
-                return ModernDarkColors.backgroundPrimary
+                return FlatChrome.canvas
             } else {
                 return .white
             }

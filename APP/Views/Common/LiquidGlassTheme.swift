@@ -1,10 +1,31 @@
 import SwiftUI
 
+/// Flat MSIGN-style chrome (no iOS 26 Liquid Glass / materials).
+enum FlatChrome {
+    static let canvas = Color.black
+    static let row = Color(white: 0.11)
+    static let elevated = Color(white: 0.14)
+    static let tabBar = Color(white: 0.07)
+    static let hairline = Color.white.opacity(0.12)
+}
+
 struct LiquidGlassBackground: View {
     @EnvironmentObject private var themeManager: ThemeManager
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
+        // Prefer flat MSIGN canvas unless the user explicitly re-enables glass atmospherics.
+        if themeManager.liquidGlassEnabled {
+            atmospheric
+        } else {
+            FlatChrome.canvas
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var atmospheric: some View {
         GeometryReader { proxy in
             let size = proxy.size
             ZStack {
@@ -69,96 +90,123 @@ struct LiquidGlassBackground: View {
 }
 
 struct LiquidGlassBackdrop: View {
-    @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var themeManager: ThemeManager
 
     var body: some View {
-        solid
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-    }
-
-    /// Solid static background: no gradient, no TimelineView, no ripples — avoids continuous redraws.
-    private var solid: Color {
-        colorScheme == .dark
-            ? Color(red: 0.086, green: 0.094, blue: 0.118)
-            : Color(red: 0.960, green: 0.968, blue: 0.984)
+        Group {
+            if themeManager.liquidGlassEnabled {
+                Color(red: 0.086, green: 0.094, blue: 0.118)
+            } else {
+                FlatChrome.canvas
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
 extension View {
     @ViewBuilder
     func liquidGlassSurface(cornerRadius: CGFloat = 16) -> some View {
-        if #available(iOS 26.0, *) {
-            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        if ThemeManager.shared.liquidGlassEnabled {
+            if #available(iOS 26.0, *) {
+                self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            } else {
+                self
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.28), Color.white.opacity(0.06)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.6
+                            )
+                    )
+                    .shadow(color: Color.black.opacity(0.14), radius: 18, x: 0, y: 8)
+            }
         } else {
-            self
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.28), Color.white.opacity(0.06)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 0.6
-                        )
-                )
-                .shadow(color: Color.black.opacity(0.14), radius: 18, x: 0, y: 8)
+            self.background(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(FlatChrome.row)
+            )
         }
     }
 
-    /// Translucent glass without the opaque grey card fill (for floating tab chrome).
+    /// Tab-bar pill chrome — flat solid when Liquid Glass is off.
     @ViewBuilder
     func clearLiquidGlassSurface(cornerRadius: CGFloat = 16) -> some View {
-        if #available(iOS 26.0, *) {
-            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        if ThemeManager.shared.liquidGlassEnabled {
+            if #available(iOS 26.0, *) {
+                self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            } else {
+                self
+                    .background {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(Color.white.opacity(0.08))
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                            .compositingGroup()
+                            .opacity(0.72)
+                    }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.22), lineWidth: 0.6)
+                    )
+            }
         } else {
             self
-                .background {
+                .background(
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(Color.white.opacity(0.08))
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                        .compositingGroup()
-                        .opacity(0.72)
-                }
+                        .fill(FlatChrome.tabBar)
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.22), lineWidth: 0.6)
+                        .strokeBorder(FlatChrome.hairline, lineWidth: 0.5)
                 )
         }
     }
 
     @ViewBuilder
     func liquidGlassCircle() -> some View {
-        if #available(iOS 26.0, *) {
-            self.glassEffect(.regular, in: Circle())
+        if ThemeManager.shared.liquidGlassEnabled {
+            if #available(iOS 26.0, *) {
+                self.glassEffect(.regular, in: Circle())
+            } else {
+                self
+                    .background(.ultraThinMaterial, in: Circle())
+                    .overlay(Circle().strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5))
+            }
         } else {
-            self
-                .background(.ultraThinMaterial, in: Circle())
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5))
+            self.background(Circle().fill(FlatChrome.tabBar))
+                .overlay(Circle().strokeBorder(FlatChrome.hairline, lineWidth: 0.5))
         }
     }
 
     @ViewBuilder
     func clearLiquidGlassCircle() -> some View {
-        if #available(iOS 26.0, *) {
-            self.glassEffect(.regular, in: Circle())
+        if ThemeManager.shared.liquidGlassEnabled {
+            if #available(iOS 26.0, *) {
+                self.glassEffect(.regular, in: Circle())
+            } else {
+                self
+                    .background {
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .background(.ultraThinMaterial, in: Circle())
+                            .compositingGroup()
+                            .opacity(0.72)
+                    }
+                    .overlay(Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5))
+            }
         } else {
-            self
-                .background {
-                    Circle()
-                        .fill(Color.white.opacity(0.08))
-                        .background(.ultraThinMaterial, in: Circle())
-                        .compositingGroup()
-                        .opacity(0.72)
-                }
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5))
+            self.background(Circle().fill(FlatChrome.tabBar))
+                .overlay(Circle().strokeBorder(FlatChrome.hairline, lineWidth: 0.5))
         }
     }
 }
-
 
 struct LiquidWaterLayer: View {
     @EnvironmentObject private var themeManager: ThemeManager

@@ -15,9 +15,7 @@ struct BrowseView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidGlassBackdrop()
-                    .environmentObject(themeManager)
-                    .ignoresSafeArea()
+                FlatChrome.canvas.ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 16) {

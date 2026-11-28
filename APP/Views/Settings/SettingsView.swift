@@ -18,9 +18,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidGlassBackdrop()
-                    .environmentObject(themeManager)
-                    .ignoresSafeArea()
+                FlatChrome.canvas.ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 22) {
@@ -148,8 +146,8 @@ struct SettingsView: View {
                 content()
             }
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.primary.opacity(0.06))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(FlatChrome.row)
             )
         }
     }
@@ -161,7 +159,7 @@ struct SettingsView: View {
             .frame(width: 30, height: 30)
             .background(
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(themeManager.accentColor)
+                    .fill(FlatChrome.elevated)
             )
     }
 
@@ -274,9 +272,10 @@ struct SettingsView: View {
             }
         }
         .buttonStyle(ScaleButtonStyle())
-        .liquidGlassSurface(cornerRadius: 16)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(FlatChrome.row)
+        )
     }
 
     private func flag(country: String) -> String {
