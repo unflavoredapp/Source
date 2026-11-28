@@ -98,7 +98,7 @@ struct TabbarView: View {
 
     // Split body so the type checker can finish (CI: "unable to type-check in reasonable time").
     var body: some View {
-        rootChrome
+        withLifecycle(rootChrome)
     }
 
     private var rootChrome: some View {
@@ -107,13 +107,6 @@ struct TabbarView: View {
             .tint(themeManager.accentColor)
             .background(FlatChrome.canvas.ignoresSafeArea())
             .preferredColorScheme(themeManager.liquidGlassEnabled ? nil : .dark)
-            .modifier(TabbarLifecycleModifier(
-                selectedTab: $selectedTab,
-                router: router,
-                themeManager: themeManager,
-                tabBarStyleManager: tabBarStyleManager,
-                updateAppearance: updateTabBarAppearance
-            ))
     }
 
     @ViewBuilder
@@ -123,6 +116,36 @@ struct TabbarView: View {
         } else {
             standardTabView
         }
+    }
+
+    private func withLifecycle<Content: View>(_ content: Content) -> some View {
+        content
+            .onAppear {
+                AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
+                updateTabBarAppearance()
+            }
+            .onReceive(router.$requested) { requested in
+                if let requested {
+                    selectedTab = requested
+                    router.requested = nil
+                }
+            }
+            .onChange(of: selectedTab) { _, newValue in
+                AnalyticsManager.shared.trackScreen(newValue.rawValue)
+                UserDefaults.standard.set(newValue.rawValue, forKey: "initialTab")
+            }
+            .onChange(of: router.requested) { _, newValue in
+                if let newValue {
+                    selectedTab = newValue
+                    router.requested = nil
+                }
+            }
+            .onChange(of: themeManager.accentColor) { _, _ in
+                updateTabBarAppearance()
+            }
+            .onChange(of: tabBarStyleManager.currentStyle) { _, _ in
+                updateTabBarAppearance()
+            }
     }
 
     private var assassinStyleRoot: some View {
@@ -306,44 +329,5 @@ struct TabbarView: View {
             if let found = findTabBar(in: child) { return found }
         }
         return findTabBar(in: controller.presentedViewController)
-    }
-}
-
-/// Lifecycle / routing modifiers extracted so `TabbarView.body` type-checks on CI.
-private struct TabbarLifecycleModifier: ViewModifier {
-    @Binding var selectedTab: TabEnum
-    @ObservedObject var router: TabRouter
-    let themeManager: ThemeManager
-    let tabBarStyleManager: TabBarStyleManager
-    let updateAppearance: () -> Void
-
-    func body(content: Content) -> some View {
-        content
-            .onAppear {
-                AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
-                updateAppearance()
-            }
-            .onReceive(router.$pendingTab) { requested in
-                if let requested {
-                    selectedTab = requested
-                    router.pendingTab = nil
-                }
-            }
-            .onChange(of: selectedTab) { _, newValue in
-                AnalyticsManager.shared.trackScreen(newValue.rawValue)
-                UserDefaults.standard.set(newValue.rawValue, forKey: "initialTab")
-            }
-            .onChange(of: router.pendingTab) { _, newValue in
-                if let newValue {
-                    selectedTab = newValue
-                    router.pendingTab = nil
-                }
-            }
-            .onChange(of: themeManager.accentColor) { _, _ in
-                updateAppearance()
-            }
-            .onChange(of: tabBarStyleManager.currentStyle) { _, _ in
-                updateAppearance()
-            }
     }
 }
