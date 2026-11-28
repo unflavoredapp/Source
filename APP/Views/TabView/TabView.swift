@@ -6,7 +6,7 @@ enum TabEnum: String, CaseIterable, Hashable {
     case downloads
     case sign
     case settings
-    /// Separate floating Search control — App Store results mockup / live search.
+    /// App Store Search — equal tab between Library and Signed.
     case search
     /// Kept for deep links / Island; not shown in the tab bar.
     case decrypt
@@ -24,18 +24,17 @@ enum TabEnum: String, CaseIterable, Hashable {
 
     var icon: String {
         switch self {
-        // Correct DELvEK/MSIGN glyphs (the mock had these scrambled).
-        case .browse:    return "circle.grid.3x3.fill"   // 3×3 dots
-        case .downloads: return "square.grid.2x2.fill"   // 2×2 squares
-        case .sign:      return "signature"              // scribble
-        case .settings:  return "gearshape.fill"         // gear (not signature)
-        case .decrypt:   return "folder.fill"
+        case .browse:    return "circle.grid.3x3.fill"
+        case .downloads: return "square.grid.2x2.fill"
         case .search:    return "magnifyingglass"
+        case .sign:      return "signature"
+        case .settings:  return "gearshape.fill"
+        case .decrypt:   return "folder.fill"
         }
     }
 
-    /// Browse · Library · Signed · Settings — Search is the separate circle control.
-    static var barTabs: [TabEnum] { [.browse, .downloads, .sign, .settings] }
+    /// Browse · Library · Search · Signed · Settings
+    static var barTabs: [TabEnum] { [.browse, .downloads, .search, .sign, .settings] }
 
     @ViewBuilder
     static func view(for tab: TabEnum, themeManager: ThemeManager, tabBarStyleManager: TabBarStyleManager) -> some View {
@@ -85,7 +84,7 @@ struct TabbarView: View {
     @State private var selectedTab: TabEnum = {
         if let raw = UserDefaults.standard.string(forKey: "initialTab"),
            let tab = TabEnum(rawValue: raw),
-           TabEnum.barTabs.contains(tab) || tab == .search || tab == .decrypt {
+           TabEnum.barTabs.contains(tab) || tab == .decrypt {
             return tab
         }
         return .browse
@@ -216,41 +215,17 @@ struct TabbarView: View {
         let config = tabBarStyleManager.floatingConfig
         let tabHeight = max(config.height, 52)
 
-        // DELvEK-style dock: four labeled tabs + separate Search circle (App Store).
-        return HStack(spacing: 10) {
-            HStack(spacing: 0) {
-                ForEach(tabOrder.order, id: \.self) { tab in
-                    tabButton(for: tab, height: tabHeight)
-                        .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
-                }
+        // Equal SF Symbol tabs — Search sits between Library and Signed (no circle background).
+        return HStack(spacing: 0) {
+            ForEach(tabOrder.order, id: \.self) { tab in
+                tabButton(for: tab, height: tabHeight)
+                    .frame(minWidth: Self.floatingTabMinWidth, maxWidth: .infinity)
             }
-            .padding(.horizontal, 2)
-            .padding(.top, 4)
-            .padding(.bottom, 2)
-            .frame(height: tabHeight)
-            .frame(maxWidth: .infinity)
-
-            Button(action: {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
-                    selectedTab = .search
-                }
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            }) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        Circle().fill(
-                            selectedTab == .search ? themeManager.accentColor : FlatChrome.elevated
-                        )
-                    )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("tab_search".localized)
-            .padding(.trailing, 6)
         }
-        .padding(.leading, 4)
+        .padding(.horizontal, 4)
+        .padding(.top, 4)
+        .padding(.bottom, 2)
+        .frame(height: tabHeight)
         .frame(maxWidth: .infinity)
         .background(FlatChrome.tabBar)
         .overlay(alignment: .top) {

@@ -560,7 +560,7 @@
 "tab_order_title" = "Tab Bar Order";
 "tab_order_hint" = "Drag the handles to reorder.";
 "tab_order_reset" = "Reset to Default";
-"tab_order_search_hint" = "Search stays on the separate magnifying-glass control";
+"tab_order_search_hint" = "App Store Search — sits between Library and Signed";
 "delisted_apps_short" = "Delisted";
 "legacy_apps_delisted" = "Delisted Apps";
 "install_failed_title" = "Installation failed";
