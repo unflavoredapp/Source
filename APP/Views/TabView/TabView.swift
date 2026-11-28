@@ -108,7 +108,8 @@ struct TabbarView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .tint(themeManager.accentColor)
-        .background(themeManager.backgroundColor.ignoresSafeArea())
+        .background(FlatChrome.canvas.ignoresSafeArea())
+        .preferredColorScheme(themeManager.liquidGlassEnabled ? nil : .dark)
         .onAppear {
             AnalyticsManager.shared.trackScreen(selectedTab.rawValue)
             updateTabBarAppearance()
@@ -139,9 +140,7 @@ struct TabbarView: View {
 
     private var assassinStyleRoot: some View {
         ZStack {
-            LiquidGlassBackdrop()
-                .environmentObject(themeManager)
-                .ignoresSafeArea()
+            FlatChrome.canvas.ignoresSafeArea()
 
             tabPage(for: selectedTab)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
